@@ -137,6 +137,20 @@ class HoursCalculator
         return ($minutes >= 0 ? '+' : '-').$this->formatMinutes($minutes);
     }
 
+    public function formatHumanMinutes(int $minutes): string
+    {
+        $sign = $minutes < 0 ? '-' : '';
+        $minutes = abs($minutes);
+        $hours = intdiv($minutes, 60);
+        $remainder = $minutes % 60;
+
+        if ($hours === 0) {
+            return $sign.$remainder.'m';
+        }
+
+        return $sign.$hours.'h '.str_pad((string) $remainder, 2, '0', STR_PAD_LEFT).'m';
+    }
+
     private function clockMinutes(string $value): int
     {
         if (! preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value)) {

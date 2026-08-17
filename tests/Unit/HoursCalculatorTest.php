@@ -49,6 +49,9 @@ class HoursCalculatorTest extends TestCase
         $this->assertSame('41:30', $this->calculator->formatMinutes(2490));
         $this->assertSame('-00:15', $this->calculator->formatSignedMinutes(-15));
         $this->assertSame('+01:30', $this->calculator->formatSignedMinutes(90));
+        $this->assertSame('41h 30m', $this->calculator->formatHumanMinutes(2490));
+        $this->assertSame('45m', $this->calculator->formatHumanMinutes(45));
+        $this->assertSame('-15m', $this->calculator->formatHumanMinutes(-15));
     }
 
     public function test_summarizes_iso_weeks_year_boundaries_and_partial_ranges(): void

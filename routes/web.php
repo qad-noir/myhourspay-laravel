@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HoursController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,9 +13,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::prefix('hours')->name('hours.')->controller(HoursController::class)->group(function (): void {
         Route::get('/', 'index')->name('index');
