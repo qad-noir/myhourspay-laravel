@@ -4,7 +4,7 @@
         <header><div><p x-text="editing ? 'Update worked day' : 'Record worked day'"></p><h2 id="hours-dialog-title" x-text="editing ? 'Edit hours' : 'Add hours'"></h2></div><button type="button" @click="close()" aria-label="Close hours form">×</button></header>
         @if($errors->any())<div class="dashboard-form-errors" role="alert"><strong>Please review the form</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
         <form method="POST" :action="editing ? '{{ url('/hours/entries') }}/' + form.id : '{{ route('hours.entries.store') }}'" data-submit-once>
-            @csrf<input x-show="editing" type="hidden" name="_method" value="PATCH">
+            @csrf<input type="hidden" name="_method" value="PATCH" :disabled="!editing">
             <div class="dashboard-form-field"><label for="work_date">Work date</label><input id="work_date" name="work_date" type="date" x-model="form.work_date" required></div>
             <div class="dashboard-form-grid"><div class="dashboard-form-field"><label for="start_time">Start time</label><input id="start_time" name="start_time" type="time" x-model="form.start_time" required></div><div class="dashboard-form-field"><label for="end_time">End time</label><input id="end_time" name="end_time" type="time" x-model="form.end_time" required></div></div>
             <div class="dashboard-form-field"><label for="break_minutes">Unpaid break <span>minutes</span></label><input id="break_minutes" name="break_minutes" type="number" min="0" max="{{ config('hours.maximum_break_minutes') }}" x-model.number="form.break_minutes" required></div>
