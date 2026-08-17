@@ -168,7 +168,10 @@ class HoursController extends Controller
         $today = now(config('hours.timezone'));
         $defaults = [$today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()];
         $input = ['start' => $request->query('start', $defaults[0]), 'end' => $request->query('end', $defaults[1])];
-        $validator = Validator::make($input, ['start' => ['required', 'date_format:Y-m-d'], 'end' => ['required', 'date_format:Y-m-d', 'after_or_equal:start']]);
+        $validator = Validator::make($input, [
+            'start' => ['required', 'date_format:Y-m-d'],
+            'end' => ['required', 'date_format:Y-m-d', $exclusiveEnd ? 'after:start' : 'after_or_equal:start'],
+        ]);
         $validator->after(function ($validator) use ($input, $exclusiveEnd): void {
             if ($validator->errors()->isNotEmpty()) {
                 return;

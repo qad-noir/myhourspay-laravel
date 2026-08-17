@@ -73,6 +73,7 @@ class HoursModuleTest extends TestCase
         $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-09-01')
             ->assertOk()->assertJsonCount(1, 'events')->assertJsonPath('events.0.id', (string) $own->id)->assertJsonMissing(['private']);
         $this->actingAs($user)->getJson('/hours/events?start=2020-01-01&end=2026-09-01')->assertUnprocessable();
+        $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-08-01')->assertUnprocessable();
     }
 
     public function test_reports_csv_print_and_excel_are_user_scoped_and_formula_safe(): void

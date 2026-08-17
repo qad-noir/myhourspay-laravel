@@ -125,11 +125,18 @@ class ImportLegacyHours extends Command
 
         $laravelUsers = User::query()->get(['id', 'email'])->groupBy(fn (User $user) => mb_strtolower($user->email));
         $mapping = [];
-        $identities = $source->table('auth_identities')->whereNotNull('secret')->get(['user_id', 'secret']);
-        foreach ($identities as $identity) {
-            $matches = $laravelUsers->get(mb_strtolower(trim((string) $identity->secret)));
-            if ($matches?->count() === 1) {
-                $mapping[(string) $identity->user_id] = (int) $matches->first()->id;
+        $identityQuery = $source->table('auth_identities')->whereNotNull('secret');
+        if ($source->getSchemaBuilder()->hasColumn('auth_identities', 'type')) {
+            $identityQuery->whereIn('type', ['email', 'email_password']);
+        }
+        $identities = $identityQuery->get(['user_id', 'secret'])
+            ->filter(fn ($identity) => filter_var(trim((string) $identity->secret), FILTER_VALIDATE_EMAIL))
+            ->groupBy(fn ($identity) => mb_strtolower(trim((string) $identity->secret)));
+        foreach ($identities as $email => $emailIdentities) {
+            $legacyIds = $emailIdentities->pluck('user_id')->unique();
+            $matches = $laravelUsers->get($email);
+            if ($legacyIds->count() === 1 && $matches?->count() === 1) {
+                $mapping[(string) $legacyIds->first()] = (int) $matches->first()->id;
             }
         }
 

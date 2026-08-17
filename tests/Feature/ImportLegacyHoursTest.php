@@ -70,6 +70,21 @@ class ImportLegacyHoursTest extends TestCase
         $this->assertDatabaseCount('hours_entries', 0);
     }
 
+    public function test_ambiguous_legacy_email_is_not_mapped(): void
+    {
+        $user = User::factory()->create(['email' => 'shared@example.test']);
+        DB::connection('legacy_test')->table('auth_identities')->insert([
+            ['user_id' => 10, 'secret' => $user->email],
+            ['user_id' => 11, 'secret' => $user->email],
+        ]);
+        DB::connection('legacy_test')->table('hours_entries')->insert([
+            'id' => 9, 'user_id' => 10, 'work_date' => '2026-08-03', 'start_time' => '09:00', 'end_time' => '17:00', 'break_minutes' => 30, 'notes' => null, 'created_at' => null, 'updated_at' => null,
+        ]);
+
+        $this->artisan('hours:import-legacy', ['--source-connection' => 'legacy_test', '--dry-run' => true])->assertExitCode(2);
+        $this->assertDatabaseCount('hours_entries', 0);
+    }
+
     private function legacyRows(string $email): void
     {
         DB::connection('legacy_test')->table('auth_identities')->insert(['user_id' => 99, 'secret' => $email]);
