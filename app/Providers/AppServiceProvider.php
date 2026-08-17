@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\HoursEntry;
 use App\Policies\HoursEntryPolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,5 +24,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(HoursEntry::class, HoursEntryPolicy::class);
+        Route::bind('hoursEntry', fn (string $value) => request()->user()?->hoursEntries()->findOrFail($value));
     }
 }
