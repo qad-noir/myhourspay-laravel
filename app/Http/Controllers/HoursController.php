@@ -44,32 +44,11 @@ class HoursController extends Controller
         [$start, $end] = $this->validatedRange($request, true);
         $entries = $request->user()->hoursEntries()->forPeriod($start, $end)->orderBy('work_date')->get();
         $summary = $calculator->summarizeEntries($entries, $start, $end);
-        $weeksByKey = collect($summary['weeks'])->keyBy('key');
-        $weeks = [];
-        for ($weekStart = CarbonImmutable::parse($start)->startOfWeek(); $weekStart->lte(CarbonImmutable::parse($end)); $weekStart = $weekStart->addWeek()) {
-            $key = $weekStart->format('o-\WW');
-            $week = $weeksByKey->get($key);
-            $minutes = $week['minutes'] ?? 0;
-            $variance = $minutes - $calculator->weeklyTargetMinutes();
-            $weeks[] = $week ?? [
-                'key' => $key,
-                'number' => (int) $weekStart->format('W'),
-                'start' => $weekStart->toDateString(),
-                'end' => $weekStart->endOfWeek()->toDateString(),
-                'minutes' => 0,
-                'formatted' => $calculator->formatMinutes(0),
-                'target_minutes' => $calculator->weeklyTargetMinutes(),
-                'target_formatted' => $calculator->formatMinutes($calculator->weeklyTargetMinutes()),
-                'variance_minutes' => $variance,
-                'variance_formatted' => $calculator->formatSignedMinutes($variance),
-                'partial' => $start > $weekStart->toDateString() || $end < $weekStart->endOfWeek()->toDateString(),
-            ];
-        }
-        $summary['weeks'] = $weeks;
         $month = $this->validatedMonth($request->query('month'));
         $monthStart = CarbonImmutable::createFromFormat('!Y-m-d', $month.'-01', config('hours.timezone'));
         $monthEntries = array_values(array_filter($summary['entries'], fn (array $entry) => str_starts_with($entry['work_date'], $month)));
         $monthSummary = $calculator->summarizeEntries($monthEntries, $monthStart->toDateString(), $monthStart->endOfMonth()->toDateString());
+        $summary['weeks'] = $monthSummary['weeks'];
 
         return response()->json([
             'events' => array_map(fn (array $entry) => [

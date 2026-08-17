@@ -1,3 +1,11 @@
+import { Calendar } from 'fullcalendar';
+import dayGridPlugin from 'fullcalendar/daygrid';
+import interactionPlugin from 'fullcalendar/interaction';
+import breezyThemePlugin from 'fullcalendar/themes/breezy';
+import 'fullcalendar/skeleton.css';
+import 'fullcalendar/themes/breezy/theme.css';
+import 'fullcalendar/themes/breezy/palettes/amber.css';
+
 const nav = document.querySelector('[data-public-nav]');
 if (nav) {
     const updateNav = () => nav.classList.toggle('is-scrolled', window.scrollY > 12);
@@ -133,10 +141,12 @@ const renderCalendarSummary = (page, payload) => {
     setStat('average', humanMinutes(month.average_minutes));
 
     const grid = page.querySelector('[data-weekly-totals]');
-    grid.innerHTML = payload.summary.weeks.map((week) => `<article class="weekly-total-card ${week.variance_minutes >= 0 ? 'is-positive' : 'is-negative'}"><span>${escapeHtml(week.key.replace('-', ' '))}</span><strong>${escapeHtml(week.formatted)}</strong><small>Target ${escapeHtml(week.target_formatted)} · ${escapeHtml(week.variance_formatted)}</small></article>`).join('');
+    grid.innerHTML = payload.summary.weeks.length
+        ? payload.summary.weeks.map((week) => `<article class="weekly-total-card ${week.variance_minutes >= 0 ? 'is-positive' : 'is-negative'}"><span>${escapeHtml(week.key.replace('-', ' '))}</span><strong>${escapeHtml(week.formatted)}</strong><small>Target ${escapeHtml(week.target_formatted)} · ${escapeHtml(week.variance_formatted)}</small></article>`).join('')
+        : '<div class="weekly-totals-empty">No logged activities in this month.</div>';
     const first = payload.summary.weeks[0];
     const last = payload.summary.weeks.at(-1);
-    page.querySelector('[data-weekly-range]').textContent = first && last ? `${first.start} to ${last.end}` : '';
+    page.querySelector('[data-weekly-range]').textContent = first && last ? `${payload.summary.weeks.length} logged ${payload.summary.weeks.length === 1 ? 'week' : 'weeks'}` : '';
 };
 
 const showActivityTooltip = (info) => {
@@ -161,7 +171,7 @@ const initializeHoursFullCalendar = () => {
     element.dataset.bound = 'true';
     let calendar;
     calendar = new Calendar(element, {
-        plugins: [dayGridPlugin, interactionPlugin],
+        plugins: [dayGridPlugin, interactionPlugin, breezyThemePlugin],
         initialView: 'dayGridMonth',
         initialDate: element.dataset.initialDate,
         firstDay: 1,
@@ -215,7 +225,3 @@ const initializeNavigatedPage = () => {
 initializeNavigatedPage();
 document.addEventListener('livewire:navigated', initializeNavigatedPage);
 document.addEventListener('livewire:navigating', () => { window.hoursFullCalendar?.destroy(); window.hoursFullCalendar = null; document.querySelector('[data-hours-tooltip]')?.remove(); });
-import { Calendar } from 'fullcalendar';
-import dayGridPlugin from 'fullcalendar/daygrid';
-import interactionPlugin from 'fullcalendar/interaction';
-import 'fullcalendar/skeleton.css';

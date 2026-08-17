@@ -71,7 +71,7 @@ class HoursModuleTest extends TestCase
         $this->entry($other, ['notes' => 'private']);
 
         $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-09-01&month=2026-08')
-            ->assertOk()->assertJsonCount(1, 'events')->assertJsonCount(6, 'summary.weeks')->assertJsonPath('events.0.id', (string) $own->id)->assertJsonPath('monthSummary.worked_days', 1)->assertJsonMissing(['private']);
+            ->assertOk()->assertJsonCount(1, 'events')->assertJsonCount(1, 'summary.weeks')->assertJsonPath('summary.weeks.0.key', '2026-W32')->assertJsonPath('events.0.id', (string) $own->id)->assertJsonPath('monthSummary.worked_days', 1)->assertJsonMissing(['private']);
         $this->actingAs($user)->getJson('/hours/events?start=2020-01-01&end=2026-09-01')->assertUnprocessable();
         $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-08-01')->assertUnprocessable();
     }
