@@ -32,7 +32,7 @@
 
         <x-dashboard.panel title="Recent records" description="Your latest worked days">
             <x-slot:actions><a href="{{ route('hours.index') }}" class="dashboard-text-link">View calendar →</a></x-slot:actions>
-            @if($recent->isEmpty())<x-dashboard.empty-state compact />@else<div class="recent-records">@foreach($recent as $entry)<button type="button" data-open-entry='@json($entry)' aria-label="Edit hours for {{ $entry['work_date'] }}"><span class="recent-date"><strong>{{ \Carbon\CarbonImmutable::parse($entry['work_date'])->format('d') }}</strong>{{ \Carbon\CarbonImmutable::parse($entry['work_date'])->format('M') }}</span><span><strong>{{ $entry['weekday'] }}</strong>{{ $entry['start_time'] }}–{{ $entry['end_time'] }} · {{ $entry['break_minutes'] }}m break</span><b>{{ $calculator->formatHumanMinutes($entry['net_minutes']) }}</b></button>@endforeach</div>@endif
+            @if($recent->isEmpty())<x-dashboard.empty-state compact />@else<div class="recent-records">@foreach($recent as $entry)<a href="{{ route('hours.index', ['month' => substr($entry['work_date'], 0, 7), 'edit' => $entry['id']]) }}" aria-label="Edit hours for {{ $entry['work_date'] }}"><span class="recent-date"><strong>{{ \Carbon\CarbonImmutable::parse($entry['work_date'])->format('d') }}</strong>{{ \Carbon\CarbonImmutable::parse($entry['work_date'])->format('M') }}</span><span><strong>{{ $entry['weekday'] }}</strong>{{ $entry['start_time'] }}–{{ $entry['end_time'] }} · {{ $entry['break_minutes'] }}m break</span><b>{{ $calculator->formatHumanMinutes($entry['net_minutes']) }}</b></a>@endforeach</div>@endif
         </x-dashboard.panel>
     </div>
 </x-app-layout>

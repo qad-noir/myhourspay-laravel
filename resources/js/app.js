@@ -63,3 +63,13 @@ if (dashboardSidebar) {
     window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && dashboardSidebar.classList.contains('is-open')) setSidebar(false); });
 }
 document.querySelector('[data-dismiss-flash]')?.addEventListener('click', (event) => event.currentTarget.closest('[data-flash-message]')?.remove());
+
+document.querySelectorAll('[data-submit-once]').forEach((form) => {
+    form.addEventListener('submit', () => {
+        const button = form.querySelector('[type="submit"]');
+        if (!button) return;
+        button.disabled = true;
+        button.setAttribute('aria-disabled', 'true');
+        button.classList.add('is-loading');
+    });
+});
