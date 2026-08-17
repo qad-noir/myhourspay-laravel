@@ -12,10 +12,10 @@
             <x-slot:actions><div class="dashboard-page-actions"><a href="{{ route('hours.reports.index') }}" class="dashboard-button dashboard-button--secondary">View reports</a><button type="button" @click="openEntry('{{ now(config('hours.timezone'))->toDateString() }}')" class="dashboard-button dashboard-button--primary">＋ Add hours</button></div></x-slot:actions>
         </x-dashboard.page-header>
         <section class="dashboard-stats" aria-label="Monthly hours summary">
-            <x-dashboard.stat-card label="Month total" :value="$calculator->formatHumanMinutes($monthSummary['total_minutes'])" support="Net hours recorded" tone="analytics" icon="◷" />
-            <x-dashboard.stat-card label="Worked days" :value="$monthSummary['worked_days']" support="Days with an entry" icon="▦" />
-            <x-dashboard.stat-card label="Daily average" :value="$calculator->formatHumanMinutes($monthSummary['average_minutes'])" support="Across worked days" tone="violet" icon="≈" />
-            <x-dashboard.stat-card label="Weekly target" value="40h 00m" support="Monday to Sunday" tone="positive" icon="◎" />
+            <x-dashboard.stat-card label="Month total" :value="$calculator->formatHumanMinutes($monthSummary['total_minutes'])" support="Net hours recorded" tone="analytics" icon="clock" />
+            <x-dashboard.stat-card label="Worked days" :value="$monthSummary['worked_days']" support="Days with an entry" icon="calendar" />
+            <x-dashboard.stat-card label="Daily average" :value="$calculator->formatHumanMinutes($monthSummary['average_minutes'])" support="Across worked days" tone="violet" icon="stopwatch" />
+            <x-dashboard.stat-card label="Weekly target" value="40h 00m" support="Monday to Sunday" tone="positive" icon="target" />
         </section>
         <x-dashboard.panel class="hours-calendar-panel" title="Monthly calendar" description="Worked days show net hours after unpaid breaks.">
             <x-slot:actions><div class="calendar-controls"><a aria-label="Previous month" href="{{ route('hours.index', ['month' => $monthStart->subMonth()->format('Y-m')]) }}">←</a><a href="{{ route('hours.index') }}">Today</a><a aria-label="Next month" href="{{ route('hours.index', ['month' => $monthStart->addMonth()->format('Y-m')]) }}">→</a><strong>{{ $monthStart->format('F Y') }}</strong></div></x-slot:actions>

@@ -11,10 +11,10 @@
     </form>
 
     <section class="dashboard-stats" aria-label="Period summary">
-        <x-dashboard.stat-card label="Period total" :value="$summary['total_formatted']" support="Net recorded time" />
-        <x-dashboard.stat-card label="Days worked" :value="$summary['worked_days']" support="Days with an entry" />
-        <x-dashboard.stat-card label="Average day" :value="$summary['average_formatted']" support="Across worked days" />
-        <x-dashboard.stat-card label="Weeks included" :value="count($summary['weeks'])" support="Calendar weeks in range" />
+        <x-dashboard.stat-card label="Period total" :value="$summary['total_formatted']" support="Net recorded time" icon="clock" />
+        <x-dashboard.stat-card label="Days worked" :value="$summary['worked_days']" support="Days with an entry" icon="calendar" tone="analytics" />
+        <x-dashboard.stat-card label="Average day" :value="$summary['average_formatted']" support="Across worked days" icon="stopwatch" tone="violet" />
+        <x-dashboard.stat-card label="Weeks included" :value="count($summary['weeks'])" support="Calendar weeks in range" icon="reports" tone="positive" />
     </section>
 
     <section id="exports" class="dashboard-panel report-export-panel">

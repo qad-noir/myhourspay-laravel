@@ -10,8 +10,8 @@
     />
 
     <section class="dashboard-stats settings-summary" aria-label="Hours settings">
-        <x-dashboard.stat-card label="Default break" value="30 min" support="Used when adding an entry" />
-        <x-dashboard.stat-card label="Weekly target" value="40 hours" support="Used for weekly variance" />
+        <x-dashboard.stat-card label="Default break" value="30 min" support="Used when adding an entry" icon="stopwatch" tone="violet" />
+        <x-dashboard.stat-card label="Weekly target" value="40 hours" support="Used for weekly variance" icon="target" tone="positive" />
     </section>
 
     <div class="profile-settings-wrap">

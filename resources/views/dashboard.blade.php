@@ -11,10 +11,10 @@
         $tone = $week['worked_days'] === 0 ? 'neutral' : ($variance >= 0 ? 'positive' : 'negative');
     @endphp
     <section class="dashboard-stats" aria-label="Hours overview">
-        <x-dashboard.stat-card label="This week" :value="$calculator->formatHumanMinutes($week['total_minutes'])" :support="$varianceSupport" :tone="$tone" icon="◷" />
-        <x-dashboard.stat-card label="This month" :value="$calculator->formatHumanMinutes($month['total_minutes'])" :support="$month['worked_days'].' worked '.str('day')->plural($month['worked_days'])" tone="analytics" icon="▦" />
-        <x-dashboard.stat-card label="Daily average" :value="$calculator->formatHumanMinutes($month['average_minutes'])" support="Across worked days" tone="violet" icon="≈" />
-        <x-dashboard.stat-card label="Target variance" :value="$calculator->formatHumanMinutes($variance)" support="Weekly difference" :tone="$tone" icon="↗" />
+        <x-dashboard.stat-card label="This week" :value="$calculator->formatHumanMinutes($week['total_minutes'])" :support="$varianceSupport" :tone="$tone" icon="clock" />
+        <x-dashboard.stat-card label="This month" :value="$calculator->formatHumanMinutes($month['total_minutes'])" :support="$month['worked_days'].' worked '.str('day')->plural($month['worked_days'])" tone="analytics" icon="calendar" />
+        <x-dashboard.stat-card label="Daily average" :value="$calculator->formatHumanMinutes($month['average_minutes'])" support="Across worked days" tone="violet" icon="stopwatch" />
+        <x-dashboard.stat-card label="Target variance" :value="$calculator->formatHumanMinutes($variance)" support="Weekly difference" :tone="$tone" icon="trend" />
     </section>
 
     <div class="dashboard-overview-grid">
