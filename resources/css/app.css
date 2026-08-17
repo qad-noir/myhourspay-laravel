@@ -92,3 +92,9 @@ html { scroll-behavior: smooth; }
 
 .mhp-event-harness .mhp-hours-event{display:block!important;width:calc(100% - 16px)!important}.mhp-hours-event .fc-hours-event b,.mhp-hours-event .fc-hours-event small{white-space:nowrap}
 @media(max-width:760px){.mhp-event-harness .mhp-hours-event{width:calc(100% - 8px)!important}}
+
+/* Use the same seven equal columns for weekday labels and every calendar week. */
+.fullcalendar-panel [role="row"]{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:0!important}.fullcalendar-panel [role="row"]>*{width:auto!important;min-width:0!important}.mhp-calendar-weekday{display:grid!important;align-items:center!important;justify-items:center!important;padding:0!important;text-align:center!important}.fullcalendar-panel [role="rowgroup"]>[role="row"]{border-bottom:1px solid #e7e4e9!important}.fullcalendar-panel [role="rowgroup"]>[role="row"]:last-child{border-bottom:1px solid #e7e4e9!important}.mhp-calendar-day{border-bottom:1px solid #e7e4e9!important}
+
+/* Worked days retain the hover outline, but only empty days advertise adding. */
+.mhp-calendar-day.is-hovered.has-hours{z-index:2;border-color:var(--brand-orange)!important;background:#fff8f4;box-shadow:inset 0 0 0 1px var(--brand-orange)}.mhp-calendar-day.has-hours .mhp-add-prompt{display:none!important}
