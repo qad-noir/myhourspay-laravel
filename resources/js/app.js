@@ -1,10 +1,7 @@
 import { Calendar } from 'fullcalendar';
 import dayGridPlugin from 'fullcalendar/daygrid';
 import interactionPlugin from 'fullcalendar/interaction';
-import breezyThemePlugin from 'fullcalendar/themes/breezy';
 import 'fullcalendar/skeleton.css';
-import 'fullcalendar/themes/breezy/theme.css';
-import 'fullcalendar/themes/breezy/palettes/amber.css';
 
 const nav = document.querySelector('[data-public-nav]');
 if (nav) {
@@ -171,7 +168,7 @@ const initializeHoursFullCalendar = () => {
     element.dataset.bound = 'true';
     let calendar;
     calendar = new Calendar(element, {
-        plugins: [dayGridPlugin, interactionPlugin, breezyThemePlugin],
+        plugins: [dayGridPlugin, interactionPlugin],
         initialView: 'dayGridMonth',
         initialDate: element.dataset.initialDate,
         firstDay: 1,
@@ -179,7 +176,7 @@ const initializeHoursFullCalendar = () => {
         showNonCurrentDates: true,
         dayMaxEvents: 2,
         height: 'auto',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        headerToolbar: false,
         events: async (fetchInfo, successCallback, failureCallback) => {
             const loading = page.querySelector('[data-calendar-loading]');
             loading.hidden = false;
@@ -206,14 +203,36 @@ const initializeHoursFullCalendar = () => {
             url.searchParams.delete('add');
             url.searchParams.delete('edit');
             window.history.replaceState({}, '', url);
+            const title = page.querySelector('[data-calendar-title]');
+            if (title) title.textContent = info.view.title;
+        },
+        dayHeaderDidMount: (info) => info.el.classList.add('mhp-calendar-weekday'),
+        dayCellDidMount: (info) => {
+            const current = info.date.getMonth() === info.view.currentStart.getMonth() && info.date.getFullYear() === info.view.currentStart.getFullYear();
+            info.el.classList.add('mhp-calendar-day', current ? 'is-current-month' : 'is-outside-month');
+            if (info.isToday) info.el.classList.add('is-today');
+            info.el.querySelector('[aria-hidden="true"]')?.classList.add('mhp-calendar-date');
+            const prompt = document.createElement('span');
+            prompt.className = 'mhp-add-prompt';
+            prompt.textContent = '+ Add';
+            info.el.appendChild(prompt);
+            info.el.addEventListener('mouseenter', () => info.el.classList.add('is-hovered'));
+            info.el.addEventListener('mouseleave', () => info.el.classList.remove('is-hovered'));
         },
         dateClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.dateStr, entry: null } })),
         eventClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.event.startStr, entry: { id: info.event.id, ...info.event.extendedProps } } })),
+        eventDidMount: (info) => {
+            info.el.classList.add('mhp-hours-event');
+            info.el.closest('[data-date]')?.classList.add('has-hours');
+        },
         eventMouseEnter: showActivityTooltip,
         eventMouseLeave: () => document.querySelector('[data-hours-tooltip]')?.remove(),
-        eventContent: (info) => ({ html: `<span class="fc-hours-event"><b>${escapeHtml(info.event.extendedProps.net_formatted)}</b><small>${escapeHtml(info.event.extendedProps.start_time)}–${escapeHtml(info.event.extendedProps.end_time)}</small></span>` }),
+        eventContent: (info) => ({ html: `<span class="fc-hours-event"><b>${escapeHtml(humanMinutes(info.event.extendedProps.net_minutes))}</b><small>${escapeHtml(info.event.extendedProps.start_time)}–${escapeHtml(info.event.extendedProps.end_time)}</small></span>` }),
     });
     calendar.render();
+    page.querySelector('[data-calendar-prev]')?.addEventListener('click', () => calendar.prev());
+    page.querySelector('[data-calendar-next]')?.addEventListener('click', () => calendar.next());
+    page.querySelector('[data-calendar-today]')?.addEventListener('click', () => calendar.today());
     window.hoursFullCalendar = calendar;
 };
 

@@ -23,7 +23,15 @@
         </section>
 
         <section class="dashboard-panel fullcalendar-panel" aria-labelledby="calendar-title">
-            <div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Interactive calendar</p><h2 id="calendar-title">Worked activities</h2></div><span>Hover an activity for a quick view</span></div>
+            <div class="dashboard-panel-heading calendar-panel-heading">
+                <div><h2 id="calendar-title">Monthly calendar</h2><p>Worked days show net hours after unpaid breaks.</p></div>
+                <div class="calendar-custom-controls" aria-label="Calendar navigation">
+                    <button type="button" data-calendar-prev aria-label="Previous month">←</button>
+                    <button type="button" data-calendar-today>Today</button>
+                    <button type="button" data-calendar-next aria-label="Next month">→</button>
+                    <strong data-calendar-title>{{ $monthStart->format('F Y') }}</strong>
+                </div>
+            </div>
             <div
                 id="hours-fullcalendar"
                 data-events-url="{{ route('hours.events') }}"
