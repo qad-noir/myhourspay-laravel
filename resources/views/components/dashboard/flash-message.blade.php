@@ -1,0 +1,1 @@
+@if(session('status'))<div class="dashboard-flash" role="status" data-flash-message><span aria-hidden="true">✓</span><p>{{ session('status') }}</p><button type="button" data-dismiss-flash aria-label="Dismiss message">×</button></div>@endif

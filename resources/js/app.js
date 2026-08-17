@@ -51,3 +51,15 @@ if (timer && !reducedMotion) {
     let seconds = 2 * 3600 + 46 * 60 + 32;
     window.setInterval(() => { seconds += 1; timer.textContent = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map((value) => String(value).padStart(2, '0')).join(':'); }, 1000);
 }
+
+const dashboardSidebar = document.querySelector('[data-dashboard-sidebar]');
+if (dashboardSidebar) {
+    const backdrop = document.querySelector('[data-sidebar-backdrop]');
+    const openButton = document.querySelector('[data-sidebar-open]');
+    const closeButton = document.querySelector('[data-sidebar-close]');
+    const setSidebar = (open) => { dashboardSidebar.classList.toggle('is-open', open); backdrop.classList.toggle('is-open', open); openButton?.setAttribute('aria-expanded', String(open)); document.body.classList.toggle('dashboard-drawer-open', open); if (open) closeButton?.focus(); else openButton?.focus(); };
+    openButton?.addEventListener('click', () => setSidebar(true)); closeButton?.addEventListener('click', () => setSidebar(false)); backdrop?.addEventListener('click', () => setSidebar(false));
+    dashboardSidebar.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => { if (window.innerWidth < 1024) setSidebar(false); }));
+    window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && dashboardSidebar.classList.contains('is-open')) setSidebar(false); });
+}
+document.querySelector('[data-dismiss-flash]')?.addEventListener('click', (event) => event.currentTarget.closest('[data-flash-message]')?.remove());
