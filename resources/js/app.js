@@ -52,8 +52,10 @@ if (timer && !reducedMotion) {
     window.setInterval(() => { seconds += 1; timer.textContent = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map((value) => String(value).padStart(2, '0')).join(':'); }, 1000);
 }
 
-const dashboardSidebar = document.querySelector('[data-dashboard-sidebar]');
+const initializeDashboardBehaviors = () => {
+const dashboardSidebar = document.querySelector('[data-dashboard-sidebar]:not([data-bound])');
 if (dashboardSidebar) {
+    dashboardSidebar.dataset.bound = 'true';
     const backdrop = document.querySelector('[data-sidebar-backdrop]');
     const openButton = document.querySelector('[data-sidebar-open]');
     const closeButton = document.querySelector('[data-sidebar-close]');
@@ -62,9 +64,10 @@ if (dashboardSidebar) {
     dashboardSidebar.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => { if (window.innerWidth < 1024) setSidebar(false); }));
     window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && dashboardSidebar.classList.contains('is-open')) setSidebar(false); });
 }
-document.querySelector('[data-dismiss-flash]')?.addEventListener('click', (event) => event.currentTarget.closest('[data-flash-message]')?.remove());
+document.querySelector('[data-dismiss-flash]:not([data-bound])')?.addEventListener('click', (event) => { event.currentTarget.dataset.bound = 'true'; event.currentTarget.closest('[data-flash-message]')?.remove(); });
 
-document.querySelectorAll('[data-submit-once]').forEach((form) => {
+document.querySelectorAll('[data-submit-once]:not([data-bound])').forEach((form) => {
+    form.dataset.bound = 'true';
     form.addEventListener('submit', () => {
         const button = form.querySelector('[type="submit"]');
         if (!button) return;
@@ -73,3 +76,146 @@ document.querySelectorAll('[data-submit-once]').forEach((form) => {
         button.classList.add('is-loading');
     });
 });
+};
+
+window.hoursCalendar = (defaultBreak, initialEntry = null, initialDate = null, openInitially = false) => ({
+    open: openInitially,
+    editing: Boolean(initialEntry),
+    confirmingDelete: false,
+    form: initialEntry ? { ...initialEntry } : { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, notes: '' },
+    init() {
+        if (this.open) {
+            document.body.classList.add('dashboard-dialog-open');
+            this.$nextTick(() => document.getElementById('work_date')?.focus());
+        }
+    },
+    openEntry(date, entry = null) {
+        this.editing = Boolean(entry);
+        this.confirmingDelete = false;
+        this.form = entry ? { ...entry } : { id: null, work_date: date, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, notes: '' };
+        this.open = true;
+        document.body.classList.add('dashboard-dialog-open');
+        this.$nextTick(() => document.getElementById('work_date')?.focus());
+    },
+    close() {
+        this.open = false;
+        this.confirmingDelete = false;
+        document.body.classList.remove('dashboard-dialog-open');
+    },
+    get preview() {
+        const parse = (value) => { const parts = String(value).split(':').map(Number); return parts.length === 2 ? parts[0] * 60 + parts[1] : Number.NaN; };
+        const minutes = parse(this.form.end_time) - parse(this.form.start_time) - Number(this.form.break_minutes);
+        if (!Number.isFinite(minutes) || minutes <= 0) return 'Invalid shift';
+        return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
+    },
+});
+
+const humanMinutes = (minutes) => {
+    const sign = minutes < 0 ? '-' : '';
+    const absolute = Math.abs(minutes);
+    const hours = Math.floor(absolute / 60);
+    const remainder = absolute % 60;
+    return hours === 0 ? `${sign}${remainder}m` : `${sign}${hours}h ${String(remainder).padStart(2, '0')}m`;
+};
+
+const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[character]));
+
+const renderCalendarSummary = (page, payload) => {
+    const month = payload.monthSummary;
+    const setStat = (name, value, support = null) => {
+        const card = page.querySelector(`[data-calendar-stat="${name}"]`);
+        if (!card) return;
+        card.querySelector(':scope > strong').textContent = value;
+        if (support) card.querySelector(':scope > p').textContent = support;
+    };
+    setStat('total', humanMinutes(month.total_minutes));
+    setStat('days', month.worked_days, `${month.worked_days} worked ${month.worked_days === 1 ? 'day' : 'days'}`);
+    setStat('average', humanMinutes(month.average_minutes));
+
+    const grid = page.querySelector('[data-weekly-totals]');
+    grid.innerHTML = payload.summary.weeks.map((week) => `<article class="weekly-total-card ${week.variance_minutes >= 0 ? 'is-positive' : 'is-negative'}"><span>${escapeHtml(week.key.replace('-', ' '))}</span><strong>${escapeHtml(week.formatted)}</strong><small>Target ${escapeHtml(week.target_formatted)} · ${escapeHtml(week.variance_formatted)}</small></article>`).join('');
+    const first = payload.summary.weeks[0];
+    const last = payload.summary.weeks.at(-1);
+    page.querySelector('[data-weekly-range]').textContent = first && last ? `${first.start} to ${last.end}` : '';
+};
+
+const showActivityTooltip = (info) => {
+    document.querySelector('[data-hours-tooltip]')?.remove();
+    const entry = info.event.extendedProps;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'hours-activity-tooltip';
+    tooltip.dataset.hoursTooltip = 'true';
+    tooltip.innerHTML = `<span>${escapeHtml(entry.work_date)}</span><strong>${escapeHtml(entry.start_time)}–${escapeHtml(entry.end_time)}</strong><div><b>${escapeHtml(entry.net_formatted)}</b> net · ${escapeHtml(entry.break_minutes)}m break</div>${entry.notes ? `<p>${escapeHtml(entry.notes)}</p>` : ''}`;
+    document.body.appendChild(tooltip);
+    const rect = info.el.getBoundingClientRect();
+    const left = Math.min(window.innerWidth - tooltip.offsetWidth - 12, Math.max(12, rect.left));
+    const top = rect.bottom + tooltip.offsetHeight + 12 > window.innerHeight ? rect.top - tooltip.offsetHeight - 8 : rect.bottom + 8;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${Math.max(12, top)}px`;
+};
+
+const initializeHoursFullCalendar = () => {
+    const page = document.querySelector('[data-hours-calendar-page]');
+    const element = document.getElementById('hours-fullcalendar');
+    if (!page || !element || element.dataset.bound) return;
+    element.dataset.bound = 'true';
+    let calendar;
+    calendar = new Calendar(element, {
+        plugins: [dayGridPlugin, interactionPlugin],
+        initialView: 'dayGridMonth',
+        initialDate: element.dataset.initialDate,
+        firstDay: 1,
+        fixedWeekCount: false,
+        showNonCurrentDates: true,
+        dayMaxEvents: 2,
+        height: 'auto',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        events: async (fetchInfo, successCallback, failureCallback) => {
+            const loading = page.querySelector('[data-calendar-loading]');
+            loading.hidden = false;
+            try {
+                const focusDate = new Date(fetchInfo.start);
+                focusDate.setDate(focusDate.getDate() + 14);
+                const month = `${focusDate.getFullYear()}-${String(focusDate.getMonth() + 1).padStart(2, '0')}`;
+                const query = new URLSearchParams({ start: fetchInfo.startStr.slice(0, 10), end: fetchInfo.endStr.slice(0, 10), month });
+                const response = await fetch(`${element.dataset.eventsUrl}?${query}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+                if (!response.ok) throw new Error('Unable to load calendar activities.');
+                const payload = await response.json();
+                renderCalendarSummary(page, payload);
+                successCallback(payload.events);
+            } catch (error) {
+                failureCallback(error);
+            } finally {
+                loading.hidden = true;
+            }
+        },
+        datesSet: (info) => {
+            const month = `${info.view.currentStart.getFullYear()}-${String(info.view.currentStart.getMonth() + 1).padStart(2, '0')}`;
+            const url = new URL(window.location.href);
+            url.searchParams.set('month', month);
+            url.searchParams.delete('add');
+            url.searchParams.delete('edit');
+            window.history.replaceState({}, '', url);
+        },
+        dateClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.dateStr, entry: null } })),
+        eventClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.event.startStr, entry: { id: info.event.id, ...info.event.extendedProps } } })),
+        eventMouseEnter: showActivityTooltip,
+        eventMouseLeave: () => document.querySelector('[data-hours-tooltip]')?.remove(),
+        eventContent: (info) => ({ html: `<span class="fc-hours-event"><b>${escapeHtml(info.event.extendedProps.net_formatted)}</b><small>${escapeHtml(info.event.extendedProps.start_time)}–${escapeHtml(info.event.extendedProps.end_time)}</small></span>` }),
+    });
+    calendar.render();
+    window.hoursFullCalendar = calendar;
+};
+
+const initializeNavigatedPage = () => {
+    initializeDashboardBehaviors();
+    initializeHoursFullCalendar();
+};
+
+initializeNavigatedPage();
+document.addEventListener('livewire:navigated', initializeNavigatedPage);
+document.addEventListener('livewire:navigating', () => { window.hoursFullCalendar?.destroy(); window.hoursFullCalendar = null; document.querySelector('[data-hours-tooltip]')?.remove(); });
+import { Calendar } from 'fullcalendar';
+import dayGridPlugin from 'fullcalendar/daygrid';
+import interactionPlugin from 'fullcalendar/interaction';
+import 'fullcalendar/skeleton.css';

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use InvalidArgumentException;
@@ -13,6 +14,16 @@ class HoursCalculator
         private readonly ?int $weeklyTargetMinutes = null,
         private readonly ?string $timezone = null,
     ) {}
+
+    public function forUser(User $user): self
+    {
+        return new self($user->weekly_target_minutes ?? (int) config('hours.weekly_target_minutes'), $this->timezone());
+    }
+
+    public function weeklyTargetMinutes(): int
+    {
+        return $this->target();
+    }
 
     public function calculateGrossMinutes(string $start, string $end): int
     {

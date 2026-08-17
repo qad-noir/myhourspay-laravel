@@ -11,6 +11,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request, HoursCalculator $calculator): View
     {
+        $calculator = $calculator->forUser($request->user());
         $now = CarbonImmutable::now(config('hours.timezone'));
         $weekStart = $now->startOfWeek();
         $weekEnd = $now->endOfWeek();
@@ -34,11 +35,11 @@ class DashboardController extends Controller
 
             return ['label' => $date->format('D'), 'date' => $date->toDateString(), 'minutes' => $entry['net_minutes'] ?? 0, 'formatted' => $entry['net_formatted'] ?? '00:00'];
         })->all();
-        $variance = $week['total_minutes'] - (int) config('hours.weekly_target_minutes');
+        $variance = $week['total_minutes'] - $calculator->weeklyTargetMinutes();
         $recent = $request->user()->hoursEntries()->latest('work_date')->limit(5)->get()->map(fn ($entry) => $calculator->enrichEntry($entry));
         $hour = (int) $now->format('G');
         $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
-        return view('dashboard', compact('now', 'week', 'month', 'days', 'variance', 'recent', 'greeting'));
+        return view('dashboard', compact('now', 'week', 'month', 'days', 'variance', 'recent', 'greeting', 'calculator'));
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HoursController;
+use App\Http\Controllers\HoursSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,6 +15,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::put('/settings/hours', [HoursSettingsController::class, 'update'])->name('settings.hours.update');
 
     Route::prefix('hours')->name('hours.')->controller(HoursController::class)->group(function (): void {
         Route::get('/', 'index')->name('index');

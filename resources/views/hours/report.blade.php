@@ -1,13 +1,13 @@
 <x-app-layout>
     <x-slot name="header">Reports</x-slot>
     <x-dashboard.page-header eyebrow="Hours" title="Reports" description="Review your recorded time across a date range and export the same filtered records.">
-        <x-slot name="actions"><a href="{{ route('hours.index') }}" class="dashboard-button dashboard-button--secondary">View calendar</a></x-slot>
+        <x-slot name="actions"><a wire:navigate href="{{ route('hours.index') }}" class="dashboard-button dashboard-button--secondary">View calendar</a></x-slot>
     </x-dashboard.page-header>
 
     <form method="GET" action="{{ route('hours.reports.index') }}" class="report-filter" aria-label="Report date range">
         <div class="dashboard-field"><label for="start">Start date</label><input id="start" name="start" type="date" value="{{ $start }}" required></div>
         <div class="dashboard-field"><label for="end">End date</label><input id="end" name="end" type="date" value="{{ $end }}" required></div>
-        <div class="report-filter-actions"><button type="submit" class="dashboard-button dashboard-button--primary">Apply range</button><a href="{{ route('hours.reports.index') }}" class="dashboard-text-link">Reset</a></div>
+        <div class="report-filter-actions"><button type="submit" class="dashboard-button dashboard-button--primary">Apply range</button><a wire:navigate href="{{ route('hours.reports.index') }}" class="dashboard-text-link">Reset</a></div>
     </form>
 
     <section class="dashboard-stats" aria-label="Period summary">
@@ -33,7 +33,7 @@
         </div>
         @if (count($summary['entries']) === 0)
             <x-dashboard.empty-state title="No hours in this period" description="Change the date range or add an hours record from the calendar.">
-                <x-slot name="action"><a href="{{ route('hours.index', ['add' => 1]) }}" class="dashboard-button dashboard-button--primary">Add hours</a></x-slot>
+                <x-slot name="action"><a wire:navigate href="{{ route('hours.index', ['add' => 1]) }}" class="dashboard-button dashboard-button--primary">Add hours</a></x-slot>
             </x-dashboard.empty-state>
         @else
             <div class="report-table-wrap"><table class="report-table">

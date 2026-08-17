@@ -32,6 +32,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'default_break_minutes',
+        'weekly_target_minutes',
     ];
 
     /**
@@ -65,6 +67,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'default_break_minutes' => 'integer',
+            'weekly_target_minutes' => 'integer',
         ];
     }
 

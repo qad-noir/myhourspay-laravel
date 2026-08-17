@@ -70,8 +70,8 @@ class HoursModuleTest extends TestCase
         $own = $this->entry($user, ['notes' => 'mine']);
         $this->entry($other, ['notes' => 'private']);
 
-        $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-09-01')
-            ->assertOk()->assertJsonCount(1, 'events')->assertJsonPath('events.0.id', (string) $own->id)->assertJsonMissing(['private']);
+        $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-09-01&month=2026-08')
+            ->assertOk()->assertJsonCount(1, 'events')->assertJsonCount(6, 'summary.weeks')->assertJsonPath('events.0.id', (string) $own->id)->assertJsonPath('monthSummary.worked_days', 1)->assertJsonMissing(['private']);
         $this->actingAs($user)->getJson('/hours/events?start=2020-01-01&end=2026-09-01')->assertUnprocessable();
         $this->actingAs($user)->getJson('/hours/events?start=2026-08-01&end=2026-08-01')->assertUnprocessable();
     }
@@ -100,6 +100,26 @@ class HoursModuleTest extends TestCase
     public function test_invalid_report_range_is_rejected(): void
     {
         $this->actingAs(User::factory()->create())->get('/hours/reports?start=2026-09-01&end=2026-08-01')->assertSessionHasErrors('end');
+    }
+
+    public function test_user_can_update_hours_preferences_and_their_target_is_used(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->put(route('settings.hours.update'), [
+            'default_break_minutes' => 45,
+            'weekly_target_hours' => 37.5,
+        ])->assertRedirect(route('profile.show'));
+
+        $user->refresh();
+        $this->assertSame(45, $user->default_break_minutes);
+        $this->assertSame(2250, $user->weekly_target_minutes);
+        $this->entry($user);
+
+        $this->actingAs($user)->getJson('/hours/events?start=2026-08-03&end=2026-08-10&month=2026-08')
+            ->assertOk()
+            ->assertJsonPath('summary.weeks.0.target_minutes', 2250)
+            ->assertJsonPath('summary.weeks.0.variance_minutes', -1770);
     }
 
     private function payload(array $overrides = []): array
