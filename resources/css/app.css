@@ -84,3 +84,11 @@ html { scroll-behavior: smooth; }
 /* FullCalendar v7 positions event harnesses; anchor the harness instead of the event. */
 .mhp-calendar-day>.fc-So{top:auto!important;bottom:11px!important}.mhp-hours-event{position:static!important;margin:0 8px!important}.mhp-calendar-day .mhp-hours-event{right:auto!important;bottom:auto!important;left:auto!important}
 @media(max-width:760px){.mhp-calendar-day>.fc-So{bottom:6px!important}.mhp-hours-event{margin:0 4px!important}}
+
+/* Keep work summaries at the bottom without letting FullCalendar's event lane
+   overlap the date number or add height between calendar weeks. */
+.mhp-calendar-day .mhp-event-harness{top:auto!important;bottom:11px!important;height:auto!important;min-height:0!important}.mhp-event-harness .mhp-hours-event{position:static!important;width:auto!important;margin:0 8px!important;transform:none!important}.mhp-calendar-day [role="button"].mhp-hours-event{inset:auto!important}.fullcalendar-panel [role="rowgroup"]>[role="row"]{margin:0!important;gap:0!important}
+@media(max-width:760px){.mhp-calendar-day .mhp-event-harness{bottom:6px!important}.mhp-event-harness .mhp-hours-event{margin:0 4px!important}}
+
+.mhp-event-harness .mhp-hours-event{display:block!important;width:calc(100% - 16px)!important}.mhp-hours-event .fc-hours-event b,.mhp-hours-event .fc-hours-event small{white-space:nowrap}
+@media(max-width:760px){.mhp-event-harness .mhp-hours-event{width:calc(100% - 8px)!important}}

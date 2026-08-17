@@ -223,6 +223,7 @@ const initializeHoursFullCalendar = () => {
         eventClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.event.startStr, entry: { id: info.event.id, ...info.event.extendedProps } } })),
         eventDidMount: (info) => {
             info.el.classList.add('mhp-hours-event');
+            info.el.parentElement?.classList.add('mhp-event-harness');
             info.el.closest('[data-date]')?.classList.add('has-hours');
         },
         eventMouseEnter: showActivityTooltip,
