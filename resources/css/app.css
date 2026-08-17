@@ -107,3 +107,7 @@ html { scroll-behavior: smooth; }
 @media(max-width:760px){.fullcalendar-panel [role="rowgroup"]>[role="row"]:has(.mhp-calendar-day){flex-basis:76px!important}.fullcalendar-panel [role="rowgroup"]:has(.mhp-calendar-weekday),.fullcalendar-panel [role="rowgroup"]>[role="row"]:has(.mhp-calendar-weekday){height:40px!important;min-height:40px!important;flex-basis:40px!important}}
 
 .fullcalendar-panel [role="rowgroup"]:has(.mhp-calendar-weekday),.fullcalendar-panel [role="rowgroup"]>[role="row"]:has(.mhp-calendar-weekday){width:100%!important;align-self:stretch!important}
+
+/* FullCalendar suppresses cell borders in its virtual grid, so draw the
+   horizontal week separators inside each cell. */
+.mhp-calendar-day::after{position:absolute;z-index:4;right:0;bottom:0;left:0;height:1px;content:"";background:#e7e4e9;pointer-events:none}.mhp-calendar-day.is-hovered::after{background:var(--brand-orange)}

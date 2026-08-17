@@ -216,18 +216,24 @@ const initializeHoursFullCalendar = () => {
             prompt.className = 'mhp-add-prompt';
             prompt.textContent = '+ Add';
             info.el.appendChild(prompt);
-            info.el.addEventListener('mouseenter', () => info.el.classList.add('is-hovered'));
-            info.el.addEventListener('mouseleave', () => info.el.classList.remove('is-hovered'));
+            info.el.addEventListener('mouseenter', () => {
+                info.el.classList.add('is-hovered');
+                if (info.el.hoursEvent) showActivityTooltip({ el: info.el, event: info.el.hoursEvent });
+            });
+            info.el.addEventListener('mouseleave', () => {
+                info.el.classList.remove('is-hovered');
+                document.querySelector('[data-hours-tooltip]')?.remove();
+            });
         },
         dateClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.dateStr, entry: null } })),
         eventClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.event.startStr, entry: { id: info.event.id, ...info.event.extendedProps } } })),
         eventDidMount: (info) => {
             info.el.classList.add('mhp-hours-event');
             info.el.parentElement?.classList.add('mhp-event-harness');
-            info.el.closest('[data-date]')?.classList.add('has-hours');
+            const dayCell = info.el.closest('[data-date]');
+            dayCell?.classList.add('has-hours');
+            if (dayCell) dayCell.hoursEvent = info.event;
         },
-        eventMouseEnter: showActivityTooltip,
-        eventMouseLeave: () => document.querySelector('[data-hours-tooltip]')?.remove(),
         eventContent: (info) => ({ html: `<span class="fc-hours-event"><b>${escapeHtml(humanMinutes(info.event.extendedProps.net_minutes))}</b><small>${escapeHtml(info.event.extendedProps.start_time)}–${escapeHtml(info.event.extendedProps.end_time)}</small></span>` }),
     });
     calendar.render();
