@@ -1,60 +1,23 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
-
-        <x-validation-errors class="mb-4" />
+    <x-auth-shell eyebrow="Start with clear records" heading="Make every hour<br>count." description="Create your private account to record workdays, review weekly totals and export reports.">
+        <h2>Create your account</h2>
+        <p class="auth-panel__intro">Set up secure access to your myhourspay records.</p>
+        @if ($errors->any())<div class="auth-summary-error" role="alert">Your account could not be created. Review the highlighted fields.</div>@endif
 
         <form method="POST" action="{{ route('register') }}">
             @csrf
-
-            <div>
-                <x-label for="name" value="{{ __('Name') }}" />
-                <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
-                <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
-            </div>
-
-            @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-                <div class="mt-4">
-                    <x-label for="terms">
-                        <div class="flex items-center">
-                            <x-checkbox name="terms" id="terms" required />
-
-                            <div class="ms-2">
-                                {!! __('I agree to the :terms_of_service and :privacy_policy', [
-                                        'terms_of_service' => '<a target="_blank" href="'.route('terms.show').'" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">'.__('Terms of Service').'</a>',
-                                        'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">'.__('Privacy Policy').'</a>',
-                                ]) !!}
-                            </div>
-                        </div>
-                    </x-label>
-                </div>
-            @endif
-
-            <div class="flex items-center justify-end mt-4">
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
-                    {{ __('Already registered?') }}
-                </a>
-
-                <x-button class="ms-4">
-                    {{ __('Register') }}
-                </x-button>
-            </div>
+            <x-public-input label="Full name" name="name" :value="old('name')" required autofocus autocomplete="name" />
+            <x-public-input label="Email address" name="email" type="email" :value="old('email')" required autocomplete="username" />
+            <x-public-input label="Password" name="password" type="password" required autocomplete="new-password" data-password-input>
+                <x-slot:suffix><button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Show password"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg></button></x-slot:suffix>
+            </x-public-input>
+            <x-password-requirements />
+            <x-public-input label="Confirm password" name="password_confirmation" type="password" required autocomplete="new-password">
+                <x-slot:suffix><button type="button" class="auth-password-toggle" data-password-toggle="password_confirmation" aria-label="Show password confirmation"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg></button></x-slot:suffix>
+            </x-public-input>
+            @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())<div class="auth-options"><label><input type="checkbox" name="terms" required class="rounded border-gray-300 text-orange-600 focus:ring-orange-500"> I agree to the <a href="{{ route('terms.show') }}" target="_blank">terms</a> and <a href="{{ route('policy.show') }}" target="_blank">privacy policy</a></label></div>@endif
+            <button type="submit" class="public-button public-button--primary auth-submit">Create my account <span aria-hidden="true">→</span></button>
         </form>
-    </x-authentication-card>
+        <p class="auth-switch">Already have an account? <a href="{{ route('login') }}">Log in</a></p>
+    </x-auth-shell>
 </x-guest-layout>

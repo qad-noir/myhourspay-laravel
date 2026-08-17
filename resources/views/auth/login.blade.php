@@ -1,48 +1,20 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
+    <x-auth-shell eyebrow="Built for focused work" heading="Your hours deserve<br>to add up." description="Welcome back. Your hours and reports are ready when you are.">
+        <h2>Welcome back</h2>
+        <p class="auth-panel__intro">Log in to continue to your private working-hours record.</p>
 
-        <x-validation-errors class="mb-4" />
-
-        @session('status')
-            <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-                {{ $value }}
-            </div>
-        @endsession
+        @session('status')<div class="auth-status" role="status">{{ $value }}</div>@endsession
+        @if ($errors->any())<div class="auth-summary-error" role="alert">We couldn’t log you in. Check the details below and try again.</div>@endif
 
         <form method="POST" action="{{ route('login') }}">
             @csrf
-
-            <div>
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            </div>
-
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
-            </div>
-
-            <div class="block mt-4">
-                <label for="remember_me" class="flex items-center">
-                    <x-checkbox id="remember_me" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-
-                <x-button class="ms-4">
-                    {{ __('Log in') }}
-                </x-button>
-            </div>
+            <x-public-input label="Email address" name="email" type="email" :value="old('email')" required autofocus autocomplete="username" />
+            <x-public-input label="Password" name="password" type="password" required autocomplete="current-password">
+                <x-slot:suffix><button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Show password"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg></button></x-slot:suffix>
+            </x-public-input>
+            <div class="auth-options"><label><input type="checkbox" name="remember" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500"> Remember me</label>@if (Route::has('password.request'))<a href="{{ route('password.request') }}">Forgot password?</a>@endif</div>
+            <button type="submit" class="public-button public-button--primary auth-submit">Log in to myhourspay <span aria-hidden="true">→</span></button>
         </form>
-    </x-authentication-card>
+        @if (Route::has('register'))<p class="auth-switch">New to myhourspay? <a href="{{ route('register') }}">Create an account</a></p>@endif
+    </x-auth-shell>
 </x-guest-layout>
