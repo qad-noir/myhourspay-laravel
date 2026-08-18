@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>{{BRAND_NAME}}</title>
+    <style>
+        @media only screen and (max-width:620px){.email-shell{width:100%!important}.email-pad{padding-left:22px!important;padding-right:22px!important}.email-card{padding:28px 22px!important}.email-heading{font-size:27px!important}.email-code{font-size:28px!important;letter-spacing:7px!important}}
+        @media (prefers-color-scheme:dark){body,.email-bg{background:#09090f!important}.email-card{background:#15141d!important;border-color:#2b2934!important}.email-heading,.email-copy-strong{color:#f8f7fa!important}.email-copy{color:#aaa5b1!important}}
+    </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f3f1;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{{PREHEADER}}</div>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="email-bg" style="width:100%;background:#f5f3f1;">
+    <tr><td align="center" class="email-pad" style="padding:42px 18px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" class="email-shell" style="width:600px;max-width:600px;">
+            <tr><td style="padding:0 4px 22px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+                    <td width="44" height="44" align="center" style="width:44px;height:44px;border-radius:13px;background:#ff6b35;color:#fff;font-size:24px;font-weight:bold;">◷</td>
+                    <td style="padding-left:12px;color:#17151e;font-size:21px;font-weight:700;letter-spacing:-.4px;"><span class="email-copy-strong">myhours</span><span style="color:#ff6b35;">pay</span></td>
+                </tr></table>
+            </td></tr>
+            <tr><td class="email-card" style="padding:42px 44px;border:1px solid #e4e0e5;border-radius:18px;background:#fff;box-shadow:0 18px 48px rgba(24,19,30,.06);">
+                <p style="margin:0 0 12px;color:#ff6b35;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;">Private account notification</p>
+                <h1 class="email-heading" style="margin:0 0 20px;color:#17151e;font-size:34px;line-height:1.16;letter-spacing:-1.2px;">{{HEADING}}</h1>
+                <p class="email-copy" style="margin:0 0 12px;color:#686370;font-size:15px;line-height:1.7;">Hello {{CUSTOMER_NAME}},</p>
+                <p class="email-copy" style="margin:0 0 12px;color:#686370;font-size:15px;line-height:1.7;">{{INTRO}}</p>
+                <p class="email-copy" style="margin:0 0 26px;color:#686370;font-size:15px;line-height:1.7;">{{CONTENT}}</p>
+                <div class="email-code" style="margin:0 0 26px;padding:19px;border:1px solid #eee7e4;border-radius:12px;color:#ff6b35;background:#fff8f5;font-size:32px;font-weight:700;letter-spacing:9px;text-align:center;">{{OTP_CODE}}</div>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#ff6b35" style="border-radius:10px;"><a href="{{ACTION_URL}}" style="display:inline-block;padding:14px 24px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">{{ACTION_TEXT}} →</a></td></tr></table>
+                <p class="email-copy" style="margin:28px 0 0;color:#928d98;font-size:12px;line-height:1.6;">Need help? Contact <a href="mailto:{{SUPPORT_EMAIL}}" style="color:#ff6b35;">{{SUPPORT_EMAIL}}</a>.</p>
+            </td></tr>
+            <tr><td align="center" style="padding:22px 20px;color:#96919c;font-size:11px;line-height:1.6;">© {{YEAR}} {{BRAND_NAME}} · Private working-hour records<br>This is an automated account email.</td></tr>
+        </table>
+    </td></tr>
+</table>
+</body>
+</html>
