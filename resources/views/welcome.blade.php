@@ -27,12 +27,22 @@
                 <div class="product-preview">
                     <aside class="preview-sidebar">
                         <x-brand-logo dark compact />
-                        <nav aria-label="Decorative product navigation"><strong><span>⌂</span> Dashboard</strong><span>◷ Timer</span><span>▣ Projects</span><span>▥ Reports</span><span>♙ Clients</span><span>▤ Invoices</span></nav>
-                        <div class="preview-user"><span>AK</span><p><strong>Abdulqadir</strong>Pro workspace</p></div><span class="preview-setting">⚙ Settings</span>
+                        <div class="preview-workspace"><span>A</span><p><small>WORKSPACE</small><strong>Acme Studio</strong></p><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6.5 8 3.5 3.5L13.5 8" /></svg></div>
+                        <nav aria-label="Decorative product navigation">
+                            <small>WORKSPACE</small>
+                            <strong><x-dashboard.icon name="overview" :size="13" /> Overview</strong>
+                            <span><x-dashboard.icon name="calendar" :size="13" /> Hours calendar</span>
+                            <span><x-dashboard.icon name="reports" :size="13" /> Reports</span>
+                            <span><x-dashboard.icon name="exports" :size="13" /> Exports</span>
+                            <small>ACCOUNT</small>
+                            <span><x-dashboard.icon name="settings" :size="13" /> Settings</span>
+                        </nav>
+                        <div class="preview-private"><x-dashboard.icon name="shield" :size="12" /><p><strong>Private workspace</strong><small>Your records are isolated.</small></p></div>
+                        <div class="preview-user"><span>AK</span><p><strong>Abdulqadir</strong>acme@example.com</p></div>
                     </aside>
                     <div class="preview-main">
                         <header><div><small>FRIDAY, AUGUST 8</small><h2>Good morning, Abdulqadir <span aria-hidden="true">👋</span></h2></div><span class="preview-status"><i></i> All systems ready</span></header>
-                        <div class="preview-metrics"><article><span>Tracked Time</span><strong>08:42:16</strong><small class="positive">↗ +12% from yesterday</small></article><article><span>Earnings</span><strong>$186.50</strong><small>At $22.40 average rate</small></article><article><span>Productivity</span><div class="preview-ring"><strong>75%</strong></div><small>Focused time</small></article></div>
+                        <div class="preview-metrics"><article><div><span>Tracked Time</span><i><x-dashboard.icon name="clock" :size="13" /></i></div><strong>08:42:16</strong><small class="positive">↗ +12% from yesterday</small></article><article><div><span>Earnings</span><i><x-dashboard.icon name="trend" :size="13" /></i></div><strong>$186.50</strong><small>At $22.40 average rate</small></article><article><div><span>Productivity</span><i><x-dashboard.icon name="target" :size="13" /></i></div><div class="preview-ring"><strong>75%</strong></div><small>Focused time</small></article></div>
                         <section class="current-session"><div><span class="session-pulse"></span><p><small>CURRENT SESSION</small><strong>Website Development</strong><span>myhourspay · Design system</span></p></div><strong class="session-time" data-preview-timer>02:46:32</strong><div class="session-controls"><button type="button" aria-label="Decorative pause button">Ⅱ</button><button type="button" aria-label="Decorative stop button">■</button></div></section>
                         <section class="preview-timeline"><div class="preview-section-title"><h3>Today’s Timeline</h3><span>8h 42m total</span></div>
                             @foreach ([['Website Development','3h 25m','orange'],['Client Meeting','1h 10m','violet'],['Research & Planning','2h 05m','blue'],['Bug Fixing','1h 02m','green']] as [$label,$duration,$color])<div class="timeline-row"><i class="{{ $color }}"></i><span>{{ $label }}</span><div><b style="width: {{ [78,31,54,25][$loop->index] }}%"></b></div><strong>{{ $duration }}</strong></div>@endforeach
