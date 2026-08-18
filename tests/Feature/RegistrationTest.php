@@ -56,11 +56,27 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('email-code.show', absolute: false));
         $user = User::query()->where('email', 'test@example.com')->firstOrFail();
         $this->assertNull($user->email_verified_at);
         Notification::assertSentTo($user, VerifyEmailCodeNotification::class);
         $this->get(route('dashboard'))->assertRedirect(route('email-code.show'));
+    }
+
+    public function test_registration_ignores_a_stale_intended_url_and_opens_code_verification(): void
+    {
+        Notification::fake();
+
+        $response = $this->withSession(['url.intended' => route('login')])->post('/register', [
+            'name' => 'Fresh User',
+            'email' => 'fresh@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('email-code.show'));
     }
 
     public function test_registration_requires_mixed_case_and_a_number(): void
