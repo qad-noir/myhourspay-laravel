@@ -86,8 +86,11 @@ class HoursModuleTest extends TestCase
         $this->actingAs($user)->get(route('hours.reports.index', $range))->assertOk()->assertSee('=HYPERLINK', false)->assertDontSee('other secret');
         $this->actingAs($user)->get(route('hours.reports.print', $range))->assertOk()->assertDontSee('other secret');
         $csv = $this->actingAs($user)->get(route('hours.reports.csv', $range))->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        $this->assertStringContainsString("'=HYPERLINK", $csv->streamedContent());
-        $this->assertStringNotContainsString('other secret', $csv->streamedContent());
+        $csvContent = $csv->streamedContent();
+        $this->assertStringContainsString($user->currentWorkspace()->firstOrFail()->name, $csvContent);
+        $this->assertStringContainsString('Weekly target', $csvContent);
+        $this->assertStringContainsString("'=HYPERLINK", $csvContent);
+        $this->assertStringNotContainsString('other secret', $csvContent);
 
         $excel = $this->actingAs($user)->get(route('hours.reports.excel', $range))->assertOk()->assertDownload('myhourspay-hours-2026-08-01-to-2026-08-31.xlsx');
         $sheet = IOFactory::load($excel->baseResponse->getFile()->getPathname())->getActiveSheet();

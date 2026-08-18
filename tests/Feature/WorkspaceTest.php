@@ -85,6 +85,28 @@ class WorkspaceTest extends TestCase
         $this->assertNotSame($foreign->id, $user->refresh()->current_workspace_id);
     }
 
+    public function test_workspace_preferences_remain_independent_when_switching(): void
+    {
+        $user = User::factory()->create();
+        $first = $this->createWorkspace($user, 'Day Job');
+        $second = $this->createWorkspace($user, 'Consulting');
+
+        $this->actingAs($user)->put(route('settings.hours.update'), [
+            'default_break_minutes' => 20,
+            'weekly_target_hours' => 12.5,
+        ])->assertRedirect(route('profile.show'));
+
+        $this->assertSame(30, $first->refresh()->default_break_minutes);
+        $this->assertSame(20, $second->refresh()->default_break_minutes);
+        $this->assertSame(750, $second->weekly_target_minutes);
+
+        $this->actingAs($user)->post(route('workspaces.switch', $first))->assertRedirect(route('dashboard'));
+        $this->actingAs($user)->get(route('profile.show'))
+            ->assertOk()
+            ->assertSee('Day Job')
+            ->assertSee('40.0 hours');
+    }
+
     private function createWorkspace(User $user, string $name): Workspace
     {
         $workspace = $user->ownedWorkspaces()->create([
