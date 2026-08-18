@@ -24,6 +24,8 @@ class EmailTemplateRenderer
             'INTRO' => '',
             'CONTENT' => '',
             'OTP_CODE' => '',
+            'SITE_URL' => config('site.url'),
+            'LOGO_URL' => rtrim((string) config('site.url'), '/').'/brand-logo-white.png',
             'ACTION_URL' => config('site.url'),
             'ACTION_TEXT' => 'Open myhourspay',
             'SUPPORT_EMAIL' => config('site.contact.email'),

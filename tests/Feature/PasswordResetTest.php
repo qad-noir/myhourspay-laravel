@@ -106,6 +106,8 @@ class PasswordResetTest extends TestCase
         $this->assertStringContainsString('Reset your password', $html);
         $this->assertStringContainsString('Hello Ada', $html);
         $this->assertStringContainsString('Reset my password', $html);
+        $this->assertStringContainsString('/brand-logo-white.png', $html);
+        $this->assertStringContainsString('alt="myhourspay"', $html);
         $this->assertStringContainsString('<table', $html);
     }
 }

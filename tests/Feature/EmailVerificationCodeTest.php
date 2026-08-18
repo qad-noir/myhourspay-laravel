@@ -59,6 +59,7 @@ class EmailVerificationCodeTest extends TestCase
         $this->assertStringContainsString('123456', $html);
         $this->assertStringContainsString('Hello Ada', $html);
         $this->assertStringContainsString('myhourspay', $html);
+        $this->assertStringContainsString('/brand-logo-white.png', $html);
         $this->assertStringContainsString('<table', $html);
     }
 }
