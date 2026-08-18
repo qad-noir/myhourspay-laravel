@@ -117,6 +117,36 @@ class WorkspaceTest extends TestCase
             ->assertSee('40.0 hours');
     }
 
+    public function test_workspace_names_are_unique_per_user_and_availability_is_case_insensitive(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $this->createWorkspace($user, 'Acme Inc');
+
+        $this->actingAs($user)->getJson(route('workspaces.name-availability', ['name' => ' acme INC ']))
+            ->assertOk()
+            ->assertJson(['available' => false, 'message' => 'acme INC is taken']);
+        $this->actingAs($user)->getJson(route('workspaces.name-availability', ['name' => 'Northstar']))
+            ->assertOk()
+            ->assertJson(['available' => true, 'message' => 'Northstar is available']);
+
+        $this->actingAs($user)->post(route('workspaces.store'), [
+            'name' => 'ACME INC',
+            'position' => 'Manager',
+            'default_break_minutes' => 30,
+            'weekly_target_hours' => 40,
+        ])->assertSessionHasErrors('name');
+
+        $this->actingAs($other)->post(route('workspaces.store'), [
+            'name' => 'Acme Inc',
+            'position' => 'Manager',
+            'default_break_minutes' => 30,
+            'weekly_target_hours' => 40,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('workspaces', 2);
+    }
+
     private function createWorkspace(User $user, string $name): Workspace
     {
         $workspace = $user->ownedWorkspaces()->create([

@@ -16,6 +16,7 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/workspaces/onboarding', [WorkspaceController::class, 'onboarding'])->name('workspaces.onboarding');
+    Route::get('/workspaces/name-availability', [WorkspaceController::class, 'availability'])->name('workspaces.name-availability');
     Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
 
     Route::middleware('workspace')->group(function (): void {
