@@ -148,6 +148,23 @@ class WorkspaceTest extends TestCase
         $this->assertDatabaseCount('workspaces', 2);
     }
 
+    public function test_workspace_name_and_position_require_at_least_three_trimmed_characters(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('workspaces.store'), [
+            'name' => ' AB ',
+            'position' => ' X ',
+            'default_break_minutes' => 30,
+            'weekly_target_hours' => 40,
+        ])->assertSessionHasErrors(['name', 'position']);
+
+        $this->actingAs($user)->getJson(route('workspaces.name-availability', ['name' => 'AB']))
+            ->assertOk()
+            ->assertJson(['available' => false, 'message' => null]);
+        $this->assertDatabaseCount('workspaces', 0);
+    }
+
     private function createWorkspace(User $user, string $name): Workspace
     {
         $workspace = $user->ownedWorkspaces()->create([

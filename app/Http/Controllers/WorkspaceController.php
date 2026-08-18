@@ -30,7 +30,7 @@ class WorkspaceController extends Controller
     public function availability(Request $request): JsonResponse
     {
         $name = trim((string) $request->query('name'));
-        $valid = $name !== '' && mb_strlen($name) <= 100;
+        $valid = mb_strlen($name) >= 3 && mb_strlen($name) <= 100;
         $available = $valid && ! $this->nameTaken($request, $name);
 
         return response()->json([
@@ -46,12 +46,12 @@ class WorkspaceController extends Controller
             'position' => trim((string) $request->input('position')),
         ]);
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100', function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
+            'name' => ['required', 'string', 'min:3', 'max:100', function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
                 if ($this->nameTaken($request, (string) $value)) {
                     $fail('You already have a workspace with this name.');
                 }
             }],
-            'position' => ['required', 'string', 'max:100'],
+            'position' => ['required', 'string', 'min:3', 'max:100'],
             'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
             'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168'],
         ]);
