@@ -4,7 +4,7 @@ return [
     'name' => 'myhourspay',
     'domain' => env('SITE_DOMAIN', 'myhourspay.com'),
     'url' => env('SITE_URL', 'https://myhourspay.com'),
-    'logo_url' => env('SITE_LOGO_URL', '/brand-logo-white.png'),
+    'logo_url' => env('SITE_LOGO_URL', '/brand-logo.png'),
     'description' => 'Track working hours, review weekly targets, and export clear, private reports.',
 
     'contact' => [

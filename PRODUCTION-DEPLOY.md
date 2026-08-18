@@ -14,7 +14,7 @@ APP_DEBUG=false
 
 SITE_DOMAIN=myhourspay.com
 SITE_URL=https://myhourspay.com
-SITE_LOGO_URL=/brand-logo-white.png
+SITE_LOGO_URL=/brand-logo.png
 SITE_EMAIL_DOMAIN=myhourspay.com
 SITE_EMAIL=support@myhourspay.com
 SITE_PHONE=
