@@ -9,6 +9,9 @@ This archive contains the authentication, email verification, notification, and 
 3. Add or update these production environment values as needed:
 
 ```dotenv
+APP_ENV=production
+APP_DEBUG=false
+
 SITE_DOMAIN=myhourspay.com
 SITE_URL=https://myhourspay.com
 SITE_EMAIL_DOMAIN=myhourspay.com
