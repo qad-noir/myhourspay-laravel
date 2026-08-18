@@ -21,7 +21,7 @@
                     @if (Route::has('register'))<a href="{{ route('register') }}" class="public-button public-button--primary">Start Tracking Free <span aria-hidden="true">→</span></a>@endif
                     <a href="#how-it-works" class="public-button public-button--outline"><span class="play-button" aria-hidden="true">▶</span> See How It Works</a>
                 </div>
-                <div class="hero-proof"><div class="hero-avatars" aria-hidden="true"><span>NS</span><span>ST</span><span>MO</span></div><p>Built for professionals tracking time smarter</p></div>
+                <div class="hero-proof"><div class="hero-avatars" aria-hidden="true"><span>AM</span><span>JL</span><span>SK</span><span>+</span></div><p>Built for professionals tracking time smarter</p></div>
             </div>
             <div class="product-stage" aria-label="Decorative preview of the myhourspay product interface">
                 <div class="product-preview">
