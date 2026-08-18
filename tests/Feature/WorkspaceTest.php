@@ -21,6 +21,8 @@ class WorkspaceTest extends TestCase
             ->assertOk()
             ->assertSee('Welcome, Ada')
             ->assertSee('Use your company or organisation name, for example Acme Inc.')
+            ->assertSee('value="30"', false)
+            ->assertSee('value="40"', false)
             ->assertSee('aria-describedby="workspace-name-help"', false);
     }
 
@@ -35,6 +37,8 @@ class WorkspaceTest extends TestCase
         $this->actingAs($user)->post(route('workspaces.store'), [
             'name' => '  Acme Inc  ',
             'position' => '  Product Designer  ',
+            'default_break_minutes' => 45,
+            'weekly_target_hours' => 37.5,
         ])->assertRedirect(route('dashboard'));
 
         $workspace = Workspace::query()->sole();
@@ -60,6 +64,8 @@ class WorkspaceTest extends TestCase
         $this->actingAs($user)->post(route('workspaces.store'), [
             'name' => 'Side Project',
             'position' => 'Founder',
+            'default_break_minutes' => 30,
+            'weekly_target_hours' => 40,
         ])->assertRedirect(route('dashboard'));
         $second = Workspace::query()->where('name', 'Side Project')->sole();
         $this->actingAs($user)->post(route('hours.entries.store'), $this->entryPayload())->assertSessionHasNoErrors();

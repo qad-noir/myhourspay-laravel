@@ -116,6 +116,17 @@ html { scroll-behavior: smooth; }
 
 .mhp-calendar-day.is-hovered{border-radius:0!important}.fullcalendar-panel,.fullcalendar-panel .fc-scrollgrid{border-bottom-right-radius:0!important;border-bottom-left-radius:0!important}
 
+/* Workspace onboarding steps */
+.workspace-onboarding__progress button{height:4px;border:0;border-radius:4px;padding:0;background:#292732;cursor:default;transition:background .2s}
+.workspace-onboarding__progress button.is-active{background:linear-gradient(90deg,var(--brand-orange),#ff9a75)}
+.workspace-onboarding__step-copy small{color:#ff8a60;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.workspace-onboarding__step-copy h2{margin:7px 0 5px;color:#f7f5fa;font:800 20px/1.2 Manrope,sans-serif;letter-spacing:-.03em}
+.workspace-onboarding__step-copy p{margin:0 0 22px;color:#8f8997;font-size:11px;line-height:1.55}
+.workspace-onboarding__actions{display:grid;align-items:end;grid-template-columns:auto 1fr;gap:10px}
+.workspace-onboarding__actions .workspace-onboarding__submit{margin-top:24px}
+.workspace-onboarding__back{height:48px;margin-top:24px;border:1px solid #302d38;border-radius:10px;padding:0 17px;color:#aaa4b2;background:#191720;font-size:11px;font-weight:700}
+.workspace-onboarding__back:hover{color:#fff;border-color:#45404d;background:#211e28}
+
 /* Polished workspace selector dimensions and interaction. Important declarations
    intentionally override the compact legacy selector block below. */
 .workspace-switcher{margin-right:0!important;margin-left:0!important}

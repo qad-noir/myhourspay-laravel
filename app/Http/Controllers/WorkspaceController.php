@@ -34,6 +34,8 @@ class WorkspaceController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'position' => ['required', 'string', 'max:100'],
+            'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
+            'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168'],
         ]);
         DB::transaction(function () use ($request, $validated): void {
             $user = $request->user();
@@ -41,8 +43,8 @@ class WorkspaceController extends Controller
             $firstWorkspace = ! $user->workspaces()->exists();
             $workspace = $user->ownedWorkspaces()->create([
                 'name' => $validated['name'],
-                'default_break_minutes' => $firstWorkspace ? ($user->default_break_minutes ?? config('hours.default_break_minutes')) : config('hours.default_break_minutes'),
-                'weekly_target_minutes' => $firstWorkspace ? ($user->weekly_target_minutes ?? config('hours.weekly_target_minutes')) : config('hours.weekly_target_minutes'),
+                'default_break_minutes' => $validated['default_break_minutes'],
+                'weekly_target_minutes' => (int) round((float) $validated['weekly_target_hours'] * 60),
             ]);
             $workspace->users()->attach($user->id, ['role' => 'owner', 'position' => $validated['position']]);
             if ($firstWorkspace) {
