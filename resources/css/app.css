@@ -121,6 +121,11 @@ html { scroll-behavior: smooth; }
 .workspace-info{border:0!important;color:#918b99!important;transition:color .16s,transform .16s}
 .workspace-info:hover,.workspace-info:focus-visible{color:#d4ceda!important;transform:translateY(-1px)}
 .workspace-info svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+.workspace-availability{display:flex;align-items:center;gap:6px;margin:8px 0 0;font-size:10px;font-weight:600}
+.workspace-availability svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.workspace-availability--checking{color:#8e8997}.workspace-availability--available{color:#50d6a0}.workspace-availability--taken{color:#ff8779}
+.workspace-availability__spinner{width:11px;height:11px;border:1.5px solid #4b4653;border-top-color:#aaa4b2;border-radius:50%;animation:workspace-spin .7s linear infinite}
+@keyframes workspace-spin{to{transform:rotate(360deg)}}
 .workspace-onboarding__progress button.is-active{background:linear-gradient(90deg,var(--brand-orange),#ff9a75)}
 .workspace-onboarding__step-copy small{color:#ff8a60;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 .workspace-onboarding__step-copy h2{margin:7px 0 5px;color:#f7f5fa;font:800 20px/1.2 Manrope,sans-serif;letter-spacing:-.03em}

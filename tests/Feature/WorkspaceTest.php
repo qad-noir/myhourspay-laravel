@@ -24,6 +24,7 @@ class WorkspaceTest extends TestCase
             ->assertSee('value="30"', false)
             ->assertSee('value="40"', false)
             ->assertSee('Cancel setup')
+            ->assertSee('Checking availability')
             ->assertSee('aria-label="Back to workspace details"', false)
             ->assertSee('aria-describedby="workspace-name-help"', false);
 

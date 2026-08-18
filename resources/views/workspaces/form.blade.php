@@ -7,7 +7,36 @@
             <span>Keep each company or project’s hours and preferences separate.</span>
         </section>
         @php($initialStep = $errors->has('default_break_minutes') ? 2 : ($errors->has('weekly_target_hours') ? 3 : 1))
-        <section class="workspace-onboarding__card" x-data="{ step: {{ $initialStep }}, next() { const panel = this.$refs['step' + this.step]; if ([...panel.querySelectorAll('input')].every(input => input.reportValidity())) this.step++ } }">
+        <section class="workspace-onboarding__card" x-data="{
+            step: {{ $initialStep }},
+            workspaceName: @js(old('name', '')),
+            availability: 'idle',
+            availabilityMessage: '',
+            async checkAvailability() {
+                const name = this.workspaceName.trim();
+                if (!name) { this.availability = 'idle'; this.availabilityMessage = ''; return false; }
+                this.availability = 'checking'; this.availabilityMessage = 'Checking availability';
+                const checkedName = name;
+                let result;
+                try {
+                    const response = await fetch(@js(route('workspaces.name-availability')) + '?name=' + encodeURIComponent(name), { headers: { Accept: 'application/json' } });
+                    result = await response.json();
+                } catch (error) {
+                    if (this.workspaceName.trim() === checkedName) { this.availability = 'taken'; this.availabilityMessage = 'Unable to check availability'; }
+                    return false;
+                }
+                if (this.workspaceName.trim() !== checkedName) return false;
+                this.availability = result.available ? 'available' : 'taken';
+                this.availabilityMessage = result.message || '';
+                return result.available;
+            },
+            async next() {
+                const panel = this.$refs['step' + this.step];
+                if (![...panel.querySelectorAll('input')].every(input => input.reportValidity())) return;
+                if (this.step === 1 && !await this.checkAvailability()) return;
+                this.step++;
+            }
+        }">
             <div class="workspace-onboarding__progress" aria-label="Workspace setup progress">
                 <button type="button" :class="{ 'is-active': step >= 1 }" @click="step = 1" aria-label="Workspace details"></button>
                 <button type="button" :class="{ 'is-active': step >= 2 }" @click="step > 1 && (step = 2)" aria-label="Default break"></button>
@@ -19,8 +48,9 @@
                     <div class="workspace-onboarding__step-copy"><small>Step 1 of 3</small><h2>Workspace details</h2><p>Name the company or project whose hours you’ll track.</p></div>
                     <div class="workspace-onboarding__field">
                         <label for="name">Workspace name <button type="button" class="workspace-info" aria-label="About workspace names" aria-describedby="workspace-name-help"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.25" /><path d="M10 8.8v4.4M10 6.5h.01" /></svg><span id="workspace-name-help" role="tooltip">Use your company or organisation name, for example Acme Inc.</span></button></label>
-                        <input id="name" name="name" value="{{ old('name') }}" maxlength="100" placeholder="Acme Inc" autocomplete="organization" required autofocus>
+                        <input id="name" name="name" x-model="workspaceName" @input.debounce.450ms="checkAvailability()" maxlength="100" placeholder="Acme Inc" autocomplete="organization" required autofocus>
                         @error('name')<small>{{ $message }}</small>@enderror
+                        <p x-cloak class="workspace-availability" :class="'workspace-availability--' + availability" x-show="availability !== 'idle'" aria-live="polite"><span class="workspace-availability__spinner" x-show="availability === 'checking'" aria-hidden="true"></span><svg x-show="availability === 'available'" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.3 3.2 7.7-8" /></svg><svg x-show="availability === 'taken'" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8m0-8-8 8" /></svg><span x-text="availabilityMessage"></span></p>
                     </div>
                     <div class="workspace-onboarding__field"><label for="position">Position</label><input id="position" name="position" value="{{ old('position') }}" maxlength="100" placeholder="Product designer" autocomplete="organization-title" required>@error('position')<small>{{ $message }}</small>@enderror</div>
                     <button type="button" class="workspace-onboarding__submit" @click="next()">Continue <span>→</span></button>
