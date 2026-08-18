@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Notifications\VerifyEmailCodeNotification;
+use App\Services\EmailVerificationCodeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 use Laravel\Jetstream\Jetstream;
@@ -72,5 +74,34 @@ class RegistrationTest extends TestCase
 
         $response->assertSessionHasErrors('password');
         $this->assertGuest();
+    }
+
+    public function test_mail_transport_failure_rolls_back_registration_and_shows_support_alert(): void
+    {
+        Log::spy();
+        $this->mock(EmailVerificationCodeService::class)
+            ->shouldReceive('issue')
+            ->once()
+            ->andThrow(new \RuntimeException('SMTP certificate verification failed'));
+
+        $response = $this->from('/register')->followingRedirects()->post('/register', [
+            'name' => 'Traceable User',
+            'email' => 'trace@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+        ]);
+
+        $response->assertOk()
+            ->assertSee('Registration is temporarily unavailable')
+            ->assertSee(config('site.contact.email'));
+        $this->assertDatabaseMissing('users', ['email' => 'trace@example.com']);
+        $this->assertGuest();
+        Log::shouldHaveReceived('error')->once()->withArgs(fn (string $message, array $context): bool => $message === 'Registration verification email could not be sent.'
+            && $context['email'] === 'trace@example.com'
+            && $context['name'] === 'Traceable User'
+            && $context['exception'] instanceof \RuntimeException
+            && filled($context['reference'])
+        );
     }
 }

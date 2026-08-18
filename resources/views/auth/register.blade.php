@@ -2,7 +2,15 @@
     <x-auth-shell eyebrow="Start with clear records" heading="Make every hour<br>count." description="Create your private account to record workdays, review weekly totals and export reports.">
         <h2>Create your account</h2>
         <p class="auth-panel__intro">Set up secure access to your myhourspay records.</p>
-        @if ($errors->any())<div class="auth-summary-error" role="alert">Your account could not be created. Review the highlighted fields.</div>@endif
+        @if ($errors->has('registration'))
+            <div class="auth-summary-error auth-summary-error--service" role="alert">
+                <strong>Registration is temporarily unavailable</strong>
+                <p>{{ $errors->first('registration') }}</p>
+                <a href="mailto:{{ config('site.contact.email') }}">Contact {{ config('site.contact.email') }}</a>
+            </div>
+        @else
+            @if ($errors->any())<div class="auth-summary-error" role="alert">Your account could not be created. Review the highlighted fields.</div>@endif
+        @endif
 
         <form method="POST" action="{{ route('register') }}">
             @csrf
