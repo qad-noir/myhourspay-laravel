@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workspaces', function (Blueprint $table): void {
+            $table->engine = 'InnoDB';
             $table->id();
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('name', 100);
@@ -18,6 +19,7 @@ return new class extends Migration
         });
 
         Schema::create('workspace_user', function (Blueprint $table): void {
+            $table->engine = 'InnoDB';
             $table->id();
             $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
