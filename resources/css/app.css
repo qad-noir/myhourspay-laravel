@@ -127,7 +127,8 @@ html { scroll-behavior: smooth; }
 .workspace-onboarding__step-copy p{margin:0 0 22px;color:#8f8997;font-size:11px;line-height:1.55}
 .workspace-onboarding__actions{display:grid;align-items:end;grid-template-columns:auto 1fr;gap:10px}
 .workspace-onboarding__actions .workspace-onboarding__submit{margin-top:24px}
-.workspace-onboarding__back{height:48px;margin-top:24px;border:1px solid #302d38;border-radius:10px;padding:0 17px;color:#aaa4b2;background:#191720;font-size:11px;font-weight:700}
+.workspace-onboarding__back{display:grid;width:48px;height:48px;place-items:center;margin-top:24px;border:1px solid #302d38;border-radius:10px;padding:0;color:#aaa4b2;background:#191720}
+.workspace-onboarding__back svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .workspace-onboarding__back:hover{color:#fff;border-color:#45404d;background:#211e28}
 
 /* Polished workspace selector dimensions and interaction. Important declarations
