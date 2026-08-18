@@ -52,7 +52,10 @@ class EmailVerificationCodeTest extends TestCase
 
     public function test_verification_notification_uses_the_reusable_html_template(): void
     {
-        config(['site.logo_url' => '/brand-logo.png']);
+        config([
+            'site.logo_url' => '/brand-logo.png',
+            'site.logo_mark_url' => '/brand-mark.png',
+        ]);
         $user = User::factory()->unverified()->create(['name' => 'Ada Lovelace']);
         $mail = (new VerifyEmailCodeNotification('123456'))->toMail($user);
         $html = $mail->render();
@@ -60,8 +63,9 @@ class EmailVerificationCodeTest extends TestCase
         $this->assertStringContainsString('123456', $html);
         $this->assertStringContainsString('Hello Ada', $html);
         $this->assertStringContainsString('myhourspay', $html);
-        $this->assertStringContainsString('/brand-logo.png', $html);
+        $this->assertStringContainsString('/brand-mark.png', $html);
         $this->assertStringContainsString('class="email-logo-header"', $html);
+        $this->assertStringContainsString('class="email-logo-word"', $html);
         $this->assertStringContainsString('<table', $html);
     }
 }

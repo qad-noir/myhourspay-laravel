@@ -26,6 +26,7 @@ class EmailTemplateRenderer
             'OTP_CODE' => '',
             'SITE_URL' => config('site.url'),
             'LOGO_URL' => $this->absoluteAssetUrl((string) config('site.logo_url')),
+            'LOGO_MARK_URL' => $this->absoluteAssetUrl((string) config('site.logo_mark_url')),
             'ACTION_URL' => config('site.url'),
             'ACTION_TEXT' => 'Open myhourspay',
             'SUPPORT_EMAIL' => config('site.contact.email'),

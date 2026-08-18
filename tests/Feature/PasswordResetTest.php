@@ -103,6 +103,7 @@ class PasswordResetTest extends TestCase
         config([
             'site.url' => 'https://app.example.com',
             'site.logo_url' => '/email-logo.png',
+            'site.logo_mark_url' => '/email-mark.png',
         ]);
         $user = User::factory()->create(['name' => 'Ada Lovelace']);
         $html = (new PasswordResetNotification('secure-token'))->toMail($user)->render();
@@ -110,8 +111,8 @@ class PasswordResetTest extends TestCase
         $this->assertStringContainsString('Reset your password', $html);
         $this->assertStringContainsString('Hello Ada', $html);
         $this->assertStringContainsString('Reset my password', $html);
-        $this->assertStringContainsString('https://app.example.com/email-logo.png', $html);
-        $this->assertStringContainsString('alt="myhourspay"', $html);
+        $this->assertStringContainsString('https://app.example.com/email-mark.png', $html);
+        $this->assertStringContainsString('class="email-logo-word"', $html);
         $this->assertStringContainsString('<table', $html);
     }
 }

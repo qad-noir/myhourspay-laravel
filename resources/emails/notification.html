@@ -8,7 +8,7 @@
     <title>{{BRAND_NAME}}</title>
     <style>
         @media only screen and (max-width:620px){.email-shell{width:100%!important}.email-pad{padding-left:22px!important;padding-right:22px!important}.email-card{padding:28px 22px!important}.email-heading{font-size:27px!important}.email-code{font-size:28px!important;letter-spacing:7px!important}}
-        @media (prefers-color-scheme:dark){body,.email-bg{background:#09090f!important}.email-card{background:#15141d!important;border-color:#2b2934!important}.email-logo-header{background:#fff!important}.email-heading,.email-copy-strong{color:#f8f7fa!important}.email-copy{color:#aaa5b1!important}}
+        @media (prefers-color-scheme:dark){body,.email-bg{background:#09090f!important}.email-card{background:#15141d!important;border-color:#2b2934!important}.email-logo-header{background:#fff!important}.email-logo-word{color:#17151e!important}.email-heading,.email-copy-strong{color:#f8f7fa!important}.email-copy{color:#aaa5b1!important}}
     </style>
 </head>
 <body style="margin:0;padding:0;background:#f5f3f1;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;">
@@ -18,7 +18,10 @@
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" class="email-shell" style="width:600px;max-width:600px;">
             <tr><td bgcolor="#ffffff" class="email-logo-header" style="padding:18px 22px;border:1px solid #e4e0e5;border-radius:15px;background:#ffffff;">
                 <a href="{{SITE_URL}}" style="display:inline-block;text-decoration:none;">
-                    <img src="{{LOGO_URL}}" width="210" alt="{{BRAND_NAME}}" border="0" style="display:block;width:210px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+                        <td width="54" style="width:54px;"><img src="{{LOGO_MARK_URL}}" width="54" height="54" alt="" border="0" style="display:block;width:54px;height:54px;border:0;outline:none;text-decoration:none;"></td>
+                        <td class="email-logo-word" style="padding-left:13px;color:#17151e;font-family:Arial,Helvetica,sans-serif;font-size:25px;font-weight:700;letter-spacing:-1px;white-space:nowrap;">myhours<span style="color:#ff6b35;">pay</span></td>
+                    </tr></table>
                 </a>
             </td></tr>
             <tr><td height="18" style="height:18px;font-size:0;line-height:0;">&nbsp;</td></tr>
