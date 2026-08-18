@@ -97,4 +97,15 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    public function test_password_reset_notification_uses_the_branded_html_template(): void
+    {
+        $user = User::factory()->create(['name' => 'Ada Lovelace']);
+        $html = (new PasswordResetNotification('secure-token'))->toMail($user)->render();
+
+        $this->assertStringContainsString('Reset your password', $html);
+        $this->assertStringContainsString('Hello Ada', $html);
+        $this->assertStringContainsString('Reset my password', $html);
+        $this->assertStringContainsString('<table', $html);
+    }
 }
