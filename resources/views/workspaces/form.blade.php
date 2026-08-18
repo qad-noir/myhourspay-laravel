@@ -65,7 +65,7 @@
                     <div class="workspace-onboarding__field"><label for="weekly_target_hours">Weekly target (hours)</label><input id="weekly_target_hours" name="weekly_target_hours" type="number" min="1" max="168" step="0.25" value="{{ old('weekly_target_hours', 40) }}" required>@error('weekly_target_hours')<small>{{ $message }}</small>@enderror</div>
                     <div class="workspace-onboarding__actions"><button type="button" class="workspace-onboarding__back" @click="step = 2" aria-label="Back to default break"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 5-5 5 5 5" /></svg></button><button type="submit" class="workspace-onboarding__submit">{{ $onboarding ? 'Create workspace' : 'Create and switch' }} <span>→</span></button></div>
                 </div>
-                <a wire:navigate class="workspace-onboarding__cancel" href="{{ $onboarding ? url('/') : route('dashboard') }}">Cancel setup</a>
+                <a class="workspace-onboarding__cancel" href="{{ $onboarding ? url('/') : route('dashboard') }}">Cancel setup</a>
             </form>
         </section>
     </main>
