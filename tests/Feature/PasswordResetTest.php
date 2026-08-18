@@ -100,13 +100,14 @@ class PasswordResetTest extends TestCase
 
     public function test_password_reset_notification_uses_the_branded_html_template(): void
     {
+        config(['site.logo_url' => 'https://assets.example.com/email-logo.png']);
         $user = User::factory()->create(['name' => 'Ada Lovelace']);
         $html = (new PasswordResetNotification('secure-token'))->toMail($user)->render();
 
         $this->assertStringContainsString('Reset your password', $html);
         $this->assertStringContainsString('Hello Ada', $html);
         $this->assertStringContainsString('Reset my password', $html);
-        $this->assertStringContainsString('/brand-logo-white.png', $html);
+        $this->assertStringContainsString('https://assets.example.com/email-logo.png', $html);
         $this->assertStringContainsString('alt="myhourspay"', $html);
         $this->assertStringContainsString('<table', $html);
     }
