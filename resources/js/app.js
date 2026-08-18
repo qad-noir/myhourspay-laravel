@@ -83,6 +83,12 @@ document.querySelectorAll('[data-submit-once]:not([data-bound])').forEach((form)
 });
 };
 
+document.addEventListener('click', (event) => {
+    document.querySelectorAll('.workspace-switcher[open]').forEach((switcher) => {
+        if (!switcher.contains(event.target)) switcher.removeAttribute('open');
+    });
+});
+
 window.hoursCalendar = (defaultBreak, initialEntry = null, initialDate = null, openInitially = false) => ({
     open: openInitially,
     editing: Boolean(initialEntry),
