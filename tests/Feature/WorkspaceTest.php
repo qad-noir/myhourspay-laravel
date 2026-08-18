@@ -23,7 +23,10 @@ class WorkspaceTest extends TestCase
             ->assertSee('Use your company or organisation name, for example Acme Inc.')
             ->assertSee('value="30"', false)
             ->assertSee('value="40"', false)
+            ->assertSee('Cancel setup')
             ->assertSee('aria-describedby="workspace-name-help"', false);
+
+        $this->assertDatabaseCount('workspaces', 0);
     }
 
     public function test_onboarding_creates_owner_membership_and_migrates_legacy_data(): void
