@@ -118,6 +118,9 @@ html { scroll-behavior: smooth; }
 
 /* Workspace onboarding steps */
 .workspace-onboarding__progress button{height:4px;border:0;border-radius:4px;padding:0;background:#292732;cursor:default;transition:background .2s}
+.workspace-info{border:0!important;color:#918b99!important;transition:color .16s,transform .16s}
+.workspace-info:hover,.workspace-info:focus-visible{color:#d4ceda!important;transform:translateY(-1px)}
+.workspace-info svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
 .workspace-onboarding__progress button.is-active{background:linear-gradient(90deg,var(--brand-orange),#ff9a75)}
 .workspace-onboarding__step-copy small{color:#ff8a60;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 .workspace-onboarding__step-copy h2{margin:7px 0 5px;color:#f7f5fa;font:800 20px/1.2 Manrope,sans-serif;letter-spacing:-.03em}

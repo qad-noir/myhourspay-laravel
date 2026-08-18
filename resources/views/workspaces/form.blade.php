@@ -18,7 +18,7 @@
                 <div x-show="step === 1" x-ref="step1">
                     <div class="workspace-onboarding__step-copy"><small>Step 1 of 3</small><h2>Workspace details</h2><p>Name the company or project whose hours you’ll track.</p></div>
                     <div class="workspace-onboarding__field">
-                        <label for="name">Workspace name <button type="button" class="workspace-info" aria-label="About workspace names" aria-describedby="workspace-name-help">i<span id="workspace-name-help" role="tooltip">Use your company or organisation name, for example Acme Inc.</span></button></label>
+                        <label for="name">Workspace name <button type="button" class="workspace-info" aria-label="About workspace names" aria-describedby="workspace-name-help"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.25" /><path d="M10 8.8v4.4M10 6.5h.01" /></svg><span id="workspace-name-help" role="tooltip">Use your company or organisation name, for example Acme Inc.</span></button></label>
                         <input id="name" name="name" value="{{ old('name') }}" maxlength="100" placeholder="Acme Inc" autocomplete="organization" required autofocus>
                         @error('name')<small>{{ $message }}</small>@enderror
                     </div>
