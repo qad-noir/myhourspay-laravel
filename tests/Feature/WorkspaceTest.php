@@ -23,6 +23,7 @@ class WorkspaceTest extends TestCase
             ->assertSee('Use your company or organisation name, for example Acme Inc.')
             ->assertSee('value="30"', false)
             ->assertSee('value="40"', false)
+            ->assertSee('autocomplete="off"', false)
             ->assertSee('Cancel setup')
             ->assertSee('Checking availability')
             ->assertSee('aria-label="Back to workspace details"', false)

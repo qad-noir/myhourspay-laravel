@@ -48,11 +48,11 @@
                     <div class="workspace-onboarding__step-copy"><small>Step 1 of 3</small><h2>Workspace details</h2><p>Name the company or project whose hours you’ll track.</p></div>
                     <div class="workspace-onboarding__field">
                         <label for="name">Workspace name <button type="button" class="workspace-info" aria-label="About workspace names" aria-describedby="workspace-name-help"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.25" /><path d="M10 8.8v4.4M10 6.5h.01" /></svg><span id="workspace-name-help" role="tooltip">Use your company or organisation name, for example Acme Inc.</span></button></label>
-                        <input id="name" name="name" x-model="workspaceName" @input.debounce.450ms="checkAvailability()" minlength="3" maxlength="100" placeholder="Acme Inc" autocomplete="organization" required autofocus>
+                        <input id="name" name="name" x-model="workspaceName" @input.debounce.450ms="checkAvailability()" minlength="3" maxlength="100" placeholder="Acme Inc" autocomplete="off" required autofocus>
                         @error('name')<small>{{ $message }}</small>@enderror
                         <p x-cloak class="workspace-availability" :class="'workspace-availability--' + availability" x-show="availability !== 'idle'" aria-live="polite"><span class="workspace-availability__spinner" x-show="availability === 'checking'" aria-hidden="true"></span><svg x-show="availability === 'available'" viewBox="0 0 20 20" aria-hidden="true"><path d="m4.5 10.5 3.3 3.2 7.7-8" /></svg><svg x-show="availability === 'taken'" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 6 8 8m0-8-8 8" /></svg><span x-text="availabilityMessage"></span></p>
                     </div>
-                    <div class="workspace-onboarding__field"><label for="position">Position</label><input id="position" name="position" value="{{ old('position') }}" minlength="3" maxlength="100" placeholder="Product designer" autocomplete="organization-title" required>@error('position')<small>{{ $message }}</small>@enderror</div>
+                    <div class="workspace-onboarding__field"><label for="position">Position</label><input id="position" name="position" value="{{ old('position') }}" minlength="3" maxlength="100" placeholder="Product designer" autocomplete="off" required>@error('position')<small>{{ $message }}</small>@enderror</div>
                     <button type="button" class="workspace-onboarding__submit" @click="next()">Continue <span>→</span></button>
                 </div>
                 <div x-cloak x-show="step === 2" x-ref="step2">
