@@ -6,6 +6,9 @@
             <h1>{{ $onboarding ? 'Set up your workspace' : 'Create another workspace' }}</h1>
             <span>Keep each company or project’s hours and preferences separate.</span>
         </section>
+        @if (session('status'))
+            <div class="workspace-onboarding__notice" role="status">{{ session('status') }}</div>
+        @endif
         @php($initialStep = $errors->has('default_break_minutes') ? 2 : ($errors->has('weekly_target_hours') ? 3 : 1))
         <section class="workspace-onboarding__card" x-data="{
             step: {{ $initialStep }},
@@ -67,6 +70,12 @@
                 </div>
                 <a class="workspace-onboarding__cancel" href="{{ $onboarding ? url('/') : route('dashboard') }}">Cancel setup</a>
             </form>
+            @if ($onboarding)
+                <form method="POST" action="{{ route('logout') }}" class="workspace-onboarding__logout">
+                    @csrf
+                    <button type="submit"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4H4.8A1.8 1.8 0 0 0 3 5.8v8.4A1.8 1.8 0 0 0 4.8 16H8m4-3 3-3-3-3m3 3H7" /></svg>Log out</button>
+                </form>
+            @endif
         </section>
     </main>
 </x-guest-layout>

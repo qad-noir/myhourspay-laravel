@@ -5,11 +5,20 @@ use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
 use App\Http\Controllers\WorkspaceController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/logout', function (Request $request) {
+    if (! $request->user()) {
+        return redirect()->route('login');
+    }
+
+    return redirect()->back()->with('status', 'Use the Log out button to sign out securely.');
+})->name('logout.help');
 
 Route::middleware([
     'auth:sanctum',

@@ -140,6 +140,7 @@ html { scroll-behavior: smooth; }
 .workspace-onboarding__step-copy p{margin:0 0 22px;color:#8f8997;font-size:11px;line-height:1.55}
 .workspace-onboarding__actions{display:grid;align-items:end;grid-template-columns:auto 1fr;gap:10px}
 .workspace-onboarding__actions .workspace-onboarding__submit{margin-top:24px}
+.workspace-onboarding__notice{width:min(100vw - 36px,490px);margin:18px auto -10px;border:1px solid rgba(255,138,96,.25);border-radius:11px;padding:11px 14px;color:#ffd4c5;background:rgba(255,107,53,.08);font-size:11px;text-align:center}.workspace-onboarding__logout{margin-top:10px;border-top:1px solid #292631;padding-top:13px;text-align:center}.workspace-onboarding__logout button{display:inline-flex;align-items:center;gap:7px;border:0;padding:5px 8px;color:#aaa4b2;background:transparent;font:700 11px "DM Sans",sans-serif;cursor:pointer}.workspace-onboarding__logout button:hover{color:#fff}.workspace-onboarding__logout svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .workspace-onboarding__back{display:grid;width:48px;height:48px;place-items:center;margin-top:24px;border:1px solid #302d38;border-radius:10px;padding:0;color:#aaa4b2;background:#191720}
 .workspace-onboarding__back svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .workspace-onboarding__back:hover{color:#fff;border-color:#45404d;background:#211e28}

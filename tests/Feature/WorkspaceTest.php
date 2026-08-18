@@ -25,12 +25,29 @@ class WorkspaceTest extends TestCase
             ->assertSee('value="40"', false)
             ->assertSee('autocomplete="off"', false)
             ->assertSee('Cancel setup')
+            ->assertSee('action="'.route('logout').'"', false)
+            ->assertSee('Log out')
             ->assertSee('Checking availability')
             ->assertSee('aria-label="Back to workspace details"', false)
             ->assertSee('aria-describedby="workspace-name-help"', false)
             ->assertDontSee('wire:navigate class="workspace-onboarding__cancel"', false);
 
         $this->assertDatabaseCount('workspaces', 0);
+    }
+
+    public function test_get_logout_is_handled_gracefully_and_onboarding_has_secure_logout(): void
+    {
+        $user = User::factory()->create();
+
+        $this->get('/logout')->assertRedirect(route('login'));
+        $this->actingAs($user)
+            ->from(route('workspaces.onboarding'))
+            ->get('/logout')
+            ->assertRedirect(route('workspaces.onboarding'))
+            ->assertSessionHas('status', 'Use the Log out button to sign out securely.');
+
+        $this->actingAs($user)->post(route('logout'))->assertRedirect('/');
+        $this->assertGuest();
     }
 
     public function test_onboarding_creates_owner_membership_and_migrates_legacy_data(): void
