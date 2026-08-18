@@ -115,12 +115,16 @@ class HoursController extends Controller
     public function csv(Request $request, HoursReportExport $export): StreamedResponse
     {
         [$start, $end] = $this->validatedRange($request);
+        $workspace = $this->current->for($request->user());
         $summary = $this->reportSummary($request, $start, $end);
         $filename = $this->filename($start, $end, 'csv');
 
-        return response()->streamDownload(function () use ($summary, $export): void {
+        return response()->streamDownload(function () use ($summary, $export, $workspace): void {
             $stream = fopen('php://output', 'wb');
             fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, ['Workspace', $export->safeText($workspace->name)]);
+            fputcsv($stream, ['Weekly target', $this->calculator->formatMinutes($workspace->weekly_target_minutes)]);
+            fputcsv($stream, []);
             fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes']);
             foreach ($summary['entries'] as $entry) {
                 fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $export->safeText($entry['notes'] ?? '')]);

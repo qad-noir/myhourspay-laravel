@@ -36,7 +36,8 @@ class WorkspaceController extends Controller
             'position' => ['required', 'string', 'max:100'],
         ]);
         DB::transaction(function () use ($request, $validated): void {
-            $user = $request->user()->fresh();
+            $user = $request->user();
+            $user->refresh();
             $firstWorkspace = ! $user->workspaces()->exists();
             $workspace = $user->ownedWorkspaces()->create([
                 'name' => $validated['name'],

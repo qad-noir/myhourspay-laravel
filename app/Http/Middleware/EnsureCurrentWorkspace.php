@@ -13,6 +13,10 @@ class EnsureCurrentWorkspace
 
     public function handle(Request $request, Closure $next): Response
     {
+        if (! $request->user()) {
+            return $next($request);
+        }
+
         if (! $this->workspaces->existsFor($request->user())) {
             return to_route('workspaces.onboarding');
         }
