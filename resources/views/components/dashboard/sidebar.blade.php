@@ -3,7 +3,7 @@
 <aside id="dashboard-sidebar" class="dashboard-sidebar" aria-label="Dashboard navigation" data-dashboard-sidebar>
     <div class="dashboard-sidebar__top"><a wire:navigate href="{{ route('dashboard') }}" aria-label="myhourspay overview"><x-brand-logo dark /></a><button type="button" class="dashboard-sidebar__close" data-sidebar-close aria-label="Close navigation">×</button></div>
     <details class="workspace-switcher">
-        <summary><span class="workspace-switcher__avatar">{{ str($currentWorkspace->name)->substr(0, 1)->upper() }}</span><span><small>Workspace</small><strong>{{ $currentWorkspace->name }}</strong></span><i aria-hidden="true">⌄</i></summary>
+        <summary><span class="workspace-switcher__avatar">{{ str($currentWorkspace->name)->substr(0, 1)->upper() }}</span><span><small>Workspace</small><strong>{{ $currentWorkspace->name }}</strong></span><svg class="workspace-switcher__chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6.5 8 3.5 3.5L13.5 8" /></svg></summary>
         <div class="workspace-switcher__menu">
             @foreach($workspaces as $workspace)
                 <form method="POST" action="{{ route('workspaces.switch', $workspace) }}">@csrf<button type="submit" @if($workspace->is($currentWorkspace)) aria-current="true" @endif><span>{{ str($workspace->name)->substr(0, 1)->upper() }}</span><strong>{{ $workspace->name }}</strong>@if($workspace->is($currentWorkspace))<i>✓</i>@endif</button></form>
