@@ -21,7 +21,10 @@ class PasswordResetTest extends TestCase
 
         $response = $this->get('/forgot-password');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Forgot your password?')
+            ->assertSee('class="auth-shell"', false)
+            ->assertSee('Send reset link');
     }
 
     public function test_reset_password_link_can_be_requested(): void
@@ -58,7 +61,10 @@ class PasswordResetTest extends TestCase
         Notification::assertSentTo($user, ResetPassword::class, function (object $notification) {
             $response = $this->get('/reset-password/'.$notification->token);
 
-            $response->assertStatus(200);
+            $response->assertStatus(200)
+                ->assertSee('Reset your password')
+                ->assertSee('class="auth-shell"', false)
+                ->assertSee('name="password_confirmation"', false);
 
             return true;
         });
