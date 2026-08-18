@@ -7,7 +7,7 @@
     @endphp
 
     <div
-        x-data="hoursCalendar({{ auth()->user()->default_break_minutes ?? config('hours.default_break_minutes') }}, @js($initialEntry), @js($initialDate), {{ $openInitially ? 'true' : 'false' }})"
+        x-data="hoursCalendar({{ app(App\Services\CurrentWorkspace::class)->for(auth()->user())->default_break_minutes }}, @js($initialEntry), @js($initialDate), {{ $openInitially ? 'true' : 'false' }})"
         @hours-day-selected.window="openEntry($event.detail.date, $event.detail.entry)"
         data-hours-calendar-page
     >
@@ -19,7 +19,7 @@
             <x-dashboard.stat-card data-calendar-stat="total" label="Month total" :value="$calculator->formatHumanMinutes($monthSummary['total_minutes'])" support="Net hours recorded" tone="analytics" icon="clock" />
             <x-dashboard.stat-card data-calendar-stat="days" label="Worked days" :value="$monthSummary['worked_days']" support="Days with an entry" icon="calendar" />
             <x-dashboard.stat-card data-calendar-stat="average" label="Daily average" :value="$calculator->formatHumanMinutes($monthSummary['average_minutes'])" support="Across worked days" tone="violet" icon="stopwatch" />
-            <x-dashboard.stat-card data-calendar-stat="target" label="Weekly target" :value="$calculator->formatHumanMinutes(auth()->user()->weekly_target_minutes ?? config('hours.weekly_target_minutes'))" support="Monday to Sunday" tone="positive" icon="target" />
+            <x-dashboard.stat-card data-calendar-stat="target" label="Weekly target" :value="$calculator->formatHumanMinutes(app(App\Services\CurrentWorkspace::class)->for(auth()->user())->weekly_target_minutes)" support="Monday to Sunday" tone="positive" icon="target" />
         </section>
 
         <section class="dashboard-panel fullcalendar-panel" aria-labelledby="calendar-title">

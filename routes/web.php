@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
+use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,10 +15,16 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
-    Route::put('/settings/hours', [HoursSettingsController::class, 'update'])->name('settings.hours.update');
+    Route::get('/workspaces/onboarding', [WorkspaceController::class, 'onboarding'])->name('workspaces.onboarding');
+    Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
 
-    Route::prefix('hours')->name('hours.')->controller(HoursController::class)->group(function (): void {
+    Route::middleware('workspace')->group(function (): void {
+        Route::get('/dashboard', DashboardController::class)->name('dashboard');
+        Route::get('/workspaces/create', [WorkspaceController::class, 'create'])->name('workspaces.create');
+        Route::post('/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
+        Route::put('/settings/hours', [HoursSettingsController::class, 'update'])->name('settings.hours.update');
+
+        Route::prefix('hours')->name('hours.')->controller(HoursController::class)->group(function (): void {
         Route::get('/', 'index')->name('index');
         Route::get('/events', 'events')->name('events');
         Route::post('/entries', 'store')->name('entries.store');
@@ -27,5 +34,6 @@ Route::middleware([
         Route::get('/reports/export/excel', 'excel')->name('reports.excel');
         Route::get('/reports/export/csv', 'csv')->name('reports.csv');
         Route::get('/reports/print', 'print')->name('reports.print');
+        });
     });
 });

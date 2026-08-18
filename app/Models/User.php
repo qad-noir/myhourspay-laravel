@@ -6,6 +6,8 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -34,6 +36,7 @@ class User extends Authenticatable
         'password',
         'default_break_minutes',
         'weekly_target_minutes',
+        'current_workspace_id',
     ];
 
     /**
@@ -69,11 +72,27 @@ class User extends Authenticatable
             'password' => 'hashed',
             'default_break_minutes' => 'integer',
             'weekly_target_minutes' => 'integer',
+            'current_workspace_id' => 'integer',
         ];
     }
 
     public function hoursEntries(): HasMany
     {
         return $this->hasMany(HoursEntry::class);
+    }
+
+    public function ownedWorkspaces(): HasMany
+    {
+        return $this->hasMany(Workspace::class, 'owner_id');
+    }
+
+    public function workspaces(): BelongsToMany
+    {
+        return $this->belongsToMany(Workspace::class, 'workspace_user')->withPivot(['role', 'position'])->withTimestamps();
+    }
+
+    public function currentWorkspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class, 'current_workspace_id');
     }
 }

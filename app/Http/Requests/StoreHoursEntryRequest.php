@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesHoursEntry;
 use App\Models\HoursEntry;
+use App\Services\CurrentWorkspace;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +23,9 @@ class StoreHoursEntryRequest extends FormRequest
             'work_date' => [
                 'required',
                 'date_format:Y-m-d',
-                Rule::unique(HoursEntry::class)->where(fn ($query) => $query->where('user_id', $this->user()->id)),
+                Rule::unique(HoursEntry::class)->where(fn ($query) => $query
+                    ->where('user_id', $this->user()->id)
+                    ->where('workspace_id', app(CurrentWorkspace::class)->for($this->user())->id)),
             ],
         ]);
     }

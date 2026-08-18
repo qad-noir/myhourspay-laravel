@@ -21,14 +21,14 @@ class HoursModuleTest extends TestCase
 
     public function test_authenticated_navigation_and_calendar_are_available(): void
     {
-        $user = User::factory()->create();
+        $user = $this->workspaceUser();
         $this->actingAs($user)->get('/hours?month=2026-08')->assertOk()->assertSee('Hours')->assertSee($user->name);
         $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('Hours');
     }
 
     public function test_user_can_create_update_and_delete_an_entry(): void
     {
-        $user = User::factory()->create();
+        $user = $this->workspaceUser();
         $response = $this->actingAs($user)->post(route('hours.entries.store'), $this->payload());
         $response->assertRedirect(route('hours.index', ['month' => '2026-08']));
         $entry = $user->hoursEntries()->sole();
@@ -43,7 +43,7 @@ class HoursModuleTest extends TestCase
 
     public function test_duplicate_dates_are_per_user_and_validation_is_strict(): void
     {
-        [$first, $second] = [User::factory()->create(), User::factory()->create()];
+        [$first, $second] = [$this->workspaceUser(), $this->workspaceUser()];
         $this->actingAs($first)->post(route('hours.entries.store'), $this->payload())->assertSessionHasNoErrors();
         $this->actingAs($first)->post(route('hours.entries.store'), $this->payload())->assertSessionHasErrors('work_date');
         $this->actingAs($second)->post(route('hours.entries.store'), $this->payload())->assertSessionHasNoErrors();
@@ -56,7 +56,7 @@ class HoursModuleTest extends TestCase
 
     public function test_another_users_entry_is_not_bound_for_update_or_delete(): void
     {
-        [$owner, $attacker] = [User::factory()->create(), User::factory()->create()];
+        [$owner, $attacker] = [$this->workspaceUser(), $this->workspaceUser()];
         $entry = $this->entry($owner);
 
         $this->actingAs($attacker)->patch(route('hours.entries.update', $entry), $this->payload())->assertNotFound();
@@ -66,7 +66,7 @@ class HoursModuleTest extends TestCase
 
     public function test_calendar_events_are_user_scoped_and_ranges_are_bounded(): void
     {
-        [$user, $other] = [User::factory()->create(), User::factory()->create()];
+        [$user, $other] = [$this->workspaceUser(), $this->workspaceUser()];
         $own = $this->entry($user, ['notes' => 'mine']);
         $this->entry($other, ['notes' => 'private']);
 
@@ -78,7 +78,7 @@ class HoursModuleTest extends TestCase
 
     public function test_reports_csv_print_and_excel_are_user_scoped_and_formula_safe(): void
     {
-        [$user, $other] = [User::factory()->create(), User::factory()->create()];
+        [$user, $other] = [$this->workspaceUser(), $this->workspaceUser()];
         $this->entry($user, ['notes' => '=HYPERLINK("bad")']);
         $this->entry($other, ['notes' => 'other secret']);
         $range = ['start' => '2026-08-01', 'end' => '2026-08-31'];
@@ -99,12 +99,12 @@ class HoursModuleTest extends TestCase
 
     public function test_invalid_report_range_is_rejected(): void
     {
-        $this->actingAs(User::factory()->create())->get('/hours/reports?start=2026-09-01&end=2026-08-01')->assertSessionHasErrors('end');
+        $this->actingAs($this->workspaceUser())->get('/hours/reports?start=2026-09-01&end=2026-08-01')->assertSessionHasErrors('end');
     }
 
     public function test_user_can_update_hours_preferences_and_their_target_is_used(): void
     {
-        $user = User::factory()->create();
+        $user = $this->workspaceUser();
 
         $this->actingAs($user)->put(route('settings.hours.update'), [
             'default_break_minutes' => 45,
@@ -112,8 +112,9 @@ class HoursModuleTest extends TestCase
         ])->assertRedirect(route('profile.show'));
 
         $user->refresh();
-        $this->assertSame(45, $user->default_break_minutes);
-        $this->assertSame(2250, $user->weekly_target_minutes);
+        $workspace = $user->currentWorkspace()->firstOrFail();
+        $this->assertSame(45, $workspace->default_break_minutes);
+        $this->assertSame(2250, $workspace->weekly_target_minutes);
         $this->entry($user);
 
         $this->actingAs($user)->getJson('/hours/events?start=2026-08-03&end=2026-08-10&month=2026-08')
@@ -129,6 +130,23 @@ class HoursModuleTest extends TestCase
 
     private function entry(User $user, array $overrides = []): HoursEntry
     {
-        return $user->hoursEntries()->create($this->payload($overrides));
+        return $user->hoursEntries()->create(array_merge(
+            $this->payload($overrides),
+            ['workspace_id' => $user->current_workspace_id],
+        ));
+    }
+
+    private function workspaceUser(): User
+    {
+        $user = User::factory()->create();
+        $workspace = $user->ownedWorkspaces()->create([
+            'name' => $user->name.' Workspace',
+            'default_break_minutes' => 30,
+            'weekly_target_minutes' => 2400,
+        ]);
+        $workspace->users()->attach($user->id, ['role' => 'owner', 'position' => 'Owner']);
+        $user->update(['current_workspace_id' => $workspace->id]);
+
+        return $user->refresh();
     }
 }

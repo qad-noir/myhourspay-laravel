@@ -7,6 +7,7 @@ use App\Http\Requests\StoreHoursEntryRequest;
 use App\Http\Requests\UpdateHoursEntryRequest;
 use App\Models\HoursEntry;
 use App\Services\HoursCalculator;
+use App\Services\CurrentWorkspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -20,17 +21,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HoursController extends Controller
 {
-    public function __construct(private readonly HoursCalculator $calculator) {}
+    public function __construct(private readonly HoursCalculator $calculator, private readonly CurrentWorkspace $current) {}
 
     public function index(Request $request): View
     {
-        $calculator = $this->calculator->forUser($request->user());
+        $workspace = $this->current->for($request->user());
+        $calculator = $this->calculator->forWorkspace($workspace);
         $month = $this->validatedMonth($request->query('month'));
         $monthStart = CarbonImmutable::createFromFormat('!Y-m-d', $month.'-01', config('hours.timezone'));
         $monthEnd = $monthStart->endOfMonth();
         $gridStart = $monthStart->startOfWeek();
         $gridEnd = $monthEnd->endOfWeek();
-        $entries = $request->user()->hoursEntries()->forPeriod($gridStart->toDateString(), $gridEnd->toDateString())->orderBy('work_date')->get();
+        $entries = $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($gridStart->toDateString(), $gridEnd->toDateString())->orderBy('work_date')->get();
         $summary = $calculator->summarizeEntries($entries, $gridStart->toDateString(), $gridEnd->toDateString());
         $monthEntries = array_values(array_filter($summary['entries'], fn (array $entry) => str_starts_with($entry['work_date'], $month)));
         $monthSummary = $calculator->summarizeEntries($monthEntries, $monthStart->toDateString(), $monthEnd->toDateString());
@@ -40,9 +42,10 @@ class HoursController extends Controller
 
     public function events(Request $request): JsonResponse
     {
-        $calculator = $this->calculator->forUser($request->user());
+        $workspace = $this->current->for($request->user());
+        $calculator = $this->calculator->forWorkspace($workspace);
         [$start, $end] = $this->validatedRange($request, true);
-        $entries = $request->user()->hoursEntries()->forPeriod($start, $end)->orderBy('work_date')->get();
+        $entries = $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($start, $end)->orderBy('work_date')->get();
         $summary = $calculator->summarizeEntries($entries, $start, $end);
         $month = $this->validatedMonth($request->query('month'));
         $monthStart = CarbonImmutable::createFromFormat('!Y-m-d', $month.'-01', config('hours.timezone'));
@@ -66,7 +69,7 @@ class HoursController extends Controller
     public function store(StoreHoursEntryRequest $request): RedirectResponse
     {
         try {
-            $request->user()->hoursEntries()->create($request->validated());
+            $request->user()->hoursEntries()->create([...$request->validated(), 'workspace_id' => $this->current->for($request->user())->id]);
         } catch (QueryException $exception) {
             if ($this->isUniqueViolation($exception)) {
                 return back()->withInput()->withErrors(['work_date' => 'An entry already exists for that date.']);
@@ -131,7 +134,7 @@ class HoursController extends Controller
         [$start, $end] = $this->validatedRange($request);
         $summary = $this->reportSummary($request, $start, $end);
         $path = tempnam(storage_path('app/private'), 'hours-export-');
-        $export->store($request->user(), $summary, $start, $end, $path);
+        $export->store($request->user(), $this->current->for($request->user()), $summary, $start, $end, $path);
 
         return response()->download($path, $this->filename($start, $end, 'xlsx'), [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -149,12 +152,13 @@ class HoursController extends Controller
 
     private function reportSummary(Request $request, string $start, string $end): array
     {
-        $calculator = $this->calculator->forUser($request->user());
-        $periodEntries = $request->user()->hoursEntries()->forPeriod($start, $end)->orderBy('work_date')->get();
+        $workspace = $this->current->for($request->user());
+        $calculator = $this->calculator->forWorkspace($workspace);
+        $periodEntries = $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($start, $end)->orderBy('work_date')->get();
         $weekStart = CarbonImmutable::parse($start, config('hours.timezone'))->startOfWeek()->toDateString();
         $weekEnd = CarbonImmutable::parse($end, config('hours.timezone'))->endOfWeek()->toDateString();
         $weekSummary = $calculator->summarizeEntries(
-            $request->user()->hoursEntries()->forPeriod($weekStart, $weekEnd)->orderBy('work_date')->get(),
+            $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($weekStart, $weekEnd)->orderBy('work_date')->get(),
             $start,
             $end,
         );

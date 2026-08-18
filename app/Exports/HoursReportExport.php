@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\User;
+use App\Models\Workspace;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -12,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class HoursReportExport
 {
-    public function store(User $user, array $summary, string $start, string $end, string $path): void
+    public function store(User $user, Workspace $workspace, array $summary, string $start, string $end, string $path): void
     {
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
@@ -24,17 +25,19 @@ class HoursReportExport
         $sheet->setCellValueExplicit('B3', $user->name, DataType::TYPE_STRING);
         $sheet->setCellValue('A4', 'Period');
         $sheet->setCellValue('B4', "$start to $end");
-        $sheet->setCellValue('A5', 'Generated');
-        $sheet->setCellValue('B5', now(config('hours.timezone'))->format('Y-m-d H:i T'));
-        $sheet->setCellValue('A6', 'Weekly target');
-        $sheet->setCellValue('B6', sprintf('%02d:00', intdiv((int) config('hours.weekly_target_minutes'), 60)));
-        $sheet->setCellValue('A7', 'Period total');
-        $sheet->setCellValue('B7', $summary['total_formatted']);
+        $sheet->setCellValue('A5', 'Workspace');
+        $sheet->setCellValueExplicit('B5', $workspace->name, DataType::TYPE_STRING);
+        $sheet->setCellValue('A6', 'Generated');
+        $sheet->setCellValue('B6', now(config('hours.timezone'))->format('Y-m-d H:i T'));
+        $sheet->setCellValue('A7', 'Weekly target');
+        $sheet->setCellValue('B7', sprintf('%02d:%02d', intdiv($workspace->weekly_target_minutes, 60), $workspace->weekly_target_minutes % 60));
+        $sheet->setCellValue('A8', 'Period total');
+        $sheet->setCellValue('B8', $summary['total_formatted']);
 
         $headings = ['Date', 'Weekday', 'Start', 'End', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes'];
-        $sheet->fromArray($headings, null, 'A9');
+        $sheet->fromArray($headings, null, 'A10');
 
-        $row = 10;
+        $row = 11;
         foreach ($summary['entries'] as $entry) {
             $values = [
                 $entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'],
@@ -57,10 +60,10 @@ class HoursReportExport
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(18)->setColor(new Color('FFFFFFFF'));
         $sheet->getStyle('A1:K1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F766E');
         $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A9:K9')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A9:K9')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
-        $sheet->freezePane('A10');
-        $sheet->setAutoFilter('A9:K'.max(9, $row - 1));
+        $sheet->getStyle('A10:K10')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A10:K10')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
+        $sheet->freezePane('A11');
+        $sheet->setAutoFilter('A10:K'.max(10, $row - 1));
         foreach (range('A', 'K') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
