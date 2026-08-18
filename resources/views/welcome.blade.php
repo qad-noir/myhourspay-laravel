@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="myhourspay helps professionals record working hours, review weekly targets and export accurate reports.">
+    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any"><link rel="apple-touch-icon" href="{{ asset('brand-mark.png') }}">
-    <title>myhourspay — Clear working-hours records</title>
+    <x-site-meta title="myhourspay — Track your hours. Know your worth." :canonical="config('site.url')" />
     <link rel="preconnect" href="https://fonts.bunny.net"><link href="https://fonts.bunny.net/css?family=dm-sans:400,500,600,700&family=manrope:500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

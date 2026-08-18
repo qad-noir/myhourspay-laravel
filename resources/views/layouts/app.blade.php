@@ -7,7 +7,7 @@
         <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
         <link rel="apple-touch-icon" href="{{ asset('brand-mark.png') }}">
 
-        <title>{{ isset($header) ? trim(strip_tags($header)) . ' · ' : '' }}myhourspay</title>
+        <x-site-meta :title="(isset($header) ? trim(strip_tags($header)).' · ' : '').config('site.name')" :index="false" />
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

@@ -15,11 +15,26 @@ class PublicFrontendTest extends TestCase
             ->assertSee('myhourspay')
             ->assertSee('Track your hours.')
             ->assertSee('Everything you need to')
+            ->assertSee('property="og:image" content="https://myhourspay.com/og-image.jpg"', false)
+            ->assertSee('name="twitter:card" content="summary_large_image"', false)
+            ->assertSee('rel="canonical" href="https://myhourspay.com"', false)
             ->assertSee('href="'.route('login').'"', false);
 
         if (Features::enabled(Features::registration())) {
             $response->assertSee('href="'.route('register').'"', false);
         }
+    }
+
+    public function test_open_graph_image_has_standard_dimensions_and_a_small_payload(): void
+    {
+        $path = public_path(config('site.social.image'));
+        $image = getimagesize($path);
+
+        $this->assertSame(1200, $image[0]);
+        $this->assertSame(630, $image[1]);
+        $this->assertSame('image/jpeg', $image['mime']);
+        $this->assertLessThan(300_000, filesize($path));
+        $this->assertSame('myhourspay.com', config('site.domain'));
     }
 
     public function test_login_page_is_connected_to_fortify(): void

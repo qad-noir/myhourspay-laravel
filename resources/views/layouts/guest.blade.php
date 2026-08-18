@@ -7,7 +7,7 @@
         <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
         <link rel="apple-touch-icon" href="{{ asset('brand-mark.png') }}">
 
-        <title>myhourspay</title>
+        <x-site-meta :title="config('site.name')" />
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
