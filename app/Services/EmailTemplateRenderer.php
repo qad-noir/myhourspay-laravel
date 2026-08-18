@@ -25,7 +25,7 @@ class EmailTemplateRenderer
             'CONTENT' => '',
             'OTP_CODE' => '',
             'SITE_URL' => config('site.url'),
-            'LOGO_URL' => config('site.logo_url'),
+            'LOGO_URL' => $this->absoluteAssetUrl((string) config('site.logo_url')),
             'ACTION_URL' => config('site.url'),
             'ACTION_TEXT' => 'Open myhourspay',
             'SUPPORT_EMAIL' => config('site.contact.email'),
@@ -38,5 +38,14 @@ class EmailTemplateRenderer
         }
 
         return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
+    private function absoluteAssetUrl(string $path): string
+    {
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return rtrim((string) config('site.url'), '/').'/'.ltrim($path, '/');
     }
 }
