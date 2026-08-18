@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureCurrentWorkspace;
+use App\Http\Middleware\EnsureEmailCodeVerified;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,7 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['workspace' => \App\Http\Middleware\EnsureCurrentWorkspace::class]);
+        $middleware->alias([
+            'email-code.verified' => EnsureEmailCodeVerified::class,
+            'workspace' => EnsureCurrentWorkspace::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

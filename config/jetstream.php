@@ -29,7 +29,7 @@ return [
     |
     */
 
-    'middleware' => ['web', 'workspace'],
+    'middleware' => ['web', 'email-code.verified', 'workspace'],
 
     'auth_session' => AuthenticateSession::class,
 

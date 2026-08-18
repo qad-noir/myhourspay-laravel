@@ -22,4 +22,10 @@ return [
         'image_height' => 630,
         'image_alt' => 'myhourspay — Track your hours. Know your worth.',
     ],
+
+    'verification' => [
+        'expires_minutes' => 10,
+        'resend_seconds' => 60,
+        'max_attempts' => 5,
+    ],
 ];

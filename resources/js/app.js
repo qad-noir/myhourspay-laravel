@@ -32,6 +32,29 @@ document.querySelectorAll('[data-password-toggle]').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-verification-code]:not([data-bound])').forEach((form) => {
+    form.dataset.bound = 'true';
+    const inputs = [...form.querySelectorAll('.verification-code input')];
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/\D/g, '').slice(-1);
+            if (input.value && index < inputs.length - 1) inputs[index + 1].focus();
+        });
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Backspace' && !input.value && index > 0) inputs[index - 1].focus();
+            if (event.key === 'ArrowLeft' && index > 0) { event.preventDefault(); inputs[index - 1].focus(); }
+            if (event.key === 'ArrowRight' && index < inputs.length - 1) { event.preventDefault(); inputs[index + 1].focus(); }
+        });
+        input.addEventListener('paste', (event) => {
+            const digits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6).split('');
+            if (!digits.length) return;
+            event.preventDefault();
+            inputs.forEach((field, digitIndex) => { field.value = digits[digitIndex] || ''; });
+            inputs[Math.min(digits.length, inputs.length) - 1].focus();
+        });
+    });
+});
+
 const password = document.querySelector('[data-password-input]');
 const rules = document.querySelector('[data-password-rules]');
 if (password && rules) {
