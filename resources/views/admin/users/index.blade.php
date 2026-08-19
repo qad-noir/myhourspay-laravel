@@ -1,0 +1,6 @@
+@extends('layouts.admin')
+@section('title', 'Users')
+@section('content')
+<form class="admin-filter" method="GET"><input name="search" value="{{ request('search') }}" placeholder="Search name or email"><select name="status"><option value="">All statuses</option><option value="active" @selected(request('status')==='active')>Active</option><option value="suspended" @selected(request('status')==='suspended')>Suspended</option></select><button>Filter</button></form>
+<section class="admin-card admin-table-card"><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>User</th><th>Status</th><th>Workspaces</th><th>Entries</th><th>Joined</th><th></th></tr></thead><tbody>@forelse($users as $user)<tr><td><strong>{{ $user->name }}</strong><small>{{ $user->email }}</small></td><td><span class="status-pill {{ $user->suspended_at ? 'is-suspended' : 'is-active' }}">{{ $user->suspended_at ? 'Suspended' : 'Active' }}</span></td><td>{{ $user->workspaces_count }}</td><td>{{ $user->hours_entries_count }}</td><td>{{ $user->created_at->format('d M Y') }}</td><td><a href="{{ route('admin.users.show',$user) }}">View →</a></td></tr>@empty<tr><td colspan="6">No matching users.</td></tr>@endforelse</tbody></table></div><div class="admin-pagination">{{ $users->links() }}</div></section>
+@endsection

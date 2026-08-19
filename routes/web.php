@@ -5,6 +5,7 @@ use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\Admin\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +24,18 @@ Route::get('/logout', function (Request $request) {
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
+    'active',
 ])->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware('admin')->controller(AdminController::class)->group(function (): void {
+        Route::get('/', 'dashboard')->name('dashboard');
+        Route::get('/users', 'users')->name('users.index');
+        Route::get('/users/{user}', 'user')->name('users.show');
+        Route::put('/users/{user}', 'updateUser')->name('users.update');
+        Route::post('/users/{user}/suspension', 'suspend')->name('users.suspension');
+        Route::get('/workspaces', 'workspaces')->name('workspaces.index');
+        Route::get('/workspaces/{workspace}', 'workspace')->name('workspaces.show');
+        Route::put('/workspaces/{workspace}', 'updateWorkspace')->name('workspaces.update');
+    });
     Route::get('/verify-email-code', [EmailVerificationCodeController::class, 'show'])->name('email-code.show');
     Route::post('/verify-email-code', [EmailVerificationCodeController::class, 'verify'])->middleware('throttle:10,1')->name('email-code.verify');
     Route::post('/verify-email-code/resend', [EmailVerificationCodeController::class, 'resend'])->middleware('throttle:6,1')->name('email-code.resend');
