@@ -1,28 +1,11 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
-
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
-        </div>
-
-        <x-validation-errors class="mb-4" />
-
-        <form method="POST" action="{{ route('password.confirm') }}">
-            @csrf
-
-            <div>
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" autofocus />
-            </div>
-
-            <div class="flex justify-end mt-4">
-                <x-button class="ms-4">
-                    {{ __('Confirm') }}
-                </x-button>
-            </div>
+    <x-auth-shell eyebrow="Protected action" heading="Security before<br>the next step." description="Confirm your password to continue with this sensitive account action.">
+        <p class="auth-eyebrow">Confirm your identity</p><h2>Confirm your password</h2>
+        <p class="auth-panel__intro">This is a secure area. Enter your current password to continue.</p>
+        @if ($errors->any())<div class="auth-summary-error" role="alert">The password could not be confirmed.</div>@endif
+        <form method="POST" action="{{ route('password.confirm') }}" data-submit-once>@csrf
+            <x-public-input label="Current password" name="password" type="password" required autocomplete="current-password" autofocus />
+            <button type="submit" class="public-button public-button--primary auth-submit">Confirm and continue <span aria-hidden="true">→</span></button>
         </form>
-    </x-authentication-card>
+    </x-auth-shell>
 </x-guest-layout>

@@ -1,58 +1,17 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
-
+    <x-auth-shell eyebrow="Secure account access" heading="One more step<br>to your hours." description="Use your authenticator app or a recovery code to securely finish signing in.">
         <div x-data="{ recovery: false }">
-            <div class="mb-4 text-sm text-gray-600 dark:text-gray-400" x-show="! recovery">
-                {{ __('Please confirm access to your account by entering the authentication code provided by your authenticator application.') }}
-            </div>
-
-            <div class="mb-4 text-sm text-gray-600 dark:text-gray-400" x-cloak x-show="recovery">
-                {{ __('Please confirm access to your account by entering one of your emergency recovery codes.') }}
-            </div>
-
-            <x-validation-errors class="mb-4" />
-
-            <form method="POST" action="{{ route('two-factor.login') }}">
+            <p class="auth-eyebrow">Two-factor authentication</p>
+            <h2 x-text="recovery ? 'Use a recovery code' : 'Enter your security code'">Enter your security code</h2>
+            <p class="auth-panel__intro" x-text="recovery ? 'Enter one of the emergency recovery codes you saved when enabling two-factor authentication.' : 'Enter the six-digit code currently shown in your authenticator app.'"></p>
+            @if ($errors->any())<div class="auth-summary-error" role="alert">The code could not be verified. Check it and try again.</div>@endif
+            <form method="POST" action="{{ route('two-factor.login') }}" data-submit-once>
                 @csrf
-
-                <div class="mt-4" x-show="! recovery">
-                    <x-label for="code" value="{{ __('Code') }}" />
-                    <x-input id="code" class="block mt-1 w-full" type="text" inputmode="numeric" name="code" autofocus x-ref="code" autocomplete="one-time-code" />
-                </div>
-
-                <div class="mt-4" x-cloak x-show="recovery">
-                    <x-label for="recovery_code" value="{{ __('Recovery Code') }}" />
-                    <x-input id="recovery_code" class="block mt-1 w-full" type="text" name="recovery_code" x-ref="recovery_code" autocomplete="one-time-code" />
-                </div>
-
-                <div class="flex items-center justify-end mt-4">
-                    <button type="button" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                                    x-show="! recovery"
-                                    x-on:click="
-                                        recovery = true;
-                                        $nextTick(() => { $refs.recovery_code.focus() })
-                                    ">
-                        {{ __('Use a recovery code') }}
-                    </button>
-
-                    <button type="button" class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 underline cursor-pointer"
-                                    x-cloak
-                                    x-show="recovery"
-                                    x-on:click="
-                                        recovery = false;
-                                        $nextTick(() => { $refs.code.focus() })
-                                    ">
-                        {{ __('Use an authentication code') }}
-                    </button>
-
-                    <x-button class="ms-4">
-                        {{ __('Log in') }}
-                    </x-button>
-                </div>
+                <div x-show="! recovery"><x-public-input label="Authentication code" name="code" inputmode="numeric" autofocus autocomplete="one-time-code" placeholder="000000" /></div>
+                <div x-cloak x-show="recovery"><x-public-input label="Recovery code" name="recovery_code" autocomplete="one-time-code" placeholder="Enter a recovery code" /></div>
+                <button type="submit" class="public-button public-button--primary auth-submit"><span x-text="recovery ? 'Continue with recovery code' : 'Verify and continue'"></span><span aria-hidden="true">→</span></button>
             </form>
+            <button type="button" class="auth-mode-switch" @click="recovery = ! recovery; $nextTick(() => document.getElementById(recovery ? 'recovery_code' : 'code')?.focus())" x-text="recovery ? 'Use an authentication code instead' : 'Use a recovery code instead'"></button>
         </div>
-    </x-authentication-card>
+    </x-auth-shell>
 </x-guest-layout>
