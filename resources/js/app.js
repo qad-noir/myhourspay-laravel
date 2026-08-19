@@ -31,8 +31,32 @@ const initializeAdminTables = () => {
     });
 };
 
+const initializeAdminHoursForms = () => {
+    document.querySelectorAll('[data-admin-hours-form]:not([data-bound])').forEach((form) => {
+        form.dataset.bound = 'true';
+        const user = form.querySelector('[data-hours-user]');
+        const workspace = form.querySelector('[data-hours-workspace]');
+        const empty = form.querySelector('[data-hours-workspace-empty]');
+        const filterWorkspaces = () => {
+            const available = [...workspace.options].filter((option) => {
+                const matches = option.dataset.userId === user.value;
+                option.hidden = !matches;
+                option.disabled = !matches;
+                return matches;
+            });
+            if (!available.some((option) => option.selected)) workspace.value = available[0]?.value || '';
+            workspace.disabled = available.length === 0;
+            empty.hidden = available.length !== 0;
+        };
+        user.addEventListener('change', filterWorkspaces);
+        filterWorkspaces();
+    });
+};
+
 document.addEventListener('DOMContentLoaded', initializeAdminTables);
+document.addEventListener('DOMContentLoaded', initializeAdminHoursForms);
 document.addEventListener('livewire:navigated', initializeAdminTables);
+document.addEventListener('livewire:navigated', initializeAdminHoursForms);
 document.addEventListener('submit', (event) => {
     const message = event.target.dataset.confirm;
     if (message && !window.confirm(message)) event.preventDefault();

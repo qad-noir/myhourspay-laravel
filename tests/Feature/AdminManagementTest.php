@@ -61,6 +61,25 @@ class AdminManagementTest extends TestCase
         $this->assertNotSoftDeleted($entry->refresh());
     }
 
+    public function test_admin_hours_edit_scopes_workspace_options_to_entry_user(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $entryUser = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $workspace = $this->workspaceFor($entryUser);
+        $otherWorkspace = $this->workspaceFor($otherUser);
+        $entry = $entryUser->hoursEntries()->create([
+            'workspace_id'=>$workspace->id,'work_date'=>'2026-08-19','start_time'=>'09:00','end_time'=>'17:00','break_type'=>'unpaid','break_minutes'=>30,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.hours.edit', $entry));
+
+        $response->assertOk()
+            ->assertSee('data-hours-workspace', false)
+            ->assertSee('value="'.$workspace->id.'" data-user-id="'.$entryUser->id.'"', false)
+            ->assertSee('value="'.$otherWorkspace->id.'" data-user-id="'.$otherUser->id.'" hidden disabled', false);
+    }
+
     public function test_admin_can_resolve_and_reopen_an_incident(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
