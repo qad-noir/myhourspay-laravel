@@ -30,6 +30,7 @@ class WorkspaceTest extends TestCase
             ->assertSee('Checking availability')
             ->assertSee('aria-label="Back to workspace details"', false)
             ->assertSee('aria-describedby="workspace-name-help"', false)
+            ->assertSee('@submit="if (step < 3)', false)
             ->assertDontSee('wire:navigate class="workspace-onboarding__cancel"', false);
 
         $this->assertDatabaseCount('workspaces', 0);

@@ -2,11 +2,25 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
 
 class PublicFrontendTest extends TestCase
 {
+    use RefreshDatabase;
+
+    public function test_authenticated_public_navigation_shows_dashboard_instead_of_login(): void
+    {
+        $response = $this->actingAs(User::factory()->create())->get('/');
+
+        $response->assertOk()
+            ->assertSee('href="'.route('dashboard').'"', false)
+            ->assertDontSee('href="'.route('login').'"', false)
+            ->assertDontSee('href="'.route('register').'"', false);
+    }
+
     public function test_landing_page_uses_the_public_brand_and_real_auth_routes(): void
     {
         $response = $this->get('/');

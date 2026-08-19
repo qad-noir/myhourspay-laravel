@@ -172,6 +172,7 @@ html { scroll-behavior: smooth; }
 .dashboard-form-field>small,.dashboard-field>p{display:block;margin:6px 0 0;color:var(--brand-muted);font-size:8px}
 .workspace-onboarding__field select{height:48px;border-color:#302d38;color:#fff;background:#09090e;font-size:13px;outline:none}
 .workspace-onboarding__field select:focus{border-color:var(--brand-orange);box-shadow:0 0 0 3px rgba(255,107,53,.12)}
+select[name="default_break_type"],select[name="break_type"]{-webkit-appearance:none;appearance:none;padding-right:42px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m6.5 8 3.5 3.5L13.5 8' stroke='%23847d89' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 13px center!important;background-size:18px 18px!important}
 /* Monthly break and overtime dashboard summary */
 .dashboard-stats{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
 .monthly-breaks{margin:18px 0}

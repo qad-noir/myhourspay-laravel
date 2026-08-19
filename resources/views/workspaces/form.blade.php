@@ -46,7 +46,7 @@
                 <button type="button" :class="{ 'is-active': step >= 2 }" @click="step > 1 && (step = 2)" aria-label="Default break"></button>
                 <button type="button" :class="{ 'is-active': step >= 3 }" @click="step > 2 && (step = 3)" aria-label="Weekly target"></button>
             </div>
-            <form method="POST" action="{{ route('workspaces.store') }}" data-submit-once>
+            <form method="POST" action="{{ route('workspaces.store') }}" data-submit-once @submit="if (step < 3) { $event.preventDefault(); next(); }">
                 @csrf
                 <div x-show="step === 1" x-ref="step1">
                     <div class="workspace-onboarding__step-copy"><small>Step 1 of 3</small><h2>Workspace details</h2><p>Name the company or project whose hours you’ll track.</p></div>
