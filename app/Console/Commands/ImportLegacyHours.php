@@ -184,7 +184,9 @@ class ImportLegacyHours extends Command
 
         $count = DB::transaction(function () use ($source): int {
             $ids = DB::table('hours_import_records')->where('source', $source)->pluck('hours_entry_id');
-            $deleted = HoursEntry::query()->whereKey($ids)->delete();
+            // Import rollback is an explicit reversal of machine-created rows,
+            // so remove them permanently instead of placing them in admin trash.
+            $deleted = HoursEntry::query()->whereKey($ids)->forceDelete();
             DB::table('hours_import_records')->where('source', $source)->delete();
 
             return $deleted;
