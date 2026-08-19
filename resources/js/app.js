@@ -112,11 +112,11 @@ document.addEventListener('click', (event) => {
     });
 });
 
-window.hoursCalendar = (defaultBreak, initialEntry = null, initialDate = null, openInitially = false) => ({
+window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry = null, initialDate = null, openInitially = false) => ({
     open: openInitially,
     editing: Boolean(initialEntry),
     confirmingDelete: false,
-    form: initialEntry ? { ...initialEntry } : { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, notes: '' },
+    form: initialEntry ? { break_type: 'unpaid', ...initialEntry } : { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, notes: '' },
     init() {
         if (this.open) {
             document.body.classList.add('dashboard-dialog-open');
@@ -126,7 +126,7 @@ window.hoursCalendar = (defaultBreak, initialEntry = null, initialDate = null, o
     openEntry(date, entry = null) {
         this.editing = Boolean(entry);
         this.confirmingDelete = false;
-        this.form = entry ? { ...entry } : { id: null, work_date: date, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, notes: '' };
+        this.form = entry ? { break_type: 'unpaid', ...entry } : { id: null, work_date: date, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, notes: '' };
         this.open = true;
         document.body.classList.add('dashboard-dialog-open');
         this.$nextTick(() => document.getElementById('work_date')?.focus());
@@ -138,7 +138,8 @@ window.hoursCalendar = (defaultBreak, initialEntry = null, initialDate = null, o
     },
     get preview() {
         const parse = (value) => { const parts = String(value).split(':').map(Number); return parts.length === 2 ? parts[0] * 60 + parts[1] : Number.NaN; };
-        const minutes = parse(this.form.end_time) - parse(this.form.start_time) - Number(this.form.break_minutes);
+        const gross = parse(this.form.end_time) - parse(this.form.start_time);
+        const minutes = this.form.break_type === 'paid' ? gross : gross - Number(this.form.break_minutes);
         if (!Number.isFinite(minutes) || minutes <= 0) return 'Invalid shift';
         return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
     },
@@ -181,7 +182,7 @@ const showActivityTooltip = (info) => {
     const tooltip = document.createElement('div');
     tooltip.className = 'hours-activity-tooltip';
     tooltip.dataset.hoursTooltip = 'true';
-    tooltip.innerHTML = `<span>${escapeHtml(entry.work_date)}</span><strong>${escapeHtml(entry.start_time)}–${escapeHtml(entry.end_time)}</strong><div><b>${escapeHtml(entry.net_formatted)}</b> net · ${escapeHtml(entry.break_minutes)}m break</div>${entry.notes ? `<p>${escapeHtml(entry.notes)}</p>` : ''}`;
+    tooltip.innerHTML = `<span>${escapeHtml(entry.work_date)}</span><strong>${escapeHtml(entry.start_time)}–${escapeHtml(entry.end_time)}</strong><div><b>${escapeHtml(entry.net_formatted)}</b> net · ${escapeHtml(entry.break_minutes)}m ${escapeHtml(entry.break_type)} break</div>${entry.notes ? `<p>${escapeHtml(entry.notes)}</p>` : ''}`;
     document.body.appendChild(tooltip);
     const rect = info.el.getBoundingClientRect();
     const left = Math.min(window.innerWidth - tooltip.offsetWidth - 12, Math.max(12, rect.left));

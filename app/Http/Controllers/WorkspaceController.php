@@ -44,6 +44,7 @@ class WorkspaceController extends Controller
         $request->merge([
             'name' => trim((string) $request->input('name')),
             'position' => trim((string) $request->input('position')),
+            'default_break_type' => $request->input('default_break_type', 'unpaid'),
         ]);
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:3', 'max:100', function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
@@ -52,6 +53,7 @@ class WorkspaceController extends Controller
                 }
             }],
             'position' => ['required', 'string', 'min:3', 'max:100'],
+            'default_break_type' => ['required', 'in:paid,unpaid'],
             'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
             'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168'],
         ]);
@@ -62,6 +64,7 @@ class WorkspaceController extends Controller
                 $firstWorkspace = ! $user->workspaces()->exists();
                 $workspace = $user->ownedWorkspaces()->create([
                     'name' => $validated['name'],
+                    'default_break_type' => $validated['default_break_type'],
                     'default_break_minutes' => $validated['default_break_minutes'],
                     'weekly_target_minutes' => (int) round((float) $validated['weekly_target_hours'] * 60),
                 ]);

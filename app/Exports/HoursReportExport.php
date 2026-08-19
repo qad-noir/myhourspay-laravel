@@ -34,14 +34,14 @@ class HoursReportExport
         $sheet->setCellValue('A8', 'Period total');
         $sheet->setCellValue('B8', $summary['total_formatted']);
 
-        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes'];
+        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes'];
         $sheet->fromArray($headings, null, 'A10');
 
         $row = 11;
         foreach ($summary['entries'] as $entry) {
             $values = [
                 $entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'],
-                $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'],
+                ucfirst($entry['break_type']), $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'],
                 $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''),
                 $entry['weekly_total'], $entry['weekly_variance'], $this->safeText($entry['notes'] ?? ''),
             ];
@@ -56,15 +56,15 @@ class HoursReportExport
             $row++;
         }
 
-        $sheet->mergeCells('A1:K1');
+        $sheet->mergeCells('A1:L1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(18)->setColor(new Color('FFFFFFFF'));
-        $sheet->getStyle('A1:K1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F766E');
-        $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A10:K10')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A10:K10')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
+        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F766E');
+        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A10:L10')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A10:L10')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
         $sheet->freezePane('A11');
-        $sheet->setAutoFilter('A10:K'.max(10, $row - 1));
-        foreach (range('A', 'K') as $column) {
+        $sheet->setAutoFilter('A10:L'.max(10, $row - 1));
+        foreach (range('A', 'L') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 

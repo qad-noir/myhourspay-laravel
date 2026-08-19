@@ -40,7 +40,7 @@
                 <thead><tr><th scope="col">Date</th><th scope="col">Time</th><th scope="col">Break</th><th scope="col">Gross</th><th scope="col">Net</th><th scope="col">Week</th><th scope="col">Notes</th></tr></thead>
                 <tbody>@foreach ($summary['entries'] as $entry)<tr>
                     <td data-label="Date"><strong>{{ $entry['work_date'] }}</strong><small>{{ $entry['weekday'] }}</small></td>
-                    <td data-label="Time">{{ $entry['start_time'] }}–{{ $entry['end_time'] }}</td><td data-label="Break">{{ $entry['break_minutes'] }}m</td><td data-label="Gross">{{ $entry['gross_formatted'] }}</td><td data-label="Net"><strong>{{ $entry['net_formatted'] }}</strong></td>
+                    <td data-label="Time">{{ $entry['start_time'] }}–{{ $entry['end_time'] }}</td><td data-label="Break">{{ $entry['break_minutes'] }}m {{ $entry['break_type'] }}</td><td data-label="Gross">{{ $entry['gross_formatted'] }}</td><td data-label="Net"><strong>{{ $entry['net_formatted'] }}</strong></td>
                     <td data-label="Week"><strong>W{{ $entry['week_number'] }}{{ $entry['partial_week'] ? ' · partial' : '' }}</strong><small>{{ $entry['weekly_total'] }} · {{ $entry['weekly_variance'] }}</small></td>
                     <td data-label="Notes" class="report-notes">{{ $entry['notes'] ?: '—' }}</td>
                 </tr>@endforeach</tbody>

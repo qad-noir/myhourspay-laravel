@@ -30,6 +30,13 @@ class DashboardController extends Controller
             $monthStart->toDateString(),
             $monthEnd->toDateString(),
         );
+        $overtime = $calculator->summarizeEntries(
+            $request->user()->hoursEntries()->forWorkspace($workspace)
+                ->forPeriod($monthStart->startOfWeek()->toDateString(), $monthEnd->endOfWeek()->toDateString())
+                ->orderBy('work_date')->get(),
+            $monthStart->startOfWeek()->toDateString(),
+            $monthEnd->endOfWeek()->toDateString(),
+        )['overtime_minutes'];
         $byDate = collect($week['entries'])->keyBy('work_date');
         $days = collect(range(0, 6))->map(function (int $offset) use ($weekStart, $byDate): array {
             $date = $weekStart->addDays($offset);
@@ -42,6 +49,6 @@ class DashboardController extends Controller
         $hour = (int) $now->format('G');
         $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 
-        return view('dashboard', compact('now', 'week', 'month', 'days', 'variance', 'recent', 'greeting', 'calculator'));
+        return view('dashboard', compact('now', 'week', 'month', 'overtime', 'days', 'variance', 'recent', 'greeting', 'calculator'));
     }
 }

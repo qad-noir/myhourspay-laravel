@@ -8,6 +8,17 @@ use InvalidArgumentException;
 
 trait ValidatesHoursEntry
 {
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('break_type')) {
+            $entry = $this->route('hoursEntry');
+            $default = $entry?->break_type
+                ?? app(\App\Services\CurrentWorkspace::class)->for($this->user())->default_break_type
+                ?? 'unpaid';
+            $this->merge(['break_type' => $default]);
+        }
+    }
+
     protected function entryRules(): array
     {
         return [

@@ -7,7 +7,7 @@
     @endphp
 
     <div
-        x-data="hoursCalendar({{ app(App\Services\CurrentWorkspace::class)->for(auth()->user())->default_break_minutes }}, @js($initialEntry), @js($initialDate), {{ $openInitially ? 'true' : 'false' }})"
+        x-data="hoursCalendar({{ app(App\Services\CurrentWorkspace::class)->for(auth()->user())->default_break_minutes }}, @js(app(App\Services\CurrentWorkspace::class)->for(auth()->user())->default_break_type), @js($initialEntry), @js($initialDate), {{ $openInitially ? 'true' : 'false' }})"
         @hours-day-selected.window="openEntry($event.detail.date, $event.detail.entry)"
         data-hours-calendar-page
     >
@@ -24,7 +24,7 @@
 
         <section class="dashboard-panel fullcalendar-panel" aria-labelledby="calendar-title">
             <div class="dashboard-panel-heading calendar-panel-heading">
-                <div><h2 id="calendar-title">Monthly calendar</h2><p>Worked days show net hours after unpaid breaks.</p></div>
+                <div><h2 id="calendar-title">Monthly calendar</h2><p>Worked days show net hours after applying paid or unpaid breaks.</p></div>
                 <div class="calendar-custom-controls" aria-label="Calendar navigation">
                     <button type="button" data-calendar-prev aria-label="Previous month">←</button>
                     <button type="button" data-calendar-today>Today</button>

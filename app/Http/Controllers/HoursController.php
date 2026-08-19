@@ -59,7 +59,7 @@ class HoursController extends Controller
                 'title' => $entry['net_formatted'].' worked',
                 'start' => $entry['work_date'],
                 'allDay' => true,
-                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted'])->all(),
+                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted'])->all(),
             ], $summary['entries']),
             'summary' => $summary,
             'monthSummary' => $monthSummary,
@@ -125,9 +125,9 @@ class HoursController extends Controller
             fputcsv($stream, ['Workspace', $export->safeText($workspace->name)]);
             fputcsv($stream, ['Weekly target', $this->calculator->formatMinutes($workspace->weekly_target_minutes)]);
             fputcsv($stream, []);
-            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes']);
+            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes']);
             foreach ($summary['entries'] as $entry) {
-                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $export->safeText($entry['notes'] ?? '')]);
+                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $export->safeText($entry['notes'] ?? '')]);
             }
             fclose($stream);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);

@@ -12,6 +12,7 @@
         @php($initialStep = $errors->has('default_break_minutes') ? 2 : ($errors->has('weekly_target_hours') ? 3 : 1))
         <section class="workspace-onboarding__card" x-data="{
             step: {{ $initialStep }},
+            breakType: @js(old('default_break_type', 'unpaid')),
             workspaceName: @js(old('name', '')),
             availability: 'idle',
             availabilityMessage: '',
@@ -59,7 +60,8 @@
                     <button type="button" class="workspace-onboarding__submit" @click="next()">Continue <span>→</span></button>
                 </div>
                 <div x-cloak x-show="step === 2" x-ref="step2">
-                    <div class="workspace-onboarding__step-copy"><small>Step 2 of 3</small><h2>Default break</h2><p>This unpaid break is prefilled whenever you add an hours entry.</p></div>
+                    <div class="workspace-onboarding__step-copy"><small>Step 2 of 3</small><h2>Default break</h2><p x-text="breakType === 'paid' ? 'This break will be included in your hours.' : 'This break will be deducted from your hours.'"></p></div>
+                    <div class="workspace-onboarding__field"><label for="default_break_type">Break type</label><select id="default_break_type" name="default_break_type" x-model="breakType" required><option value="unpaid">Unpaid break</option><option value="paid">Paid break</option></select>@error('default_break_type')<small>{{ $message }}</small>@enderror</div>
                     <div class="workspace-onboarding__field"><label for="default_break_minutes">Default break (minutes)</label><input id="default_break_minutes" name="default_break_minutes" type="number" min="0" max="1439" value="{{ old('default_break_minutes', 30) }}" required>@error('default_break_minutes')<small>{{ $message }}</small>@enderror</div>
                     <div class="workspace-onboarding__actions"><button type="button" class="workspace-onboarding__back" @click="step = 1" aria-label="Back to workspace details"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 5-5 5 5 5" /></svg></button><button type="button" class="workspace-onboarding__submit" @click="next()">Continue <span>→</span></button></div>
                 </div>
