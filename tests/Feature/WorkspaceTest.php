@@ -47,7 +47,7 @@ class WorkspaceTest extends TestCase
             ->assertRedirect(route('workspaces.onboarding'))
             ->assertSessionHas('status', 'Use the Log out button to sign out securely.');
 
-        $this->actingAs($user)->post(route('logout'))->assertRedirect('/');
+        $this->actingAs($user)->post(route('logout'))->assertRedirect(route('login'));
         $this->assertGuest();
     }
 
