@@ -39,6 +39,8 @@ class User extends Authenticatable
         'default_break_minutes',
         'weekly_target_minutes',
         'current_workspace_id',
+        'is_admin',
+        'suspended_at',
     ];
 
     /**
@@ -75,6 +77,8 @@ class User extends Authenticatable
             'default_break_minutes' => 'integer',
             'weekly_target_minutes' => 'integer',
             'current_workspace_id' => 'integer',
+            'is_admin' => 'boolean',
+            'suspended_at' => 'datetime',
         ];
     }
 

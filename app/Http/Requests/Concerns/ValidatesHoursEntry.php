@@ -15,6 +15,7 @@ trait ValidatesHoursEntry
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],
             'break_minutes' => ['required', 'integer', 'min:0', 'max:'.config('hours.maximum_break_minutes')],
+            'break_type' => ['required', 'in:paid,unpaid'],
             'notes' => ['nullable', 'string', 'max:'.config('hours.maximum_notes_length')],
         ];
     }
@@ -32,6 +33,7 @@ trait ValidatesHoursEntry
                     (string) $this->input('start_time'),
                     (string) $this->input('end_time'),
                     (int) $this->input('break_minutes'),
+                    (string) $this->input('break_type'),
                 );
             } catch (InvalidArgumentException $exception) {
                 $validator->errors()->add('end_time', $exception->getMessage());

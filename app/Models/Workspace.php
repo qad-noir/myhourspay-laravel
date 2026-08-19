@@ -12,7 +12,7 @@ class Workspace extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'default_break_minutes', 'weekly_target_minutes'];
+    protected $fillable = ['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes'];
 
     protected function casts(): array
     {

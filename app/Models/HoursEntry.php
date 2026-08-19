@@ -16,6 +16,7 @@ class HoursEntry extends Model
         'start_time',
         'end_time',
         'break_minutes',
+        'break_type',
         'notes',
         'workspace_id',
     ];

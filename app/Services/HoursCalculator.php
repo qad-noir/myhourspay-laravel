@@ -44,7 +44,7 @@ class HoursCalculator
         return $gross;
     }
 
-    public function calculateNetMinutes(string $start, string $end, int $breakMinutes): int
+    public function calculateNetMinutes(string $start, string $end, int $breakMinutes, string $breakType = 'unpaid'): int
     {
         if ($breakMinutes < 0) {
             throw new InvalidArgumentException('Break minutes cannot be negative.');
@@ -55,7 +55,11 @@ class HoursCalculator
             throw new InvalidArgumentException('Break must be shorter than the shift.');
         }
 
-        return $gross - $breakMinutes;
+        if (! in_array($breakType, ['paid', 'unpaid'], true)) {
+            throw new InvalidArgumentException('Choose a valid break type.');
+        }
+
+        return $breakType === 'paid' ? $gross : $gross - $breakMinutes;
     }
 
     public function validateDate(string $date): void
@@ -75,7 +79,8 @@ class HoursCalculator
         $start = substr((string) $data['start_time'], 0, 5);
         $end = substr((string) $data['end_time'], 0, 5);
         $gross = $this->calculateGrossMinutes($start, $end);
-        $net = $this->calculateNetMinutes($start, $end, (int) $data['break_minutes']);
+        $breakType = (string) ($data['break_type'] ?? 'unpaid');
+        $net = $this->calculateNetMinutes($start, $end, (int) $data['break_minutes'], $breakType);
 
         return array_merge($data, [
             'work_date' => $date->format('Y-m-d'),
@@ -86,6 +91,7 @@ class HoursCalculator
             'gross_formatted' => $this->formatMinutes($gross),
             'net_minutes' => $net,
             'net_formatted' => $this->formatMinutes($net),
+            'break_type' => $breakType,
             'week_key' => $date->format('o-\WW'),
             'week_number' => (int) $date->format('W'),
             'week_start' => $date->startOfWeek()->format('Y-m-d'),
@@ -98,11 +104,22 @@ class HoursCalculator
         $items = [];
         $weeks = [];
         $total = 0;
+        $breakCount = 0;
+        $paidBreakMinutes = 0;
+        $unpaidBreakMinutes = 0;
 
         foreach ($entries instanceof Traversable ? iterator_to_array($entries) : $entries as $entry) {
             $item = $this->enrichEntry($entry);
             $items[] = $item;
             $total += $item['net_minutes'];
+            if ((int) $item['break_minutes'] > 0) {
+                $breakCount++;
+                if ($item['break_type'] === 'paid') {
+                    $paidBreakMinutes += (int) $item['break_minutes'];
+                } else {
+                    $unpaidBreakMinutes += (int) $item['break_minutes'];
+                }
+            }
             $weeks[$item['week_key']] ??= [
                 'key' => $item['week_key'],
                 'number' => $item['week_number'],
@@ -139,6 +156,12 @@ class HoursCalculator
             'worked_days' => count($items),
             'average_minutes' => count($items) > 0 ? (int) round($total / count($items)) : 0,
             'average_formatted' => $this->formatMinutes(count($items) > 0 ? (int) round($total / count($items)) : 0),
+            'break_count' => $breakCount,
+            'paid_break_minutes' => $paidBreakMinutes,
+            'paid_break_formatted' => $this->formatMinutes($paidBreakMinutes),
+            'unpaid_break_minutes' => $unpaidBreakMinutes,
+            'unpaid_break_formatted' => $this->formatMinutes($unpaidBreakMinutes),
+            'overtime_minutes' => array_sum(array_map(fn (array $week): int => max(0, $week['variance_minutes']), $weeks)),
         ];
     }
 
