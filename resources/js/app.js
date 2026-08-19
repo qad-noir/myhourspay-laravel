@@ -11,7 +11,23 @@ const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]:not([data-bound])').forEach((table) => {
         table.dataset.bound = 'true';
         const columns = JSON.parse(table.dataset.columns || '[]');
-        new DataTable(table, { processing: true, serverSide: true, ajax: table.dataset.url, columns, responsive: { details: true }, scrollX: true, pageLength: 20, lengthMenu: [10, 20, 50, 100], order: [[0, 'desc']], autoWidth: false });
+        const filters = document.querySelector(`[data-table-filters="${table.id}"]`);
+        const dataTable = new DataTable(table, {
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: table.dataset.url,
+                data: (data) => filters?.querySelectorAll('[name]').forEach((field) => { data[field.name] = field.value; }),
+            },
+            columns,
+            responsive: { details: true },
+            scrollX: true,
+            pageLength: 20,
+            lengthMenu: [10, 20, 50, 100],
+            order: [[0, 'desc']],
+            autoWidth: false,
+        });
+        filters?.addEventListener('change', () => dataTable.ajax.reload());
     });
 };
 
