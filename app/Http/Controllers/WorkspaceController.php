@@ -15,7 +15,7 @@ class WorkspaceController extends Controller
 {
     public function onboarding(Request $request, CurrentWorkspace $current): View|RedirectResponse
     {
-        if ($current->existsFor($request->user())) {
+        if (! $request->user()->workspace_onboarding_reset_at && $current->existsFor($request->user())) {
             return to_route('dashboard');
         }
 
@@ -72,7 +72,7 @@ class WorkspaceController extends Controller
                 if ($firstWorkspace) {
                     $user->hoursEntries()->whereNull('workspace_id')->update(['workspace_id' => $workspace->id]);
                 }
-                $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+                $user->forceFill(['current_workspace_id' => $workspace->id, 'workspace_onboarding_reset_at' => null])->save();
             });
         } catch (UniqueConstraintViolationException) {
             return back()->withInput()->withErrors(['name' => 'You already have a workspace with this name.']);

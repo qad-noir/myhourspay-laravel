@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
+use App\Services\OperationalIncidentRecorder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -53,6 +54,11 @@ class CreateNewUser implements CreatesNewUsers
                 'ip_address' => request()->ip(),
                 'user_agent' => Str::limit((string) request()->userAgent(), 500),
                 'exception' => $exception,
+            ]);
+            app(OperationalIncidentRecorder::class)->record('registration.verification_email_failed', $exception, [
+                'reference' => $reference,
+                'name' => $input['name'] ?? null,
+                'email' => $input['email'] ?? null,
             ]);
 
             throw ValidationException::withMessages([

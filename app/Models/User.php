@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
@@ -26,6 +27,7 @@ class User extends Authenticatable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -41,6 +43,7 @@ class User extends Authenticatable
         'current_workspace_id',
         'is_admin',
         'suspended_at',
+        'workspace_onboarding_reset_at',
     ];
 
     /**
@@ -79,6 +82,7 @@ class User extends Authenticatable
             'current_workspace_id' => 'integer',
             'is_admin' => 'boolean',
             'suspended_at' => 'datetime',
+            'workspace_onboarding_reset_at' => 'datetime',
         ];
     }
 

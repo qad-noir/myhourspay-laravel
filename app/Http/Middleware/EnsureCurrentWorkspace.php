@@ -17,7 +17,7 @@ class EnsureCurrentWorkspace
             return $next($request);
         }
 
-        if (! $this->workspaces->existsFor($request->user())) {
+        if ($request->user()->workspace_onboarding_reset_at || ! $this->workspaces->existsFor($request->user())) {
             return to_route('workspaces.onboarding');
         }
 
