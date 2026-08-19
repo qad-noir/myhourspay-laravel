@@ -25,6 +25,31 @@ class HoursCalculatorTest extends TestCase
         $this->assertSame(450, $this->calculator->calculateNetMinutes('09:00', '17:30', 60));
     }
 
+    public function test_paid_breaks_are_included_and_break_totals_are_separated(): void
+    {
+        $this->assertSame(510, $this->calculator->calculateNetMinutes('09:00', '17:30', 30, 'paid'));
+        $summary = $this->calculator->summarizeEntries([
+            ['work_date' => '2026-08-03', 'start_time' => '09:00', 'end_time' => '17:30', 'break_minutes' => 30, 'break_type' => 'paid'],
+            ['work_date' => '2026-08-04', 'start_time' => '09:00', 'end_time' => '17:30', 'break_minutes' => 45, 'break_type' => 'unpaid'],
+            ['work_date' => '2026-08-05', 'start_time' => '09:00', 'end_time' => '17:00', 'break_minutes' => 0, 'break_type' => 'paid'],
+        ]);
+
+        $this->assertSame(2, $summary['break_count']);
+        $this->assertSame(30, $summary['paid_break_minutes']);
+        $this->assertSame(45, $summary['unpaid_break_minutes']);
+    }
+
+    public function test_overtime_sums_positive_weekly_excess_without_negative_offsets(): void
+    {
+        $summary = $this->calculator->summarizeEntries([
+            ['work_date' => '2026-08-03', 'start_time' => '00:00', 'end_time' => '23:00', 'break_minutes' => 0, 'break_type' => 'paid'],
+            ['work_date' => '2026-08-04', 'start_time' => '00:00', 'end_time' => '23:00', 'break_minutes' => 0, 'break_type' => 'paid'],
+            ['work_date' => '2026-08-10', 'start_time' => '09:00', 'end_time' => '17:00', 'break_minutes' => 0, 'break_type' => 'unpaid'],
+        ]);
+
+        $this->assertSame(360, $summary['overtime_minutes']);
+    }
+
     #[DataProvider('invalidShiftProvider')]
     public function test_rejects_invalid_shifts(string $start, string $end, int $break): void
     {
