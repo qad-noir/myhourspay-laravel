@@ -1,0 +1,3 @@
+@extends('layouts.admin') @section('title','Hours entries') @section('content')
+<div class="admin-page-actions"><a class="admin-primary-action" href="{{ route('admin.hours.create') }}">＋ Create hours entry</a></div><section class="admin-card admin-table-card"><x-admin.data-table id="hours-table" :url="route('admin.data.hours')" :columns="[['data'=>'date','title'=>'Date'],['data'=>'user','title'=>'User'],['data'=>'workspace','title'=>'Workspace'],['data'=>'time','title'=>'Time'],['data'=>'break','title'=>'Break'],['data'=>'actions','title'=>'Actions','orderable'=>false,'searchable'=>false]]" /></section>
+@endsection

@@ -21,6 +21,8 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
+        "datatables.net-dt": "^3.0.2",
+        "datatables.net-responsive-dt": "^4.0.2",
         "fullcalendar": "^7.0.2",
         "temporal-polyfill": "^1.0.4"
     }

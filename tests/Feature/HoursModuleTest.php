@@ -38,7 +38,7 @@ class HoursModuleTest extends TestCase
         $this->assertDatabaseHas('hours_entries', ['id' => $entry->id, 'break_minutes' => 0, 'notes' => 'Updated']);
 
         $this->actingAs($user)->delete(route('hours.entries.destroy', $entry))->assertRedirect();
-        $this->assertDatabaseMissing('hours_entries', ['id' => $entry->id]);
+        $this->assertSoftDeleted('hours_entries', ['id' => $entry->id]);
     }
 
     public function test_duplicate_dates_are_per_user_and_validation_is_strict(): void

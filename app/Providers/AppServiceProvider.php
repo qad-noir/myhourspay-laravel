@@ -24,6 +24,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(HoursEntry::class, HoursEntryPolicy::class);
-        Route::bind('hoursEntry', fn (string $value) => request()->user()?->hoursEntries()->findOrFail($value));
+        Route::bind('hoursEntry', function (string $value): HoursEntry {
+            $user = request()->user();
+
+            return $user?->is_admin
+                ? HoursEntry::query()->findOrFail($value)
+                : $user?->hoursEntries()->findOrFail($value);
+        });
     }
 }

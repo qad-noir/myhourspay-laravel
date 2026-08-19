@@ -14,6 +14,7 @@ class HoursEntry extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'user_id',
         'work_date',
         'start_time',
         'end_time',

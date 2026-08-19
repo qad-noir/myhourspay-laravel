@@ -2,6 +2,25 @@ import { Calendar } from 'fullcalendar';
 import dayGridPlugin from 'fullcalendar/daygrid';
 import interactionPlugin from 'fullcalendar/interaction';
 import 'fullcalendar/skeleton.css';
+import DataTable from 'datatables.net-dt';
+import 'datatables.net-responsive-dt';
+import 'datatables.net-dt/css/dataTables.dataTables.css';
+import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
+
+const initializeAdminTables = () => {
+    document.querySelectorAll('[data-admin-table]:not([data-bound])').forEach((table) => {
+        table.dataset.bound = 'true';
+        const columns = JSON.parse(table.dataset.columns || '[]');
+        new DataTable(table, { processing: true, serverSide: true, ajax: table.dataset.url, columns, responsive: { details: true }, scrollX: true, pageLength: 20, lengthMenu: [10, 20, 50, 100], order: [[0, 'desc']], autoWidth: false });
+    });
+};
+
+document.addEventListener('DOMContentLoaded', initializeAdminTables);
+document.addEventListener('livewire:navigated', initializeAdminTables);
+document.addEventListener('submit', (event) => {
+    const message = event.target.dataset.confirm;
+    if (message && !window.confirm(message)) event.preventDefault();
+});
 
 const nav = document.querySelector('[data-public-nav]');
 if (nav) {
