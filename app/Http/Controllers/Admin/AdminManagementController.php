@@ -134,7 +134,15 @@ class AdminManagementController extends Controller
     public function forceDeleteHours(Request $request,int $hoursEntry): RedirectResponse { $entry=HoursEntry::onlyTrashed()->findOrFail($hoursEntry); $this->audit->record($request,'hours.permanently_deleted',$entry); $entry->forceDelete(); return back()->with('status','Hours entry permanently deleted.'); }
     public function trash(): View { return view('admin.trash'); }
 
-    private function trashWorkspaceData(Workspace $workspace): void { $workspace->hoursEntries()->delete(); User::query()->where('current_workspace_id',$workspace->id)->update(['current_workspace_id'=>null]); $workspace->delete(); }
+    private function trashWorkspaceData(Workspace $workspace): void
+    {
+        $workspace->hoursEntries()->delete();
+        User::query()->where('current_workspace_id', $workspace->id)->get()->each(function (User $user) use ($workspace): void {
+            $fallback = $user->workspaces()->whereKeyNot($workspace->id)->value('workspaces.id');
+            $user->forceFill(['current_workspace_id' => $fallback])->save();
+        });
+        $workspace->delete();
+    }
     private function workspaceData(Request $request): array { return $request->validate(['owner_id'=>['required','exists:users,id'],'position'=>['required','string','min:3','max:100'],'name'=>['required','string','min:3','max:100',Rule::unique('workspaces')->where('owner_id',$request->input('owner_id'))],'default_break_type'=>['required','in:paid,unpaid'],'default_break_minutes'=>['required','integer','min:0','max:1439'],'weekly_target_hours'=>['required','numeric','min:1','max:168']]); }
     private function workspaceValues(array $data): array { return ['name'=>trim($data['name']),'default_break_type'=>$data['default_break_type'],'default_break_minutes'=>$data['default_break_minutes'],'weekly_target_minutes'=>(int)round($data['weekly_target_hours']*60)]; }
     private function hoursData(Request $request, ?HoursEntry $entry=null): array

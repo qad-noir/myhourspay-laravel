@@ -76,6 +76,21 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseHas('admin_audit_logs', ['action'=>'incident.reopened','target_id'=>$incident->id]);
     }
 
+    public function test_trashing_current_workspace_selects_an_available_fallback(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+        $current = $this->workspaceFor($user);
+        $fallback = $user->ownedWorkspaces()->create(['name'=>'Second','default_break_type'=>'unpaid','default_break_minutes'=>30,'weekly_target_minutes'=>2400]);
+        $fallback->users()->attach($user, ['role'=>'owner','position'=>'Founder']);
+        $user->update(['current_workspace_id' => $current->id]);
+
+        $this->actingAs($admin)->delete(route('admin.workspaces.destroy', $current))->assertRedirect();
+
+        $this->assertSoftDeleted($current);
+        $this->assertSame($fallback->id, $user->refresh()->current_workspace_id);
+    }
+
     private function workspaceFor(User $user): Workspace
     {
         $workspace = $user->ownedWorkspaces()->create(['name'=>'Acme','default_break_type'=>'unpaid','default_break_minutes'=>30,'weekly_target_minutes'=>2400]);
