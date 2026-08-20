@@ -15,6 +15,7 @@
         <x-dashboard.stat-card label="Days worked" :value="$summary['worked_days']" support="Days with an entry" icon="calendar" tone="analytics" />
         <x-dashboard.stat-card label="Average day" :value="$summary['average_formatted']" support="Across worked days" icon="stopwatch" tone="violet" />
         <x-dashboard.stat-card label="Weeks included" :value="count($summary['weeks'])" support="Calendar weeks in range" icon="reports" tone="positive" />
+        <x-dashboard.stat-card label="Overtime" :value="$summary['overtime_formatted']" support="Positive weekly excess" icon="target" :tone="$summary['overtime_minutes'] > 0 ? 'positive' : 'neutral'" />
     </section>
 
     <section id="exports" class="dashboard-panel report-export-panel">
@@ -37,11 +38,12 @@
             </x-dashboard.empty-state>
         @else
             <div class="report-table-wrap"><table class="report-table">
-                <thead><tr><th scope="col">Date</th><th scope="col">Time</th><th scope="col">Break</th><th scope="col">Gross</th><th scope="col">Net</th><th scope="col">Week</th><th scope="col">Notes</th></tr></thead>
+                <thead><tr><th scope="col">Date</th><th scope="col">Time</th><th scope="col">Break</th><th scope="col">Hours worked</th><th scope="col">Week</th><th scope="col">Overtime</th><th scope="col">Notes</th></tr></thead>
                 <tbody>@foreach ($summary['entries'] as $entry)<tr>
                     <td data-label="Date"><strong>{{ $entry['work_date'] }}</strong><small>{{ $entry['weekday'] }}</small></td>
-                    <td data-label="Time">{{ $entry['start_time'] }}–{{ $entry['end_time'] }}</td><td data-label="Break">{{ $entry['break_minutes'] }}m {{ $entry['break_type'] }}</td><td data-label="Gross">{{ $entry['gross_formatted'] }}</td><td data-label="Net"><strong>{{ $entry['net_formatted'] }}</strong></td>
+                    <td data-label="Time">{{ $entry['start_time'] }}–{{ $entry['end_time'] }}</td><td data-label="Break">{{ $entry['break_minutes'] }}m {{ $entry['break_type'] }}</td><td data-label="Hours worked"><strong>{{ $entry['net_formatted'] }}</strong></td>
                     <td data-label="Week"><strong>W{{ $entry['week_number'] }}{{ $entry['partial_week'] ? ' · partial' : '' }}</strong><small>{{ $entry['weekly_total'] }} · {{ $entry['weekly_variance'] }}</small></td>
+                    <td data-label="Overtime"><strong>{{ $entry['weekly_overtime_formatted'] }}</strong></td>
                     <td data-label="Notes" class="report-notes">{{ $entry['notes'] ?: '—' }}</td>
                 </tr>@endforeach</tbody>
             </table></div>

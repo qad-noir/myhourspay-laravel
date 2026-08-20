@@ -124,10 +124,16 @@ class HoursController extends Controller
             fwrite($stream, "\xEF\xBB\xBF");
             fputcsv($stream, ['Workspace', $export->safeText($workspace->name)]);
             fputcsv($stream, ['Weekly target', $this->calculator->formatMinutes($workspace->weekly_target_minutes)]);
+            fputcsv($stream, ['Period hours', $summary['total_formatted']]);
+            fputcsv($stream, ['Overtime', $summary['overtime_formatted']]);
+            fputcsv($stream, ['Breaks logged', $summary['break_count']]);
+            fputcsv($stream, ['Paid breaks included', $summary['paid_break_formatted']]);
+            fputcsv($stream, ['Unpaid breaks deducted', $summary['unpaid_break_formatted']]);
+            fputcsv($stream, ['Workspace default break', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes']);
             fputcsv($stream, []);
-            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes']);
+            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Notes']);
             foreach ($summary['entries'] as $entry) {
-                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $export->safeText($entry['notes'] ?? '')]);
+                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], $export->safeText($entry['notes'] ?? '')]);
             }
             fclose($stream);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
@@ -172,10 +178,14 @@ class HoursController extends Controller
             $week = $weeks[$entry['week_key']];
             $entry['weekly_total'] = $week['formatted'];
             $entry['weekly_variance'] = $week['variance_formatted'];
+            $entry['weekly_overtime_minutes'] = max(0, $week['variance_minutes']);
+            $entry['weekly_overtime_formatted'] = $calculator->formatMinutes($entry['weekly_overtime_minutes']);
             $entry['partial_week'] = $week['partial'];
         }
         unset($entry);
         $period['weeks'] = $weekSummary['weeks'];
+        $period['overtime_minutes'] = $weekSummary['overtime_minutes'];
+        $period['overtime_formatted'] = $calculator->formatMinutes($weekSummary['overtime_minutes']);
 
         return $period;
     }

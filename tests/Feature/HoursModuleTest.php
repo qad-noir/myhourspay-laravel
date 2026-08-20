@@ -23,7 +23,7 @@ class HoursModuleTest extends TestCase
     {
         $user = $this->workspaceUser();
         $this->actingAs($user)->get('/hours?month=2026-08')->assertOk()->assertSee('Hours')->assertSee($user->name);
-        $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('Hours');
+        $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('Hours')->assertSee('Overtime this week')->assertSee('Overtime this month');
     }
 
     public function test_user_can_create_update_and_delete_an_entry(): void
@@ -89,6 +89,11 @@ class HoursModuleTest extends TestCase
         $csvContent = $csv->streamedContent();
         $this->assertStringContainsString($user->currentWorkspace()->firstOrFail()->name, $csvContent);
         $this->assertStringContainsString('Weekly target', $csvContent);
+        $this->assertStringContainsString('Hours worked', $csvContent);
+        $this->assertStringContainsString('Weekly overtime', $csvContent);
+        $this->assertStringContainsString('Paid breaks included', $csvContent);
+        $this->assertStringNotContainsString('Gross duration', $csvContent);
+        $this->assertStringNotContainsString('Net duration', $csvContent);
         $this->assertStringContainsString("'=HYPERLINK", $csvContent);
         $this->assertStringNotContainsString('other secret', $csvContent);
 
@@ -96,6 +101,9 @@ class HoursModuleTest extends TestCase
         $sheet = IOFactory::load($excel->baseResponse->getFile()->getPathname())->getActiveSheet();
         $values = $sheet->toArray();
         $serialized = json_encode($values);
+        $this->assertSame(['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Notes'], $sheet->rangeToArray('A15:L15')[0]);
+        $this->assertSame('Overtime', $sheet->getCell('A9')->getValue());
+        $this->assertSame('Breaks logged', $sheet->getCell('A10')->getValue());
         $this->assertStringContainsString("'=HYPERLINK", $serialized);
         $this->assertStringNotContainsString('other secret', $serialized);
     }

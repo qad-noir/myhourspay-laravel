@@ -33,17 +33,27 @@ class HoursReportExport
         $sheet->setCellValue('B7', sprintf('%02d:%02d', intdiv($workspace->weekly_target_minutes, 60), $workspace->weekly_target_minutes % 60));
         $sheet->setCellValue('A8', 'Period total');
         $sheet->setCellValue('B8', $summary['total_formatted']);
+        $sheet->setCellValue('A9', 'Overtime');
+        $sheet->setCellValue('B9', $summary['overtime_formatted']);
+        $sheet->setCellValue('A10', 'Breaks logged');
+        $sheet->setCellValue('B10', $summary['break_count']);
+        $sheet->setCellValue('A11', 'Paid breaks included');
+        $sheet->setCellValue('B11', $summary['paid_break_formatted']);
+        $sheet->setCellValue('A12', 'Unpaid breaks deducted');
+        $sheet->setCellValue('B12', $summary['unpaid_break_formatted']);
+        $sheet->setCellValue('A13', 'Workspace default break');
+        $sheet->setCellValue('B13', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes');
 
-        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Gross duration', 'Net duration', 'ISO week', 'Weekly total', 'Weekly variance', 'Notes'];
-        $sheet->fromArray($headings, null, 'A10');
+        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Notes'];
+        $sheet->fromArray($headings, null, 'A15');
 
-        $row = 11;
+        $row = 16;
         foreach ($summary['entries'] as $entry) {
             $values = [
                 $entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'],
-                ucfirst($entry['break_type']), $entry['break_minutes'], $entry['gross_formatted'], $entry['net_formatted'],
+                ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'],
                 $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''),
-                $entry['weekly_total'], $entry['weekly_variance'], $this->safeText($entry['notes'] ?? ''),
+                $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], $this->safeText($entry['notes'] ?? ''),
             ];
             foreach ($values as $column => $value) {
                 $coordinate = chr(65 + $column).$row;
@@ -60,10 +70,10 @@ class HoursReportExport
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(18)->setColor(new Color('FFFFFFFF'));
         $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F766E');
         $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A10:L10')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A10:L10')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
-        $sheet->freezePane('A11');
-        $sheet->setAutoFilter('A10:L'.max(10, $row - 1));
+        $sheet->getStyle('A15:L15')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A15:L15')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
+        $sheet->freezePane('A16');
+        $sheet->setAutoFilter('A15:L'.max(15, $row - 1));
         foreach (range('A', 'L') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
