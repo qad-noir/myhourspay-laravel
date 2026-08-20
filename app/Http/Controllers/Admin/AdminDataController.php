@@ -32,12 +32,12 @@ class AdminDataController extends Controller
     public function audits(Request $request): JsonResponse
     {
         $query=AdminAuditLog::query()->with('admin')->when($request->filled('action'),fn($q)=>$q->where('action',$request->input('action')))->when($request->filled('from'),fn($q)=>$q->whereDate('created_at','>=',$request->input('from')))->when($request->filled('to'),fn($q)=>$q->whereDate('created_at','<=',$request->input('to')));
-        return $this->respond($request,$query,['action','created_at'],fn(AdminAuditLog $log)=>['action'=>e(str($log->action)->replace('.',' ')->headline()),'admin'=>e($log->admin?->name??'Deleted admin'),'target'=>e(($log->target_type ? class_basename($log->target_type) : 'Record').' #'.$log->target_id),'ip'=>e($log->ip_address??'—'),'date'=>$log->created_at->format('d M Y H:i'),'details'=>'<a href="'.route('admin.audit-logs.show',$log).'">View →</a>']);
+        return $this->respond($request,$query,['action','created_at'],fn(AdminAuditLog $log)=>['action'=>e(str($log->action)->replace('.',' ')->headline()),'admin'=>e($log->admin?->name??'Deleted admin'),'target'=>e(($log->target_type ? class_basename($log->target_type) : 'Record').' #'.$log->target_id),'ip'=>e($log->ip_address??'—'),'date'=>$log->created_at->format('d M Y H:i'),'details'=>'<a wire:navigate href="'.route('admin.audit-logs.show',$log).'">View →</a>']);
     }
     public function incidents(Request $request): JsonResponse
     {
         $query=OperationalIncident::query()->when($request->input('status')==='open',fn($q)=>$q->whereNull('resolved_at'))->when($request->input('status')==='resolved',fn($q)=>$q->whereNotNull('resolved_at'))->when($request->filled('severity'),fn($q)=>$q->where('severity',$request->input('severity')));
-        return $this->respond($request,$query,['reference','event_type','severity','submitted_email','occurred_at'],fn(OperationalIncident $incident)=>['reference'=>e($incident->reference),'event'=>e(str($incident->event_type)->replace('.',' ')->headline()),'severity'=>e(ucfirst($incident->severity)),'email'=>e($incident->submitted_email??'—'),'status'=>$incident->resolved_at?'Resolved':'Open','date'=>$incident->occurred_at->format('d M Y H:i'),'details'=>'<a href="'.route('admin.incidents.show',$incident).'">View →</a>']);
+        return $this->respond($request,$query,['reference','event_type','severity','submitted_email','occurred_at'],fn(OperationalIncident $incident)=>['reference'=>e($incident->reference),'event'=>e(str($incident->event_type)->replace('.',' ')->headline()),'severity'=>e(ucfirst($incident->severity)),'email'=>e($incident->submitted_email??'—'),'status'=>$incident->resolved_at?'Resolved':'Open','date'=>$incident->occurred_at->format('d M Y H:i'),'details'=>'<a wire:navigate href="'.route('admin.incidents.show',$incident).'">View →</a>']);
     }
     private function respond(Request $request,Builder $query,array $columns,callable $map):JsonResponse
     {

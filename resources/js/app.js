@@ -26,6 +26,13 @@ const initializeAdminTables = () => {
             lengthMenu: [10, 20, 50, 100],
             order: [[0, 'desc']],
             autoWidth: false,
+            language: {
+                search: '',
+                searchPlaceholder: 'Search records',
+                lengthMenu: '_MENU_ per page',
+                info: 'Showing _START_–_END_ of _TOTAL_',
+                paginate: { first: '«', previous: '‹', next: '›', last: '»' },
+            },
         });
         filters?.addEventListener('change', () => dataTable.ajax.reload());
     });
@@ -73,6 +80,12 @@ document.addEventListener('toggle', (event) => {
         if (menu !== event.target) menu.removeAttribute('open');
     });
     const panel = event.target.querySelector('.admin-action-menu__panel');
+    if (window.innerWidth <= 780 && panel) {
+        panel.style.removeProperty('position');
+        panel.style.removeProperty('top');
+        panel.style.removeProperty('left');
+        panel.style.removeProperty('right');
+    }
     if (window.innerWidth > 780 && panel) {
         const trigger = event.target.querySelector('summary').getBoundingClientRect();
         const panelHeight = panel.getBoundingClientRect().height;
