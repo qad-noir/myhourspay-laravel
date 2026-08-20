@@ -8,42 +8,129 @@ use App\Models\HoursEntry;
 use App\Models\OperationalIncident;
 use App\Models\User;
 use App\Models\Workspace;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class AdminDataController extends Controller
 {
     public function users(Request $request): JsonResponse
     {
-        $query=User::query()->withCount(['workspaces','hoursEntries']); if($request->boolean('trash'))$query=User::onlyTrashed()->withCount(['workspaces','hoursEntries']);
-        return $this->respond($request,$query,['name','email','created_at'],function(User $user):array{return ['name'=>e($user->name).'<small>'.e($user->email).'</small>','status'=>$user->deleted_at?'Trashed':($user->suspended_at?'Suspended':($user->email_verified_at?'Verified':'Unverified')),'workspaces'=>$user->workspaces_count,'entries'=>$user->hours_entries_count,'joined'=>$user->created_at->format('d M Y'),'actions'=>view('admin.partials.user-actions',compact('user'))->render()];});
+        $query = ($request->boolean('trash') ? User::onlyTrashed() : User::query())
+            ->withCount(['workspaces', 'hoursEntries']);
+
+        return DataTables::eloquent($query)
+            ->editColumn('name', fn (User $user) => e($user->name).'<small>'.e($user->email).'</small>')
+            ->addColumn('status', fn (User $user) => $user->deleted_at ? 'Trashed' : ($user->suspended_at ? 'Suspended' : ($user->email_verified_at ? 'Verified' : 'Unverified')))
+            ->addColumn('workspaces', fn (User $user) => $user->workspaces_count)
+            ->addColumn('entries', fn (User $user) => $user->hours_entries_count)
+            ->addColumn('joined', fn (User $user) => $user->created_at->format('d M Y'))
+            ->addColumn('actions', fn (User $user) => view('admin.partials.user-actions', compact('user'))->render())
+            ->filterColumn('name', fn ($query, string $keyword) => $query->where(fn ($query) => $query->where('name', 'like', "%{$keyword}%")->orWhere('email', 'like', "%{$keyword}%")))
+            ->filterColumn('status', function ($query, string $keyword): void {
+                $keyword = strtolower($keyword);
+                $query->where(function ($query) use ($keyword): void {
+                    if (str_contains($keyword, 'suspend')) $query->whereNotNull('suspended_at');
+                    elseif (str_contains($keyword, 'unverified')) $query->whereNull('email_verified_at');
+                    elseif (str_contains($keyword, 'verified')) $query->whereNotNull('email_verified_at');
+                    elseif (str_contains($keyword, 'trash')) $query->whereNotNull('deleted_at');
+                });
+            })
+            ->orderColumn('status', 'email_verified_at $1')
+            ->orderColumn('workspaces', 'workspaces_count $1')
+            ->orderColumn('entries', 'hours_entries_count $1')
+            ->orderColumn('joined', 'created_at $1')
+            ->rawColumns(['name', 'actions'])
+            ->toJson();
     }
+
     public function workspaces(Request $request): JsonResponse
     {
-        $query=($request->boolean('trash')?Workspace::onlyTrashed():Workspace::query())->with('owner')->withCount(['users','hoursEntries']);
-        return $this->respond($request,$query,['name','created_at'],function(Workspace $workspace):array{return ['name'=>e($workspace->name).'<small>'.e($workspace->default_break_minutes.'m '.$workspace->default_break_type).'</small>','owner'=>e($workspace->owner?->name??'Deleted user'),'members'=>$workspace->users_count,'entries'=>$workspace->hours_entries_count,'target'=>number_format($workspace->weekly_target_minutes/60,1).'h','actions'=>view('admin.partials.workspace-actions',compact('workspace'))->render()];});
+        $query = ($request->boolean('trash') ? Workspace::onlyTrashed() : Workspace::query())
+            ->with('owner')->withCount(['users', 'hoursEntries']);
+
+        return DataTables::eloquent($query)
+            ->editColumn('name', fn (Workspace $workspace) => e($workspace->name).'<small>'.e($workspace->default_break_minutes.'m '.$workspace->default_break_type).'</small>')
+            ->addColumn('owner', fn (Workspace $workspace) => e($workspace->owner?->name ?? 'Deleted user'))
+            ->addColumn('members', fn (Workspace $workspace) => $workspace->users_count)
+            ->addColumn('entries', fn (Workspace $workspace) => $workspace->hours_entries_count)
+            ->addColumn('target', fn (Workspace $workspace) => number_format($workspace->weekly_target_minutes / 60, 1).'h')
+            ->addColumn('actions', fn (Workspace $workspace) => view('admin.partials.workspace-actions', compact('workspace'))->render())
+            ->filterColumn('owner', fn ($query, string $keyword) => $query->whereHas('owner', fn ($query) => $query->where('name', 'like', "%{$keyword}%")->orWhere('email', 'like', "%{$keyword}%")))
+            ->orderColumn('owner', fn ($query, string $direction) => $query->orderBy(User::select('name')->whereColumn('users.id', 'workspaces.owner_id'), $direction))
+            ->orderColumn('members', 'users_count $1')
+            ->orderColumn('entries', 'hours_entries_count $1')
+            ->orderColumn('target', 'weekly_target_minutes $1')
+            ->rawColumns(['name', 'actions'])
+            ->toJson();
     }
+
     public function hours(Request $request): JsonResponse
     {
-        $query=($request->boolean('trash')?HoursEntry::onlyTrashed():HoursEntry::query())->with(['user','workspace']);
-        return $this->respond($request,$query,['work_date','start_time','end_time','break_type','created_at'],function(HoursEntry $entry):array{return ['date'=>$entry->work_date->format('d M Y'),'user'=>e($entry->user?->name??'Deleted user'),'workspace'=>e($entry->workspace?->name??'Deleted workspace'),'time'=>substr($entry->start_time,0,5).'–'.substr($entry->end_time,0,5),'break'=>e($entry->break_minutes.'m '.$entry->break_type),'actions'=>view('admin.partials.hours-actions',compact('entry'))->render()];});
+        $query = ($request->boolean('trash') ? HoursEntry::onlyTrashed() : HoursEntry::query())
+            ->with(['user', 'workspace']);
+
+        return DataTables::eloquent($query)
+            ->addColumn('date', fn (HoursEntry $entry) => $entry->work_date->format('d M Y'))
+            ->addColumn('user', fn (HoursEntry $entry) => e($entry->user?->name ?? 'Deleted user'))
+            ->addColumn('workspace', fn (HoursEntry $entry) => e($entry->workspace?->name ?? 'Deleted workspace'))
+            ->addColumn('time', fn (HoursEntry $entry) => substr($entry->start_time, 0, 5).'–'.substr($entry->end_time, 0, 5))
+            ->addColumn('break', fn (HoursEntry $entry) => e($entry->break_minutes.'m '.$entry->break_type))
+            ->addColumn('actions', fn (HoursEntry $entry) => view('admin.partials.hours-actions', compact('entry'))->render())
+            ->filterColumn('user', fn ($query, string $keyword) => $query->whereHas('user', fn ($query) => $query->where('name', 'like', "%{$keyword}%")->orWhere('email', 'like', "%{$keyword}%")))
+            ->filterColumn('workspace', fn ($query, string $keyword) => $query->whereHas('workspace', fn ($query) => $query->where('name', 'like', "%{$keyword}%")))
+            ->orderColumn('date', 'work_date $1')
+            ->orderColumn('user', fn ($query, string $direction) => $query->orderBy(User::select('name')->whereColumn('users.id', 'hours_entries.user_id'), $direction))
+            ->orderColumn('workspace', fn ($query, string $direction) => $query->orderBy(Workspace::select('name')->whereColumn('workspaces.id', 'hours_entries.workspace_id'), $direction))
+            ->orderColumn('time', 'start_time $1')
+            ->orderColumn('break', 'break_minutes $1')
+            ->rawColumns(['actions'])
+            ->toJson();
     }
+
     public function audits(Request $request): JsonResponse
     {
-        $query=AdminAuditLog::query()->with('admin')->when($request->filled('action'),fn($q)=>$q->where('action',$request->input('action')))->when($request->filled('from'),fn($q)=>$q->whereDate('created_at','>=',$request->input('from')))->when($request->filled('to'),fn($q)=>$q->whereDate('created_at','<=',$request->input('to')));
-        return $this->respond($request,$query,['action','created_at'],fn(AdminAuditLog $log)=>['action'=>e(str($log->action)->replace('.',' ')->headline()),'admin'=>e($log->admin?->name??'Deleted admin'),'target'=>e(($log->target_type ? class_basename($log->target_type) : 'Record').' #'.$log->target_id),'ip'=>e($log->ip_address??'—'),'date'=>$log->created_at->format('d M Y H:i'),'details'=>'<a wire:navigate href="'.route('admin.audit-logs.show',$log).'">View →</a>']);
+        $query = AdminAuditLog::query()->with('admin')
+            ->when($request->filled('action'), fn ($query) => $query->where('action', $request->input('action')))
+            ->when($request->filled('from'), fn ($query) => $query->whereDate('created_at', '>=', $request->input('from')))
+            ->when($request->filled('to'), fn ($query) => $query->whereDate('created_at', '<=', $request->input('to')));
+
+        return DataTables::eloquent($query)
+            ->editColumn('action', fn (AdminAuditLog $log) => e(str($log->action)->replace('.', ' ')->headline()))
+            ->addColumn('admin', fn (AdminAuditLog $log) => e($log->admin?->name ?? 'Deleted admin'))
+            ->addColumn('target', fn (AdminAuditLog $log) => e(($log->target_type ? class_basename($log->target_type) : 'Record').' #'.$log->target_id))
+            ->addColumn('ip', fn (AdminAuditLog $log) => e($log->ip_address ?? '—'))
+            ->addColumn('date', fn (AdminAuditLog $log) => $log->created_at->format('d M Y H:i'))
+            ->addColumn('details', fn (AdminAuditLog $log) => '<a wire:navigate href="'.route('admin.audit-logs.show', $log).'">View details</a>')
+            ->filterColumn('admin', fn ($query, string $keyword) => $query->whereHas('admin', fn ($query) => $query->where('name', 'like', "%{$keyword}%")))
+            ->orderColumn('admin', fn ($query, string $direction) => $query->orderBy(User::select('name')->whereColumn('users.id', 'admin_audit_logs.admin_id'), $direction))
+            ->orderColumn('date', 'created_at $1')
+            ->rawColumns(['details'])
+            ->toJson();
     }
+
     public function incidents(Request $request): JsonResponse
     {
-        $query=OperationalIncident::query()->when($request->input('status')==='open',fn($q)=>$q->whereNull('resolved_at'))->when($request->input('status')==='resolved',fn($q)=>$q->whereNotNull('resolved_at'))->when($request->filled('severity'),fn($q)=>$q->where('severity',$request->input('severity')));
-        return $this->respond($request,$query,['reference','event_type','severity','submitted_email','occurred_at'],fn(OperationalIncident $incident)=>['reference'=>e($incident->reference),'event'=>e(str($incident->event_type)->replace('.',' ')->headline()),'severity'=>e(ucfirst($incident->severity)),'email'=>e($incident->submitted_email??'—'),'status'=>$incident->resolved_at?'Resolved':'Open','date'=>$incident->occurred_at->format('d M Y H:i'),'details'=>'<a wire:navigate href="'.route('admin.incidents.show',$incident).'">View →</a>']);
-    }
-    private function respond(Request $request,Builder $query,array $columns,callable $map):JsonResponse
-    {
-        $draw=max(0,$request->integer('draw'));$start=max(0,$request->integer('start'));$length=min(100,max(10,$request->integer('length',20)));$total=(clone $query)->count();$search=trim((string)data_get($request->input('search',[]),'value',''));
-        if($search!=='')$query->where(function($q)use($columns,$search){foreach($columns as $i=>$column){$i===0?$q->where($column,'like',"%{$search}%"):$q->orWhere($column,'like',"%{$search}%");}});
-        $filtered=(clone $query)->count();$orderIndex=(int)data_get($request->input('order',[]),'0.column',0);$direction=data_get($request->input('order',[]),'0.dir')==='asc'?'asc':'desc';$query->orderBy($columns[$orderIndex]??end($columns),$direction);
-        return response()->json(['draw'=>$draw,'recordsTotal'=>$total,'recordsFiltered'=>$filtered,'data'=>$query->skip($start)->take($length)->get()->map($map)->values()]);
+        $query = OperationalIncident::query()
+            ->when($request->input('status') === 'open', fn ($query) => $query->whereNull('resolved_at'))
+            ->when($request->input('status') === 'resolved', fn ($query) => $query->whereNotNull('resolved_at'))
+            ->when($request->filled('severity'), fn ($query) => $query->where('severity', $request->input('severity')));
+
+        return DataTables::eloquent($query)
+            ->addColumn('event', fn (OperationalIncident $incident) => e(str($incident->event_type)->replace('.', ' ')->headline()))
+            ->editColumn('severity', fn (OperationalIncident $incident) => e(ucfirst($incident->severity)))
+            ->addColumn('email', fn (OperationalIncident $incident) => e($incident->submitted_email ?? '—'))
+            ->addColumn('status', fn (OperationalIncident $incident) => $incident->resolved_at ? 'Resolved' : 'Open')
+            ->addColumn('date', fn (OperationalIncident $incident) => $incident->occurred_at->format('d M Y H:i'))
+            ->addColumn('details', fn (OperationalIncident $incident) => '<a wire:navigate href="'.route('admin.incidents.show', $incident).'">View details</a>')
+            ->filterColumn('event', fn ($query, string $keyword) => $query->where('event_type', 'like', "%{$keyword}%"))
+            ->filterColumn('email', fn ($query, string $keyword) => $query->where('submitted_email', 'like', "%{$keyword}%"))
+            ->filterColumn('status', fn ($query, string $keyword) => str_contains(strtolower($keyword), 'resolved') ? $query->whereNotNull('resolved_at') : $query->whereNull('resolved_at'))
+            ->orderColumn('event', 'event_type $1')
+            ->orderColumn('email', 'submitted_email $1')
+            ->orderColumn('status', 'resolved_at $1')
+            ->orderColumn('date', 'occurred_at $1')
+            ->rawColumns(['details'])
+            ->toJson();
     }
 }
