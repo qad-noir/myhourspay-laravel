@@ -9,18 +9,18 @@
 <body class="admin-body">
 <div class="admin-shell">
     <aside class="admin-sidebar">
-        <a href="{{ route('admin.dashboard') }}" class="admin-brand"><x-brand-logo dark /></a>
+        <a wire:navigate href="{{ route('admin.dashboard') }}" class="admin-brand"><x-brand-logo dark /></a>
         <div><small>Platform administration</small><strong>{{ auth()->user()->name }}</strong></div>
         <nav>
-            <a href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.dashboard')) aria-current="page" @endif>Overview</a>
-            <a href="{{ route('admin.users.index') }}" @if(request()->routeIs('admin.users.*')) aria-current="page" @endif>Users</a>
-            <a href="{{ route('admin.workspaces.index') }}" @if(request()->routeIs('admin.workspaces.*')) aria-current="page" @endif>Workspaces</a>
-            <a href="{{ route('admin.hours.index') }}" @if(request()->routeIs('admin.hours.*')) aria-current="page" @endif>Hours</a>
-            <a href="{{ route('admin.audit-logs.index') }}" @if(request()->routeIs('admin.audit-logs.*')) aria-current="page" @endif>Audit logs</a>
-            <a href="{{ route('admin.incidents.index') }}" @if(request()->routeIs('admin.incidents.*')) aria-current="page" @endif>Incidents</a>
-            <a href="{{ route('admin.trash') }}" @if(request()->routeIs('admin.trash')) aria-current="page" @endif>Trash</a>
+            <a wire:navigate href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.dashboard')) aria-current="page" @endif><x-admin.icon name="overview"/>Overview</a>
+            <a wire:navigate href="{{ route('admin.users.index') }}" @if(request()->routeIs('admin.users.*')) aria-current="page" @endif><x-admin.icon name="users"/>Users</a>
+            <a wire:navigate href="{{ route('admin.workspaces.index') }}" @if(request()->routeIs('admin.workspaces.*')) aria-current="page" @endif><x-admin.icon name="workspaces"/>Workspaces</a>
+            <a wire:navigate href="{{ route('admin.hours.index') }}" @if(request()->routeIs('admin.hours.*')) aria-current="page" @endif><x-admin.icon name="hours"/>Hours</a>
+            <a wire:navigate href="{{ route('admin.audit-logs.index') }}" @if(request()->routeIs('admin.audit-logs.*')) aria-current="page" @endif><x-admin.icon name="audit"/>Audit logs</a>
+            <a wire:navigate href="{{ route('admin.incidents.index') }}" @if(request()->routeIs('admin.incidents.*')) aria-current="page" @endif><x-admin.icon name="incidents"/>Incidents</a>
+            <a wire:navigate href="{{ route('admin.trash') }}" @if(request()->routeIs('admin.trash')) aria-current="page" @endif><x-admin.icon name="trash"/>Trash</a>
         </nav>
-        <a href="{{ route('dashboard') }}" class="admin-back">← Personal dashboard</a>
+        <a wire:navigate href="{{ route('dashboard') }}" class="admin-back"><x-admin.icon name="back"/>Personal dashboard</a>
     </aside>
     <main class="admin-main">
         <header><div><small>myhourspay control centre</small><h1>@yield('title')</h1></div><span class="admin-badge">Platform admin</span></header>

@@ -55,8 +55,36 @@ const initializeAdminHoursForms = () => {
 
 document.addEventListener('DOMContentLoaded', initializeAdminTables);
 document.addEventListener('DOMContentLoaded', initializeAdminHoursForms);
+document.addEventListener('livewire:navigating', () => {
+    document.querySelectorAll('[data-admin-table]').forEach((table) => {
+        if (DataTable.isDataTable(table)) new DataTable(table).destroy();
+    });
+});
 document.addEventListener('livewire:navigated', initializeAdminTables);
 document.addEventListener('livewire:navigated', initializeAdminHoursForms);
+document.addEventListener('click', (event) => {
+    document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
+        if (!menu.contains(event.target)) menu.removeAttribute('open');
+    });
+});
+document.addEventListener('toggle', (event) => {
+    if (!event.target.matches?.('.admin-action-menu[open]')) return;
+    document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
+        if (menu !== event.target) menu.removeAttribute('open');
+    });
+    const panel = event.target.querySelector('.admin-action-menu__panel');
+    if (window.innerWidth > 780 && panel) {
+        const trigger = event.target.querySelector('summary').getBoundingClientRect();
+        const panelHeight = panel.getBoundingClientRect().height;
+        const top = trigger.bottom + 6 + panelHeight > window.innerHeight ? trigger.top - panelHeight - 6 : trigger.bottom + 6;
+        panel.style.position = 'fixed';
+        panel.style.top = `${Math.max(8, top)}px`;
+        panel.style.left = `${Math.max(8, Math.min(window.innerWidth - 198, trigger.right - 190))}px`;
+        panel.style.right = 'auto';
+    }
+}, true);
+window.addEventListener('resize', () => document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => menu.removeAttribute('open')));
+window.addEventListener('scroll', () => document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => menu.removeAttribute('open')), true);
 document.addEventListener('submit', (event) => {
     const message = event.target.dataset.confirm;
     if (message && !window.confirm(message)) event.preventDefault();
