@@ -20,19 +20,32 @@ const initializeAdminTables = () => {
                 data: (data) => filters?.querySelectorAll('[name]').forEach((field) => { data[field.name] = field.value; }),
             },
             columns,
-            responsive: { details: true },
-            scrollX: true,
-            pageLength: 20,
+            responsive: { details: { display: DataTable.Responsive.display.childRowImmediate, renderer: DataTable.Responsive.renderer.listHidden() } },
+            pageLength: 10,
             lengthMenu: [10, 20, 50, 100],
-            order: [[0, 'desc']],
+            searchDelay: 350,
+            order: [[0, 'asc']],
             autoWidth: false,
+            layout: {
+                topStart: 'pageLength',
+                topEnd: 'search',
+                bottomStart: 'info',
+                bottomEnd: 'paging',
+            },
             language: {
                 search: '',
                 searchPlaceholder: 'Search records',
-                lengthMenu: '_MENU_ per page',
-                info: 'Showing _START_–_END_ of _TOTAL_',
-                paginate: { first: '«', previous: '‹', next: '›', last: '»' },
+                lengthMenu: 'Show _MENU_',
+                info: 'Showing _START_ to _END_ of _TOTAL_ records',
+                infoEmpty: 'No records to show',
+                zeroRecords: 'No matching records found',
+                processing: '<span class="admin-table-loader"></span><span>Loading records…</span>',
+                paginate: { first: 'First', previous: '← Previous', next: 'Next →', last: 'Last' },
             },
+        });
+        dataTable.on('xhr', (_event, _settings, json) => {
+            const count = table.closest('.admin-datatable')?.querySelector('[data-table-count]');
+            if (count && json) count.textContent = `${json.recordsTotal ?? 0} records`;
         });
         filters?.addEventListener('change', () => dataTable.ajax.reload());
     });

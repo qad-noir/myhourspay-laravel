@@ -20,8 +20,11 @@ class AdminDataController extends Controller
             ->withCount(['workspaces', 'hoursEntries']);
 
         return DataTables::eloquent($query)
-            ->editColumn('name', fn (User $user) => e($user->name).'<small>'.e($user->email).'</small>')
-            ->addColumn('status', fn (User $user) => $user->deleted_at ? 'Trashed' : ($user->suspended_at ? 'Suspended' : ($user->email_verified_at ? 'Verified' : 'Unverified')))
+            ->editColumn('name', fn (User $user) => '<div class="admin-person"><span class="admin-person__avatar">'.e(str($user->name)->substr(0, 1)->upper()).'</span><span><strong>'.e($user->name).'</strong><small>'.e($user->email).'</small></span></div>')
+            ->addColumn('status', function (User $user): string {
+                $status = $user->deleted_at ? 'Trashed' : ($user->suspended_at ? 'Suspended' : ($user->email_verified_at ? 'Verified' : 'Unverified'));
+                return '<span class="admin-status admin-status--'.strtolower($status).'"><i></i>'.e($status).'</span>';
+            })
             ->addColumn('workspaces', fn (User $user) => $user->workspaces_count)
             ->addColumn('entries', fn (User $user) => $user->hours_entries_count)
             ->addColumn('joined', fn (User $user) => $user->created_at->format('d M Y'))
@@ -40,7 +43,7 @@ class AdminDataController extends Controller
             ->orderColumn('workspaces', 'workspaces_count $1')
             ->orderColumn('entries', 'hours_entries_count $1')
             ->orderColumn('joined', 'created_at $1')
-            ->rawColumns(['name', 'actions'])
+            ->rawColumns(['name', 'status', 'actions'])
             ->toJson();
     }
 
@@ -50,7 +53,7 @@ class AdminDataController extends Controller
             ->with('owner')->withCount(['users', 'hoursEntries']);
 
         return DataTables::eloquent($query)
-            ->editColumn('name', fn (Workspace $workspace) => e($workspace->name).'<small>'.e($workspace->default_break_minutes.'m '.$workspace->default_break_type).'</small>')
+            ->editColumn('name', fn (Workspace $workspace) => '<div class="admin-person"><span class="admin-person__avatar admin-person__avatar--workspace">'.e(str($workspace->name)->substr(0, 1)->upper()).'</span><span><strong>'.e($workspace->name).'</strong><small>'.e($workspace->default_break_minutes.'m '.$workspace->default_break_type).' break</small></span></div>')
             ->addColumn('owner', fn (Workspace $workspace) => e($workspace->owner?->name ?? 'Deleted user'))
             ->addColumn('members', fn (Workspace $workspace) => $workspace->users_count)
             ->addColumn('entries', fn (Workspace $workspace) => $workspace->hours_entries_count)
@@ -72,7 +75,7 @@ class AdminDataController extends Controller
 
         return DataTables::eloquent($query)
             ->addColumn('date', fn (HoursEntry $entry) => $entry->work_date->format('d M Y'))
-            ->addColumn('user', fn (HoursEntry $entry) => e($entry->user?->name ?? 'Deleted user'))
+            ->addColumn('user', fn (HoursEntry $entry) => '<div class="admin-person admin-person--compact"><span class="admin-person__avatar">'.e(str($entry->user?->name ?? '?')->substr(0, 1)->upper()).'</span><span><strong>'.e($entry->user?->name ?? 'Deleted user').'</strong></span></div>')
             ->addColumn('workspace', fn (HoursEntry $entry) => e($entry->workspace?->name ?? 'Deleted workspace'))
             ->addColumn('time', fn (HoursEntry $entry) => substr($entry->start_time, 0, 5).'–'.substr($entry->end_time, 0, 5))
             ->addColumn('break', fn (HoursEntry $entry) => e($entry->break_minutes.'m '.$entry->break_type))
@@ -84,7 +87,7 @@ class AdminDataController extends Controller
             ->orderColumn('workspace', fn ($query, string $direction) => $query->orderBy(Workspace::select('name')->whereColumn('workspaces.id', 'hours_entries.workspace_id'), $direction))
             ->orderColumn('time', 'start_time $1')
             ->orderColumn('break', 'break_minutes $1')
-            ->rawColumns(['actions'])
+            ->rawColumns(['user', 'actions'])
             ->toJson();
     }
 
@@ -118,9 +121,9 @@ class AdminDataController extends Controller
 
         return DataTables::eloquent($query)
             ->addColumn('event', fn (OperationalIncident $incident) => e(str($incident->event_type)->replace('.', ' ')->headline()))
-            ->editColumn('severity', fn (OperationalIncident $incident) => e(ucfirst($incident->severity)))
+            ->editColumn('severity', fn (OperationalIncident $incident) => '<span class="admin-status admin-status--'.e(strtolower($incident->severity)).'"><i></i>'.e(ucfirst($incident->severity)).'</span>')
             ->addColumn('email', fn (OperationalIncident $incident) => e($incident->submitted_email ?? '—'))
-            ->addColumn('status', fn (OperationalIncident $incident) => $incident->resolved_at ? 'Resolved' : 'Open')
+            ->addColumn('status', fn (OperationalIncident $incident) => '<span class="admin-status admin-status--'.($incident->resolved_at ? 'resolved' : 'open').'"><i></i>'.($incident->resolved_at ? 'Resolved' : 'Open').'</span>')
             ->addColumn('date', fn (OperationalIncident $incident) => $incident->occurred_at->format('d M Y H:i'))
             ->addColumn('details', fn (OperationalIncident $incident) => '<a wire:navigate href="'.route('admin.incidents.show', $incident).'">View details</a>')
             ->filterColumn('event', fn ($query, string $keyword) => $query->where('event_type', 'like', "%{$keyword}%"))
@@ -130,7 +133,7 @@ class AdminDataController extends Controller
             ->orderColumn('email', 'submitted_email $1')
             ->orderColumn('status', 'resolved_at $1')
             ->orderColumn('date', 'occurred_at $1')
-            ->rawColumns(['details'])
+            ->rawColumns(['severity', 'status', 'details'])
             ->toJson();
     }
 }
