@@ -26,6 +26,37 @@ class AdminManagementTest extends TestCase
             ->assertOk()->assertJsonPath('draw', 2)->assertJsonCount(10, 'data');
     }
 
+    public function test_admin_remote_user_options_are_protected_bounded_and_require_two_characters(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        User::factory()->count(24)->sequence(fn ($sequence) => [
+            'name' => 'Remote Person '.str_pad((string) $sequence->index, 2, '0', STR_PAD_LEFT),
+            'email' => "remote{$sequence->index}@example.com",
+        ])->create();
+
+        $this->getJson(route('admin.options.users', ['q' => 'Remote']))->assertUnauthorized();
+        $this->actingAs(User::factory()->create())->getJson(route('admin.options.users', ['q' => 'Remote']))->assertForbidden();
+        $this->actingAs($admin)->getJson(route('admin.options.users', ['q' => 'R']))
+            ->assertOk()->assertJsonCount(0, 'results');
+        $this->actingAs($admin)->getJson(route('admin.options.users', ['q' => 'Remote']))
+            ->assertOk()->assertJsonCount(20, 'results');
+    }
+
+    public function test_admin_remote_workspace_options_only_include_selected_users_workspaces(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $workspace = $this->workspaceFor($user);
+        $otherWorkspace = $this->workspaceFor($other);
+
+        $response = $this->actingAs($admin)->getJson(route('admin.options.user-workspaces', $user));
+
+        $response->assertOk()
+            ->assertJsonFragment(['value' => (string) $workspace->id, 'text' => $workspace->name])
+            ->assertJsonMissing(['value' => (string) $otherWorkspace->id]);
+    }
+
     public function test_admin_can_create_and_reset_a_user_without_destroying_workspaces(): void
     {
         Notification::fake();
@@ -61,7 +92,7 @@ class AdminManagementTest extends TestCase
         $this->assertNotSoftDeleted($entry->refresh());
     }
 
-    public function test_admin_hours_edit_scopes_workspace_options_to_entry_user(): void
+    public function test_admin_hours_edit_preloads_only_the_entries_user_and_workspace(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);
         $entryUser = User::factory()->create();
@@ -75,9 +106,10 @@ class AdminManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.hours.edit', $entry));
 
         $response->assertOk()
-            ->assertSee('data-hours-workspace', false)
-            ->assertSee('value="'.$workspace->id.'" data-user-id="'.$entryUser->id.'"', false)
-            ->assertSee('value="'.$otherWorkspace->id.'" data-user-id="'.$otherUser->id.'" hidden disabled', false);
+            ->assertSee('value="'.$entryUser->id.'"', false)
+            ->assertSee('value="'.$workspace->id.'"', false)
+            ->assertDontSee('value="'.$otherUser->id.'"', false)
+            ->assertDontSee('value="'.$otherWorkspace->id.'"', false);
     }
 
     public function test_admin_can_resolve_and_reopen_an_incident(): void

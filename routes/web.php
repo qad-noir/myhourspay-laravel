@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDataController;
 use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\AdminOperationsController;
+use App\Http\Controllers\Admin\AdminOptionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +49,10 @@ Route::middleware([
         });
         Route::controller(AdminOperationsController::class)->group(function (): void { Route::get('/audit-logs','audits')->name('audit-logs.index'); Route::get('/audit-logs/{auditLog}','audit')->name('audit-logs.show'); Route::get('/incidents','incidents')->name('incidents.index'); Route::get('/incidents/{incident}','incident')->name('incidents.show'); Route::post('/incidents/{incident}/resolve','resolve')->name('incidents.resolve'); Route::post('/incidents/{incident}/reopen','reopen')->name('incidents.reopen'); });
         Route::prefix('data')->name('data.')->controller(AdminDataController::class)->group(function (): void { Route::get('/users','users')->name('users'); Route::get('/workspaces','workspaces')->name('workspaces'); Route::get('/hours','hours')->name('hours'); Route::get('/audit-logs','audits')->name('audit-logs'); Route::get('/incidents','incidents')->name('incidents'); });
+        Route::prefix('options')->name('options.')->controller(AdminOptionController::class)->group(function (): void {
+            Route::get('/users', 'users')->name('users');
+            Route::get('/users/{user}/workspaces', 'workspaces')->whereNumber('user')->name('user-workspaces');
+        });
     });
     Route::get('/verify-email-code', [EmailVerificationCodeController::class, 'show'])->name('email-code.show');
     Route::post('/verify-email-code', [EmailVerificationCodeController::class, 'verify'])->middleware('throttle:10,1')->name('email-code.verify');

@@ -99,7 +99,12 @@ class AdminManagementController extends Controller
         return back()->with('status', 'User permanently deleted.');
     }
 
-    public function createWorkspace(): View { return view('admin.workspaces.create', ['users' => User::query()->orderBy('name')->get()]); }
+    public function createWorkspace(): View
+    {
+        return view('admin.workspaces.create', [
+            'selectedOwner' => $this->selectedUser('owner_id'),
+        ]);
+    }
 
     public function storeWorkspace(Request $request): RedirectResponse
     {
@@ -125,8 +130,28 @@ class AdminManagementController extends Controller
     }
 
     public function hours(): View { return view('admin.hours.index'); }
-    public function createHours(): View { return view('admin.hours.form', ['entry'=>null,'users'=>User::with('workspaces')->orderBy('name')->get()]); }
-    public function editHours(HoursEntry $hoursEntry): View { return view('admin.hours.form', ['entry'=>$hoursEntry,'users'=>User::with('workspaces')->orderBy('name')->get()]); }
+    public function createHours(): View
+    {
+        $user = $this->selectedUser('user_id');
+
+        return view('admin.hours.form', [
+            'entry' => null,
+            'selectedUser' => $user,
+            'selectedWorkspace' => $this->selectedWorkspace($user),
+        ]);
+    }
+
+    public function editHours(HoursEntry $hoursEntry): View
+    {
+        $hoursEntry->load(['user', 'workspace']);
+        $user = $this->selectedUser('user_id', (int) $hoursEntry->user_id);
+
+        return view('admin.hours.form', [
+            'entry' => $hoursEntry,
+            'selectedUser' => $user,
+            'selectedWorkspace' => $this->selectedWorkspace($user, (int) $hoursEntry->workspace_id),
+        ]);
+    }
     public function storeHours(Request $request): RedirectResponse { $data=$this->hoursData($request); $entry=HoursEntry::query()->create($data); $this->audit->record($request,'hours.created',$entry); return to_route('admin.hours.index')->with('status','Hours entry created.'); }
     public function updateHours(Request $request, HoursEntry $hoursEntry): RedirectResponse { $data=$this->hoursData($request,$hoursEntry); $before=$hoursEntry->toArray(); $hoursEntry->update($data); $this->audit->record($request,'hours.updated',$hoursEntry,$before,$hoursEntry->toArray()); return to_route('admin.hours.index')->with('status','Hours entry updated.'); }
     public function deleteHours(Request $request, HoursEntry $hoursEntry): RedirectResponse { $this->audit->record($request,'hours.trashed',$hoursEntry); $hoursEntry->delete(); return back()->with('status','Hours entry moved to trash.'); }
@@ -156,5 +181,19 @@ class AdminManagementController extends Controller
         }
 
         return $data;
+    }
+
+    private function selectedUser(string $field, ?int $fallback = null): ?User
+    {
+        $id = (int) old($field, $fallback);
+
+        return $id > 0 ? User::query()->find($id) : null;
+    }
+
+    private function selectedWorkspace(?User $user, ?int $fallback = null): ?Workspace
+    {
+        $id = (int) old('workspace_id', $fallback);
+
+        return $user && $id > 0 ? $user->workspaces()->whereKey($id)->first() : null;
     }
 }

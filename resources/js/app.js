@@ -6,6 +6,8 @@ import DataTable from 'datatables.net-dt';
 import 'datatables.net-responsive-dt';
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
+import TomSelect from 'tom-select';
+import 'tom-select/dist/css/tom-select.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]:not([data-bound])').forEach((table) => {
@@ -51,37 +53,120 @@ const initializeAdminTables = () => {
     });
 };
 
-const initializeAdminHoursForms = () => {
-    document.querySelectorAll('[data-admin-hours-form]:not([data-bound])').forEach((form) => {
-        form.dataset.bound = 'true';
-        const user = form.querySelector('[data-hours-user]');
-        const workspace = form.querySelector('[data-hours-workspace]');
-        const empty = form.querySelector('[data-hours-workspace-empty]');
-        const filterWorkspaces = () => {
-            const available = [...workspace.options].filter((option) => {
-                const matches = option.dataset.userId === user.value;
-                option.hidden = !matches;
-                option.disabled = !matches;
-                return matches;
+const loadRemoteOptions = (select, url, query, callback) => {
+    select.adminAbortController?.abort();
+    select.adminAbortController = new AbortController();
+    const requestUrl = new URL(url, window.location.origin);
+    if (query) requestUrl.searchParams.set('q', query);
+    fetch(requestUrl, {
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        signal: select.adminAbortController.signal,
+    })
+        .then((response) => {
+            if (!response.ok) throw new Error('The options could not be loaded.');
+            return response.json();
+        })
+        .then((payload) => callback(payload.results || []))
+        .catch((error) => {
+            if (error.name !== 'AbortError') callback();
+        });
+};
+
+const remoteSelectRenderers = {
+    option(item, escape) {
+        const status = ['Verified', 'Unverified', 'Suspended'].includes(item.status) ? item.status : '';
+        return `<div class="admin-remote-option"><span><strong>${escape(item.text)}</strong>${item.email ? `<small>${escape(item.email)}</small>` : ''}</span>${status ? `<em class="is-${status.toLowerCase()}">${escape(status)}</em>` : ''}</div>`;
+    },
+    item(item, escape) {
+        return `<div class="admin-remote-item"><strong>${escape(item.text)}</strong>${item.email ? `<small>${escape(item.email)}</small>` : ''}</div>`;
+    },
+    loading() {
+        return '<div class="admin-remote-message"><i></i>Searching records…</div>';
+    },
+    no_results(data, escape) {
+        return `<div class="admin-remote-message">No records found for “${escape(data.input)}”.</div>`;
+    },
+};
+
+const initializeAdminRemoteSelects = () => {
+    document.querySelectorAll('[data-admin-user-select]:not([data-bound])').forEach((userSelect) => {
+        userSelect.dataset.bound = 'true';
+        const form = userSelect.closest('form');
+        const workspaceSelect = form?.querySelector('[data-admin-workspace-select]');
+        const workspaceHelp = form?.querySelector('[data-hours-workspace-help]');
+        let workspaceControl = null;
+
+        if (workspaceSelect) {
+            workspaceSelect.dataset.bound = 'true';
+            workspaceControl = new TomSelect(workspaceSelect, {
+                valueField: 'value',
+                labelField: 'text',
+                searchField: [],
+                maxItems: 1,
+                create: false,
+                persist: false,
+                preload: false,
+                loadThrottle: 300,
+                placeholder: workspaceSelect.dataset.placeholder || 'Select a workspace',
+                shouldLoad: () => Boolean(userSelect.tomselect?.getValue() || userSelect.value),
+                load(query, callback) {
+                    const userId = userSelect.tomselect?.getValue() || userSelect.value;
+                    if (!userId) return callback();
+                    const url = workspaceSelect.dataset.urlTemplate.replace('__USER__', encodeURIComponent(userId));
+                    loadRemoteOptions(workspaceSelect, url, query, callback);
+                },
+                render: remoteSelectRenderers,
             });
-            if (!available.some((option) => option.selected)) workspace.value = available[0]?.value || '';
-            workspace.disabled = available.length === 0;
-            empty.hidden = available.length !== 0;
-        };
-        user.addEventListener('change', filterWorkspaces);
-        filterWorkspaces();
+            if (!userSelect.value) workspaceControl.disable();
+        }
+
+        let previousUser = userSelect.value;
+        new TomSelect(userSelect, {
+            valueField: 'value',
+            labelField: 'text',
+            searchField: [],
+            maxItems: 1,
+            create: false,
+            persist: false,
+            preload: false,
+            loadThrottle: 350,
+            placeholder: userSelect.dataset.placeholder || 'Search users',
+            shouldLoad: (query) => query.trim().length >= 2,
+            load(query, callback) {
+                loadRemoteOptions(userSelect, userSelect.dataset.url, query.trim(), callback);
+            },
+            render: remoteSelectRenderers,
+            onChange(userId) {
+                if (!workspaceControl || userId === previousUser) return;
+                previousUser = userId;
+                workspaceControl.clear(true);
+                workspaceControl.clearOptions();
+                if (!userId) {
+                    workspaceControl.disable();
+                    if (workspaceHelp) workspaceHelp.textContent = 'Select a user first.';
+                    return;
+                }
+                workspaceControl.enable();
+                if (workspaceHelp) workspaceHelp.textContent = 'Only this user’s active workspaces are available.';
+                workspaceControl.load('');
+            },
+        });
     });
 };
 
 document.addEventListener('DOMContentLoaded', initializeAdminTables);
-document.addEventListener('DOMContentLoaded', initializeAdminHoursForms);
+document.addEventListener('DOMContentLoaded', initializeAdminRemoteSelects);
 document.addEventListener('livewire:navigating', () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
         if (DataTable.isDataTable(table)) new DataTable(table).destroy();
     });
+    document.querySelectorAll('[data-admin-user-select],[data-admin-workspace-select]').forEach((select) => {
+        select.adminAbortController?.abort();
+        select.tomselect?.destroy();
+    });
 });
 document.addEventListener('livewire:navigated', initializeAdminTables);
-document.addEventListener('livewire:navigated', initializeAdminHoursForms);
+document.addEventListener('livewire:navigated', initializeAdminRemoteSelects);
 document.addEventListener('click', (event) => {
     document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
         if (!menu.contains(event.target)) menu.removeAttribute('open');

@@ -1,28 +1,22 @@
 @extends('layouts.admin')
 @section('title', $entry ? 'Edit hours entry' : 'Create hours entry')
 @section('content')
-@php($selectedUserId = (int) old('user_id', $entry?->user_id ?? $users->first()?->id))
 <a class="admin-context-back" href="{{ route('admin.hours.index') }}"><svg viewBox="0 0 20 20"><path d="m12.5 5-5 5 5 5"/></svg>Back to hours</a>
 <section class="admin-card admin-form-card admin-form-card--standalone">
     <form method="POST" data-admin-hours-form action="{{ $entry ? route('admin.hours.update', $entry) : route('admin.hours.store') }}">
         @csrf
         @if($entry) @method('PUT') @endif
         <label>User
-            <select name="user_id" required data-hours-user>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}" @selected($selectedUserId === $user->id)>{{ $user->name }}</option>
-                @endforeach
+            <select name="user_id" required data-admin-user-select data-hours-user data-url="{{ route('admin.options.users') }}" data-placeholder="Search by name or email">
+                @if($selectedUser)<option value="{{ $selectedUser->id }}" selected>{{ $selectedUser->name }} · {{ $selectedUser->email }}</option>@endif
             </select>
+            <small class="admin-field-help">Enter at least two characters to find a user.</small>
         </label>
         <label>Workspace
-            <select name="workspace_id" required data-hours-workspace>
-                @foreach($users as $user)
-                    @foreach($user->workspaces as $workspace)
-                        <option value="{{ $workspace->id }}" data-user-id="{{ $user->id }}" @selected(old('workspace_id', $entry?->workspace_id) == $workspace->id) @if($selectedUserId !== $user->id) hidden disabled @endif>{{ $workspace->name }}</option>
-                    @endforeach
-                @endforeach
+            <select name="workspace_id" required data-admin-workspace-select data-hours-workspace data-url-template="{{ route('admin.options.user-workspaces', ['user' => '__USER__']) }}" data-placeholder="Select a workspace" @disabled(!$selectedUser)>
+                @if($selectedWorkspace)<option value="{{ $selectedWorkspace->id }}" selected>{{ $selectedWorkspace->name }}</option>@endif
             </select>
-            <small data-hours-workspace-empty hidden>This user does not belong to an active workspace.</small>
+            <small class="admin-field-help" data-hours-workspace-help>{{ $selectedUser ? 'Only this user’s active workspaces are available.' : 'Select a user first.' }}</small>
         </label>
         <label>Date<input type="date" name="work_date" value="{{ old('work_date', $entry?->work_date?->format('Y-m-d')) }}" required></label>
         <label>Start<input type="time" name="start_time" value="{{ old('start_time', $entry ? substr($entry->start_time, 0, 5) : '09:00') }}" required></label>
