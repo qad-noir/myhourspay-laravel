@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminAuditLog;
-use App\Models\HoursEntry;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\AdminMetrics;
 use App\Services\HoursCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -18,37 +18,10 @@ use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    public function dashboard(HoursCalculator $calculator): View
+    public function dashboard(HoursCalculator $calculator, AdminMetrics $adminMetrics): View
     {
         $now = CarbonImmutable::now(config('hours.timezone'));
-        $monthStart = $now->startOfMonth();
-        $monthEnd = $now->endOfMonth();
-        $gridStart = $monthStart->startOfWeek();
-        $gridEnd = $monthEnd->endOfWeek();
-        $workspaces = Workspace::query()->get()->keyBy('id');
-        $entries = HoursEntry::query()->whereBetween('work_date', [$gridStart, $gridEnd])->get();
-        $monthEntries = $entries->filter(fn (HoursEntry $entry) => $entry->work_date->betweenIncluded($monthStart, $monthEnd));
-        $monthMinutes = $monthEntries->sum(fn (HoursEntry $entry) => $calculator->enrichEntry($entry)['net_minutes']);
-        $overtime = $entries->groupBy(fn (HoursEntry $entry) => $entry->workspace_id.'-'.$entry->user_id)
-            ->sum(function ($group) use ($calculator, $workspaces, $gridStart, $gridEnd): int {
-                $workspace = $workspaces->get($group->first()->workspace_id);
-                if (! $workspace) {
-                    return 0;
-                }
-
-                return $calculator->forWorkspace($workspace)->summarizeEntries($group, $gridStart->toDateString(), $gridEnd->toDateString())['overtime_minutes'];
-            });
-
-        $metrics = [
-            'users' => User::query()->count(),
-            'verified' => User::query()->whereNotNull('email_verified_at')->count(),
-            'suspended' => User::query()->whereNotNull('suspended_at')->count(),
-            'workspaces' => $workspaces->count(),
-            'hours' => $monthMinutes,
-            'overtime' => $overtime,
-            'paid_breaks' => (int) $monthEntries->where('break_type', 'paid')->sum('break_minutes'),
-            'unpaid_breaks' => (int) $monthEntries->where('break_type', 'unpaid')->sum('break_minutes'),
-        ];
+        $metrics = $adminMetrics->current($now);
         $recentUsers = User::query()->latest()->limit(6)->get();
         $recentAudits = AdminAuditLog::query()->with(['admin', 'target'])->latest()->limit(8)->get();
 

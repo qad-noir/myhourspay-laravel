@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\HoursCalculator;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,21 +32,6 @@ class HoursEntry extends Model
             'break_minutes' => 'integer',
             'net_minutes' => 'integer',
         ];
-    }
-
-    protected static function booted(): void
-    {
-        static::saving(function (HoursEntry $entry): void {
-            $entry->net_minutes = app(HoursCalculator::class)->calculateNetMinutes(
-                substr((string) $entry->start_time, 0, 5),
-                substr((string) $entry->end_time, 0, 5),
-                (int) $entry->break_minutes,
-                (string) ($entry->break_type ?? 'unpaid'),
-            );
-            $entry->week_start = CarbonImmutable::parse($entry->work_date, config('hours.timezone'))
-                ->startOfWeek()
-                ->toDateString();
-        });
     }
 
     public function user(): BelongsTo
