@@ -81,11 +81,11 @@ class AdminManagementTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $user = User::factory()->create();
         $workspace = $this->workspaceFor($user);
-        $payload = ['user_id'=>$user->id,'workspace_id'=>$workspace->id,'work_date'=>'2026-08-19','start_time'=>'09:00','end_time'=>'17:00','break_type'=>'unpaid','break_minutes'=>30,'notes'=>'Admin entry'];
+        $payload = ['user_id' => $user->id, 'workspace_id' => $workspace->id, 'work_date' => '2026-08-19', 'start_time' => '09:00', 'end_time' => '17:00', 'break_type' => 'unpaid', 'break_minutes' => 30, 'notes' => 'Admin entry'];
 
         $this->actingAs($admin)->post(route('admin.hours.store'), $payload)->assertRedirect();
         $entry = HoursEntry::query()->firstOrFail();
-        $this->actingAs($admin)->put(route('admin.hours.update', $entry), [...$payload, 'break_minutes'=>480])->assertSessionHasErrors('break_minutes');
+        $this->actingAs($admin)->put(route('admin.hours.update', $entry), [...$payload, 'break_minutes' => 480])->assertSessionHasErrors('break_minutes');
         $this->actingAs($admin)->delete(route('admin.hours.destroy', $entry))->assertRedirect();
         $this->assertSoftDeleted($entry);
         $this->actingAs($admin)->post(route('admin.hours.restore', $entry->id))->assertRedirect();
@@ -101,7 +101,7 @@ class AdminManagementTest extends TestCase
         $otherWorkspace = $this->workspaceFor($otherUser);
         $otherWorkspace->update(['name' => 'Other workspace']);
         $entry = $entryUser->hoursEntries()->create([
-            'workspace_id'=>$workspace->id,'work_date'=>'2026-08-19','start_time'=>'09:00','end_time'=>'17:00','break_type'=>'unpaid','break_minutes'=>30,
+            'workspace_id' => $workspace->id, 'work_date' => '2026-08-19', 'start_time' => '09:00', 'end_time' => '17:00', 'break_type' => 'unpaid', 'break_minutes' => 30,
         ]);
 
         $response = $this->actingAs($admin)->get(route('admin.hours.edit', $entry));
@@ -121,11 +121,11 @@ class AdminManagementTest extends TestCase
             'exception_class' => 'RuntimeException', 'exception_message' => 'Safe failure', 'occurred_at' => now(),
         ]);
 
-        $this->actingAs($admin)->post(route('admin.incidents.resolve', $incident), ['resolution_notes'=>'Mail configuration corrected.'])->assertRedirect();
+        $this->actingAs($admin)->post(route('admin.incidents.resolve', $incident), ['resolution_notes' => 'Mail configuration corrected.'])->assertRedirect();
         $this->assertNotNull($incident->refresh()->resolved_at);
         $this->actingAs($admin)->post(route('admin.incidents.reopen', $incident))->assertRedirect();
         $this->assertNull($incident->refresh()->resolved_at);
-        $this->assertDatabaseHas('admin_audit_logs', ['action'=>'incident.reopened','target_id'=>$incident->id]);
+        $this->assertDatabaseHas('admin_audit_logs', ['action' => 'incident.reopened', 'target_id' => $incident->id]);
     }
 
     public function test_trashing_current_workspace_selects_an_available_fallback(): void
@@ -133,8 +133,8 @@ class AdminManagementTest extends TestCase
         $admin = User::factory()->create(['is_admin' => true]);
         $user = User::factory()->create();
         $current = $this->workspaceFor($user);
-        $fallback = $user->ownedWorkspaces()->create(['name'=>'Second','default_break_type'=>'unpaid','default_break_minutes'=>30,'weekly_target_minutes'=>2400]);
-        $fallback->users()->attach($user, ['role'=>'owner','position'=>'Founder']);
+        $fallback = $user->ownedWorkspaces()->create(['name' => 'Second', 'default_break_type' => 'unpaid', 'default_break_minutes' => 30, 'weekly_target_minutes' => 2400]);
+        $fallback->users()->attach($user, ['role' => 'owner', 'position' => 'Founder']);
         $user->update(['current_workspace_id' => $current->id]);
 
         $this->actingAs($admin)->delete(route('admin.workspaces.destroy', $current))->assertRedirect();
@@ -145,8 +145,8 @@ class AdminManagementTest extends TestCase
 
     private function workspaceFor(User $user): Workspace
     {
-        $workspace = $user->ownedWorkspaces()->create(['name'=>'Acme','default_break_type'=>'unpaid','default_break_minutes'=>30,'weekly_target_minutes'=>2400]);
-        $workspace->users()->attach($user, ['role'=>'owner','position'=>'Founder']);
+        $workspace = $user->ownedWorkspaces()->create(['name' => 'Acme', 'default_break_type' => 'unpaid', 'default_break_minutes' => 30, 'weekly_target_minutes' => 2400]);
+        $workspace->users()->attach($user, ['role' => 'owner', 'position' => 'Founder']);
 
         return $workspace;
     }

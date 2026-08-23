@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\HoursCalculator;
 use App\Services\CurrentWorkspace;
 use App\Services\DashboardSummary;
+use App\Services\HoursCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

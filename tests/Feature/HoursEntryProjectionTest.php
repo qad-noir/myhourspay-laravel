@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\HoursEntry;
 use App\Models\User;
-use App\Models\Workspace;
 use App\Services\AdminMetrics;
 use App\Services\DashboardSummary;
 use App\Services\HoursCalculator;
