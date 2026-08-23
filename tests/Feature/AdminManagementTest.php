@@ -99,6 +99,7 @@ class AdminManagementTest extends TestCase
         $otherUser = User::factory()->create();
         $workspace = $this->workspaceFor($entryUser);
         $otherWorkspace = $this->workspaceFor($otherUser);
+        $otherWorkspace->update(['name' => 'Other workspace']);
         $entry = $entryUser->hoursEntries()->create([
             'workspace_id'=>$workspace->id,'work_date'=>'2026-08-19','start_time'=>'09:00','end_time'=>'17:00','break_type'=>'unpaid','break_minutes'=>30,
         ]);
@@ -106,10 +107,10 @@ class AdminManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.hours.edit', $entry));
 
         $response->assertOk()
-            ->assertSee('value="'.$entryUser->id.'"', false)
-            ->assertSee('value="'.$workspace->id.'"', false)
-            ->assertDontSee('value="'.$otherUser->id.'"', false)
-            ->assertDontSee('value="'.$otherWorkspace->id.'"', false);
+            ->assertSee($entryUser->name)
+            ->assertSee($workspace->name)
+            ->assertDontSee($otherUser->name)
+            ->assertDontSee($otherWorkspace->name);
     }
 
     public function test_admin_can_resolve_and_reopen_an_incident(): void
