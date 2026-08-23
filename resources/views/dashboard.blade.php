@@ -34,8 +34,25 @@
             @if($week['worked_days'] === 0)
                 <x-dashboard.empty-state compact><x-slot:action><a wire:navigate href="{{ route('hours.index', ['add' => 1]) }}" class="dashboard-button dashboard-button--primary">Add hours</a></x-slot:action></x-dashboard.empty-state>
             @else
-                <div class="weekly-chart" role="img" aria-label="Weekly hours: {{ collect($days)->map(fn($day) => $day['label'].' '.$day['formatted'])->join(', ') }}">
-                    @foreach($days as $day)<div class="weekly-chart__day"><div class="weekly-chart__value">{{ $day['minutes'] > 0 ? $calculator->formatHumanMinutes($day['minutes']) : '—' }}</div><div class="weekly-chart__track"><span style="height: {{ max(3, min(100, ($day['minutes'] / 600) * 100)) }}%" class="{{ $day['minutes'] >= 480 ? 'is-target' : '' }}"></span></div><strong>{{ $day['label'] }}</strong></div>@endforeach
+                <div class="weekly-chart" role="group" aria-label="Weekly hours: {{ collect($days)->map(fn($day) => $day['label'].' '.$day['formatted'])->join(', ') }}">
+                    @foreach($days as $day)
+                        @php($tooltipId = 'weekly-chart-tooltip-'.$loop->index)
+                        <div class="weekly-chart__day" tabindex="0" aria-describedby="{{ $tooltipId }}" aria-label="{{ $day['full_date'] }}: {{ $day['minutes'] > 0 ? $calculator->formatHumanMinutes($day['minutes']).' logged' : 'No hours logged' }}">
+                            <div class="weekly-chart__value">{{ $day['minutes'] > 0 ? $calculator->formatHumanMinutes($day['minutes']) : '—' }}</div>
+                            <div class="weekly-chart__track"><span style="height: {{ max(3, min(100, ($day['minutes'] / 600) * 100)) }}%" class="{{ $day['minutes'] >= 480 ? 'is-target' : '' }}"></span></div>
+                            <strong>{{ $day['label'] }}</strong>
+                            <div class="weekly-chart__tooltip" id="{{ $tooltipId }}" role="tooltip">
+                                <strong>{{ $day['full_date'] }}</strong>
+                                @if($day['minutes'] > 0)
+                                    <span>{{ $calculator->formatHumanMinutes($day['minutes']) }} logged</span>
+                                    <small>{{ $day['start_time'] }}–{{ $day['end_time'] }} · {{ $day['break_minutes'] }}m {{ $day['break_type'] }} break</small>
+                                @else
+                                    <span>No hours logged</span>
+                                    <small>Add an entry from the hours calendar.</small>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
                 <div class="weekly-target-line"><span><i></i> Daily hours</span><span>Weekly target: {{ $targetLabel }}</span></div>
             @endif

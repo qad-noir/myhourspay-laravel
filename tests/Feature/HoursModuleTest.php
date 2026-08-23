@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\HoursEntry;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
@@ -24,6 +25,27 @@ class HoursModuleTest extends TestCase
         $user = $this->workspaceUser();
         $this->actingAs($user)->get('/hours?month=2026-08')->assertOk()->assertSee('Hours')->assertSee($user->name);
         $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('Hours')->assertSee('Overtime this week')->assertSee('Overtime this month');
+    }
+
+    public function test_weekly_chart_exposes_entry_details_on_hover_and_keyboard_focus(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-08-23 12:00:00'));
+        $user = $this->workspaceUser();
+        $this->entry($user, [
+            'work_date' => '2026-08-23',
+            'start_time' => '09:00',
+            'end_time' => '12:30',
+            'break_minutes' => 30,
+            'break_type' => 'paid',
+        ]);
+
+        $this->actingAs($user)->get('/dashboard')
+            ->assertOk()
+            ->assertSee('weekly-chart-tooltip-6')
+            ->assertSee('Sunday, 23 August 2026')
+            ->assertSee('3h 30m logged')
+            ->assertSee('09:00–12:30 · 30m paid break')
+            ->assertSee('No hours logged');
     }
 
     public function test_user_can_create_update_and_delete_an_entry(): void

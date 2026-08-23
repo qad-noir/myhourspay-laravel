@@ -29,7 +29,17 @@ class DashboardController extends Controller
             $date = $weekStart->addDays($offset);
             $entry = $byDate->get($date->toDateString());
 
-            return ['label' => $date->format('D'), 'date' => $date->toDateString(), 'minutes' => $entry['net_minutes'] ?? 0, 'formatted' => $entry['net_formatted'] ?? '00:00'];
+            return [
+                'label' => $date->format('D'),
+                'date' => $date->toDateString(),
+                'full_date' => $date->format('l, j F Y'),
+                'minutes' => $entry['net_minutes'] ?? 0,
+                'formatted' => $entry['net_formatted'] ?? '00:00',
+                'start_time' => $entry['start_time'] ?? null,
+                'end_time' => $entry['end_time'] ?? null,
+                'break_minutes' => $entry['break_minutes'] ?? null,
+                'break_type' => $entry['break_type'] ?? null,
+            ];
         })->all();
         $variance = $week['total_minutes'] - $calculator->weeklyTargetMinutes();
         $recent = $request->user()->hoursEntries()->forWorkspace($workspace)->latest('work_date')->limit(5)->get()->map(fn ($entry) => $calculator->enrichEntry($entry));
