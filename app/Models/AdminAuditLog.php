@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class AdminAuditLog extends Model
 {
-    protected $fillable = ['admin_user_id', 'action', 'before', 'after', 'ip_address'];
+    protected $fillable = ['admin_user_id', 'action', 'reason', 'before', 'after', 'ip_address'];
 
     protected function casts(): array
     {

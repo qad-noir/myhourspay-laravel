@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminBillingController;
+use App\Http\Controllers\Admin\AdminBillingDataController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDataController;
 use App\Http\Controllers\Admin\AdminManagementController;
@@ -84,6 +86,27 @@ Route::middleware([
         Route::prefix('options')->name('options.')->controller(AdminOptionController::class)->group(function (): void {
             Route::get('/users', 'users')->name('users');
             Route::get('/users/{user}/workspaces', 'workspaces')->whereNumber('user')->name('user-workspaces');
+        });
+        Route::prefix('billing')->name('billing.')->controller(AdminBillingController::class)->group(function (): void {
+            Route::get('/', 'overview')->name('overview');
+            Route::put('/switches', 'updateSwitch')->name('switches.update');
+            Route::get('/features', 'features')->name('features');
+            Route::put('/features/{feature}', 'updateFeature')->name('features.update');
+            Route::get('/plans', 'plans')->name('plans');
+            Route::put('/plans/{plan}/features/{feature}', 'updatePlanFeature')->name('plans.features.update');
+            Route::get('/subscribers', 'subscribers')->name('subscribers');
+            Route::post('/subscribers/{user}/resync', 'resync')->name('subscribers.resync');
+            Route::post('/subscribers/{user}/cancel', 'cancelSubscriber')->name('subscribers.cancel');
+            Route::get('/grants', 'grants')->name('grants');
+            Route::get('/grants/create', 'createGrant')->name('grants.create');
+            Route::post('/grants', 'storeGrant')->name('grants.store');
+            Route::post('/grants/{grant}/revoke', 'revokeGrant')->name('grants.revoke');
+            Route::get('/health', 'health')->name('health');
+        });
+        Route::prefix('data/billing')->name('data.billing.')->controller(AdminBillingDataController::class)->group(function (): void {
+            Route::get('/subscribers', 'subscribers')->name('subscribers');
+            Route::get('/grants', 'grants')->name('grants');
+            Route::get('/webhooks', 'webhooks')->name('webhooks');
         });
     });
     Route::get('/verify-email-code', [EmailVerificationCodeController::class, 'show'])->name('email-code.show');

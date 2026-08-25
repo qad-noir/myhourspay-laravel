@@ -16,6 +16,7 @@
             <a wire:navigate href="{{ route('admin.users.index') }}" @if(request()->routeIs('admin.users.*')) aria-current="page" @endif><x-admin.icon name="users"/>Users</a>
             <a wire:navigate href="{{ route('admin.workspaces.index') }}" @if(request()->routeIs('admin.workspaces.*')) aria-current="page" @endif><x-admin.icon name="workspaces"/>Workspaces</a>
             <a wire:navigate href="{{ route('admin.hours.index') }}" @if(request()->routeIs('admin.hours.*')) aria-current="page" @endif><x-admin.icon name="hours"/>Hours</a>
+            <a wire:navigate href="{{ route('admin.billing.overview') }}" @if(request()->routeIs('admin.billing.*')) aria-current="page" @endif><x-admin.icon name="billing"/>Monetisation</a>
             <a wire:navigate href="{{ route('admin.audit-logs.index') }}" @if(request()->routeIs('admin.audit-logs.*')) aria-current="page" @endif><x-admin.icon name="audit"/>Audit logs</a>
             <a wire:navigate href="{{ route('admin.incidents.index') }}" @if(request()->routeIs('admin.incidents.*')) aria-current="page" @endif><x-admin.icon name="incidents"/>Incidents</a>
             <a wire:navigate href="{{ route('admin.trash') }}" @if(request()->routeIs('admin.trash')) aria-current="page" @endif><x-admin.icon name="trash"/>Trash</a>

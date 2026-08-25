@@ -4,18 +4,21 @@ namespace App\Http\Middleware;
 
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
+use App\Services\FeatureUsage;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureFeatureAccess
 {
-    public function __construct(private readonly FeatureAccess $features, private readonly CurrentWorkspace $workspaces) {}
+    public function __construct(private readonly FeatureAccess $features, private readonly CurrentWorkspace $workspaces, private readonly FeatureUsage $usage) {}
 
     public function handle(Request $request, Closure $next, string $feature): Response
     {
         $workspace = $request->user()?->current_workspace_id ? $this->workspaces->for($request->user()) : null;
         if ($request->user() && $this->features->allows($request->user(), $feature, $workspace)) {
+            $this->usage->record($request->user(), $feature, $workspace);
+
             return $next($request);
         }
 

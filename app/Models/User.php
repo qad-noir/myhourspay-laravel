@@ -117,6 +117,11 @@ class User extends Authenticatable
         return $this->hasOne(EmailVerificationCode::class);
     }
 
+    public function entitlementGrants(): HasMany
+    {
+        return $this->hasMany(EntitlementGrant::class);
+    }
+
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new PasswordResetNotification($token));

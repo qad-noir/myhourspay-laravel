@@ -44,4 +44,14 @@ class EntitlementGrant extends Model
     {
         return $this->belongsTo(Feature::class);
     }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by')->withTrashed();
+    }
+
+    public function revoker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'revoked_by')->withTrashed();
+    }
 }

@@ -1,0 +1,8 @@
+@extends('layouts.admin')
+@section('title', 'Stripe health')
+@section('content')
+<a class="admin-context-back" wire:navigate href="{{ route('admin.billing.overview') }}"><x-admin.icon name="back"/>Back to monetisation</a>
+<section class="admin-card stripe-health-summary"><header><div><h2>Catalogue configuration</h2><p>Live amounts are controlled in Stripe Dashboard. This page verifies local identifiers and signed-event receipts.</p></div><span class="admin-status {{ $stripeConfigured?'admin-status--active':'admin-status--suspended' }}"><i></i>{{ $stripeConfigured?'Stripe configured':'Credentials incomplete' }}</span></header>
+<div>@foreach($priceHealth as $plan)<article><strong>{{ $plan->name }}</strong>@foreach($plan->prices as $price)<span class="{{ $price->stripe_price_id?'is-ready':'is-missing' }}">{{ str($price->interval)->headline() }} {{ $price->kind }} · {{ $price->stripe_price_id ?: 'Missing ID' }}</span>@endforeach</article>@endforeach</div></section>
+<section class="admin-card admin-table-card"><x-admin.data-table id="webhooks-table" :url="route('admin.data.billing.webhooks')" title="Stripe webhook receipts" description="Idempotent event processing and failure history" :columns="[['data'=>'stripe_event_id','name'=>'stripe_event_id','title'=>'Event ID'],['data'=>'type','name'=>'type','title'=>'Type','responsivePriority'=>1],['data'=>'status','name'=>'status','title'=>'Status','responsivePriority'=>2],['data'=>'received','name'=>'received','title'=>'Received'],['data'=>'processed','name'=>'processed','title'=>'Processed'],['data'=>'message','name'=>'message','title'=>'Safe error']]" /></section>
+@endsection
