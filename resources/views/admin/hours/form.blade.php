@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', $entry ? 'Edit hours entry' : 'Create hours entry')
 @section('content')
-<a class="admin-context-back" href="{{ route('admin.hours.index') }}"><svg viewBox="0 0 20 20"><path d="m12.5 5-5 5 5 5"/></svg>Back to hours</a>
+<a wire:navigate class="admin-context-back" href="{{ route('admin.hours.index') }}"><svg viewBox="0 0 20 20"><path d="m12.5 5-5 5 5 5"/></svg>Back to hours</a>
 <section class="admin-card admin-form-card admin-form-card--standalone">
     <form method="POST" data-admin-hours-form action="{{ $entry ? route('admin.hours.update', $entry) : route('admin.hours.store') }}">
         @csrf

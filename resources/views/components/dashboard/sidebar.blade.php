@@ -22,7 +22,7 @@
         <p>Account</p>
         <a wire:navigate href="{{ route('profile.show') }}" @if(request()->routeIs('profile.show')) aria-current="page" @endif><span><x-dashboard.icon name="settings" /></span> Settings</a>
         <a wire:navigate href="{{ route('billing.index') }}" @if(request()->routeIs('billing.*')) aria-current="page" @endif><span><x-dashboard.icon name="reports" /></span> Plans & billing</a>
-        @if(auth()->user()->is_admin)<p>Administration</p><a href="{{ route('admin.dashboard') }}"><span><x-dashboard.icon name="overview" /></span> Admin dashboard</a>@endif
+        @if(auth()->user()->is_admin)<p>Administration</p><a wire:navigate href="{{ route('admin.dashboard') }}"><span><x-dashboard.icon name="overview" /></span> Admin dashboard</a>@endif
     </nav>
     <div class="dashboard-sidebar__privacy"><span><x-dashboard.icon name="shield" /></span><div><strong>Private workspace</strong><small>{{ $currentWorkspace->name }} records are isolated.</small></div></div>
     <div class="dashboard-sidebar__account"><span class="dashboard-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span><div><strong>{{ auth()->user()->name }}</strong><small>{{ auth()->user()->email }}</small><a wire:navigate href="{{ route('profile.show') }}">Account</a></div><form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" aria-label="Log out"><x-dashboard.icon name="logout" :size="16" /></button></form></div>

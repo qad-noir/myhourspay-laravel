@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Audit detail')
 @section('content')
-<a class="admin-context-back" href="{{ route('admin.audit-logs.index') }}"><svg viewBox="0 0 20 20"><path d="m12.5 5-5 5 5 5"/></svg>Back to audit logs</a>
+<a wire:navigate class="admin-context-back" href="{{ route('admin.audit-logs.index') }}"><svg viewBox="0 0 20 20"><path d="m12.5 5-5 5 5 5"/></svg>Back to audit logs</a>
 <section class="admin-card admin-log-detail">
     <dl>
         <dt>Action</dt><dd>{{ $auditLog->action }}</dd>

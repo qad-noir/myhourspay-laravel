@@ -8,6 +8,8 @@ import 'datatables.net-dt/css/dataTables.dataTables.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
 import TomSelect from 'tom-select';
 import 'tom-select/dist/css/tom-select.css';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]:not([data-bound])').forEach((table) => {
@@ -156,17 +158,24 @@ const initializeAdminRemoteSelects = () => {
 
 document.addEventListener('DOMContentLoaded', initializeAdminTables);
 document.addEventListener('DOMContentLoaded', initializeAdminRemoteSelects);
-document.addEventListener('livewire:navigating', () => {
+const teardownAdminEnhancements = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
         if (DataTable.isDataTable(table)) new DataTable(table).destroy();
+        delete table.dataset.bound;
     });
     document.querySelectorAll('[data-admin-user-select],[data-admin-workspace-select]').forEach((select) => {
         select.adminAbortController?.abort();
         select.tomselect?.destroy();
+        delete select.dataset.bound;
     });
-});
+};
+document.addEventListener('livewire:navigating', teardownAdminEnhancements);
 document.addEventListener('livewire:navigated', initializeAdminTables);
 document.addEventListener('livewire:navigated', initializeAdminRemoteSelects);
+window.addEventListener('pageshow', () => {
+    initializeAdminTables();
+    initializeAdminRemoteSelects();
+});
 document.addEventListener('click', (event) => {
     document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
         if (!menu.contains(event.target)) menu.removeAttribute('open');
@@ -196,9 +205,42 @@ document.addEventListener('toggle', (event) => {
 }, true);
 window.addEventListener('resize', () => document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => menu.removeAttribute('open')));
 window.addEventListener('scroll', () => document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => menu.removeAttribute('open')), true);
-document.addEventListener('submit', (event) => {
-    const message = event.target.dataset.confirm;
-    if (message && !window.confirm(message)) event.preventDefault();
+const confirmedForms = new WeakSet();
+document.addEventListener('submit', async (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.dataset.confirm) return;
+    if (confirmedForms.has(form)) {
+        confirmedForms.delete(form);
+        return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const submitter = event.submitter;
+    const destructive = form.dataset.confirmTone !== 'neutral';
+    const result = await Swal.fire({
+        title: form.dataset.confirmTitle || (destructive ? 'Please confirm this action' : 'Confirm change'),
+        text: form.dataset.confirm,
+        icon: destructive ? 'warning' : 'question',
+        showCancelButton: true,
+        focusCancel: destructive,
+        confirmButtonText: form.dataset.confirmButton || (destructive ? 'Yes, continue' : 'Confirm'),
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+            popup: 'mhp-swal',
+            title: 'mhp-swal__title',
+            htmlContainer: 'mhp-swal__message',
+            actions: 'mhp-swal__actions',
+            confirmButton: `mhp-swal__confirm${destructive ? ' is-danger' : ''}`,
+            cancelButton: 'mhp-swal__cancel',
+        },
+    });
+
+    if (!result.isConfirmed || !form.isConnected) return;
+    confirmedForms.add(form);
+    form.requestSubmit(submitter instanceof HTMLElement && form.contains(submitter) ? submitter : undefined);
 });
 
 const nav = document.querySelector('[data-public-nav]');
@@ -478,4 +520,4 @@ const initializeNavigatedPage = () => {
 
 initializeNavigatedPage();
 document.addEventListener('livewire:navigated', initializeNavigatedPage);
-document.addEventListener('livewire:navigating', () => { window.hoursFullCalendar?.destroy(); window.hoursFullCalendar = null; document.querySelector('[data-hours-tooltip]')?.remove(); });
+document.addEventListener('livewire:navigating', () => { window.hoursFullCalendar?.destroy(); window.hoursFullCalendar = null; document.querySelector('[data-hours-tooltip]')?.remove(); Swal.close(); });
