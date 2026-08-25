@@ -19,6 +19,7 @@
         <a wire:navigate href="{{ route('hours.reports.index') }}#exports" @if(request()->routeIs('hours.reports.excel', 'hours.reports.csv', 'hours.reports.print')) aria-current="page" @endif><span><x-dashboard.icon name="exports" /></span> Exports</a>
         <p>Account</p>
         <a wire:navigate href="{{ route('profile.show') }}" @if(request()->routeIs('profile.show')) aria-current="page" @endif><span><x-dashboard.icon name="settings" /></span> Settings</a>
+        <a wire:navigate href="{{ route('billing.index') }}" @if(request()->routeIs('billing.*')) aria-current="page" @endif><span><x-dashboard.icon name="reports" /></span> Plans & billing</a>
         @if(auth()->user()->is_admin)<p>Administration</p><a href="{{ route('admin.dashboard') }}"><span><x-dashboard.icon name="overview" /></span> Admin dashboard</a>@endif
     </nav>
     <div class="dashboard-sidebar__privacy"><span><x-dashboard.icon name="shield" /></span><div><strong>Private workspace</strong><small>{{ $currentWorkspace->name }} records are isolated.</small></div></div>

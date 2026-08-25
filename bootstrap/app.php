@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureEmailCodeVerified;
 use App\Http\Middleware\EnsureFeatureAccess;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Services\BillingWebhookTracker;
 use App\Services\DatabaseSchemaIncident;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
@@ -29,6 +30,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->report(function (Throwable $exception): void {
+            if (request()->routeIs('cashier.webhook')) {
+                app(BillingWebhookTracker::class)->failed(request(), $exception);
+            }
+        });
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

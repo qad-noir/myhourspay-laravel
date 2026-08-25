@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmailVerificationCodeController;
-use App\Http\Controllers\HoursController;
-use App\Http\Controllers\HoursSettingsController;
-use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDataController;
 use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Admin\AdminOptionController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailVerificationCodeController;
+use App\Http\Controllers\HoursController;
+use App\Http\Controllers\HoursSettingsController;
+use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,13 +43,44 @@ Route::middleware([
     });
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function (): void {
         Route::controller(AdminManagementController::class)->group(function (): void {
-            Route::get('/users/create','createUser')->name('users.create'); Route::post('/users','storeUser')->name('users.store');
-            Route::post('/users/{user}/verification','verify')->name('users.verification'); Route::post('/users/{user}/verification/resend','resendVerification')->name('users.verification.resend'); Route::post('/users/{user}/workspace-reset','resetWorkspace')->name('users.workspace-reset'); Route::delete('/users/{user}','deleteUser')->name('users.destroy'); Route::post('/trash/users/{user}/restore','restoreUser')->name('users.restore'); Route::delete('/trash/users/{user}','forceDeleteUser')->name('users.force-delete');
-            Route::get('/workspaces/create','createWorkspace')->name('workspaces.create'); Route::post('/workspaces','storeWorkspace')->name('workspaces.store'); Route::delete('/workspaces/{workspace}','deleteWorkspace')->name('workspaces.destroy'); Route::post('/trash/workspaces/{workspace}/restore','restoreWorkspace')->name('workspaces.restore'); Route::delete('/trash/workspaces/{workspace}','forceDeleteWorkspace')->name('workspaces.force-delete');
-            Route::get('/hours','hours')->name('hours.index'); Route::get('/hours/create','createHours')->name('hours.create'); Route::post('/hours','storeHours')->name('hours.store'); Route::get('/hours/{hoursEntry}/edit','editHours')->name('hours.edit'); Route::put('/hours/{hoursEntry}','updateHours')->name('hours.update'); Route::delete('/hours/{hoursEntry}','deleteHours')->name('hours.destroy'); Route::post('/trash/hours/{trashedHoursEntry}/restore','restoreHours')->name('hours.restore'); Route::delete('/trash/hours/{trashedHoursEntry}','forceDeleteHours')->name('hours.force-delete'); Route::get('/trash','trash')->name('trash');
+            Route::get('/users/create', 'createUser')->name('users.create');
+            Route::post('/users', 'storeUser')->name('users.store');
+            Route::post('/users/{user}/verification', 'verify')->name('users.verification');
+            Route::post('/users/{user}/verification/resend', 'resendVerification')->name('users.verification.resend');
+            Route::post('/users/{user}/workspace-reset', 'resetWorkspace')->name('users.workspace-reset');
+            Route::delete('/users/{user}', 'deleteUser')->name('users.destroy');
+            Route::post('/trash/users/{user}/restore', 'restoreUser')->name('users.restore');
+            Route::delete('/trash/users/{user}', 'forceDeleteUser')->name('users.force-delete');
+            Route::get('/workspaces/create', 'createWorkspace')->name('workspaces.create');
+            Route::post('/workspaces', 'storeWorkspace')->name('workspaces.store');
+            Route::delete('/workspaces/{workspace}', 'deleteWorkspace')->name('workspaces.destroy');
+            Route::post('/trash/workspaces/{workspace}/restore', 'restoreWorkspace')->name('workspaces.restore');
+            Route::delete('/trash/workspaces/{workspace}', 'forceDeleteWorkspace')->name('workspaces.force-delete');
+            Route::get('/hours', 'hours')->name('hours.index');
+            Route::get('/hours/create', 'createHours')->name('hours.create');
+            Route::post('/hours', 'storeHours')->name('hours.store');
+            Route::get('/hours/{hoursEntry}/edit', 'editHours')->name('hours.edit');
+            Route::put('/hours/{hoursEntry}', 'updateHours')->name('hours.update');
+            Route::delete('/hours/{hoursEntry}', 'deleteHours')->name('hours.destroy');
+            Route::post('/trash/hours/{trashedHoursEntry}/restore', 'restoreHours')->name('hours.restore');
+            Route::delete('/trash/hours/{trashedHoursEntry}', 'forceDeleteHours')->name('hours.force-delete');
+            Route::get('/trash', 'trash')->name('trash');
         });
-        Route::controller(AdminOperationsController::class)->group(function (): void { Route::get('/audit-logs','audits')->name('audit-logs.index'); Route::get('/audit-logs/{auditLog}','audit')->name('audit-logs.show'); Route::get('/incidents','incidents')->name('incidents.index'); Route::get('/incidents/{incident}','incident')->name('incidents.show'); Route::post('/incidents/{incident}/resolve','resolve')->name('incidents.resolve'); Route::post('/incidents/{incident}/reopen','reopen')->name('incidents.reopen'); });
-        Route::prefix('data')->name('data.')->controller(AdminDataController::class)->group(function (): void { Route::get('/users','users')->name('users'); Route::get('/workspaces','workspaces')->name('workspaces'); Route::get('/hours','hours')->name('hours'); Route::get('/audit-logs','audits')->name('audit-logs'); Route::get('/incidents','incidents')->name('incidents'); });
+        Route::controller(AdminOperationsController::class)->group(function (): void {
+            Route::get('/audit-logs', 'audits')->name('audit-logs.index');
+            Route::get('/audit-logs/{auditLog}', 'audit')->name('audit-logs.show');
+            Route::get('/incidents', 'incidents')->name('incidents.index');
+            Route::get('/incidents/{incident}', 'incident')->name('incidents.show');
+            Route::post('/incidents/{incident}/resolve', 'resolve')->name('incidents.resolve');
+            Route::post('/incidents/{incident}/reopen', 'reopen')->name('incidents.reopen');
+        });
+        Route::prefix('data')->name('data.')->controller(AdminDataController::class)->group(function (): void {
+            Route::get('/users', 'users')->name('users');
+            Route::get('/workspaces', 'workspaces')->name('workspaces');
+            Route::get('/hours', 'hours')->name('hours');
+            Route::get('/audit-logs', 'audits')->name('audit-logs');
+            Route::get('/incidents', 'incidents')->name('incidents');
+        });
         Route::prefix('options')->name('options.')->controller(AdminOptionController::class)->group(function (): void {
             Route::get('/users', 'users')->name('users');
             Route::get('/users/{user}/workspaces', 'workspaces')->whereNumber('user')->name('user-workspaces');
@@ -64,6 +96,16 @@ Route::middleware([
         Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
 
         Route::middleware('workspace')->group(function (): void {
+            Route::prefix('billing')->name('billing.')->controller(BillingController::class)->group(function (): void {
+                Route::get('/', 'index')->name('index');
+                Route::post('/checkout', 'checkout')->name('checkout');
+                Route::post('/portal', 'portal')->name('portal');
+                Route::post('/cancel', 'cancel')->name('cancel');
+                Route::post('/resume', 'resume')->name('resume');
+                Route::get('/success', 'success')->name('success');
+                Route::get('/cancelled', 'cancelled')->name('cancelled');
+            });
+
             Route::get('/dashboard', DashboardController::class)->name('dashboard');
             Route::get('/workspaces/create', [WorkspaceController::class, 'create'])->name('workspaces.create');
             Route::post('/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
