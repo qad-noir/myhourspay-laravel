@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\EntitlementGrant;
 use App\Models\Feature;
+use App\Models\FeatureUsageDaily;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\BillingSettings;
@@ -41,6 +42,23 @@ class AdminBillingTest extends TestCase
         $this->actingAs($admin)->getJson(route('admin.data.billing.subscribers'))->assertOk();
         $this->actingAs($admin)->getJson(route('admin.data.billing.grants'))->assertOk();
         $this->actingAs($admin)->getJson(route('admin.data.billing.webhooks'))->assertOk();
+    }
+
+    public function test_monetization_overview_groups_usage_through_the_feature_relationship(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $feature = Feature::query()->where('key', 'advanced_reports')->firstOrFail();
+        FeatureUsageDaily::query()->create([
+            'usage_date' => today(),
+            'user_id' => $admin->id,
+            'feature_id' => $feature->id,
+            'usage_count' => 3,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.billing.overview'))
+            ->assertOk()
+            ->assertSee('Advanced Reports')
+            ->assertSee('3 uses');
     }
 
     public function test_first_enforcement_launch_creates_one_time_thirty_day_pro_grants(): void

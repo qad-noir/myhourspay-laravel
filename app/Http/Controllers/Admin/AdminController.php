@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminAuditLog;
+use App\Models\HoursEntry;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AdminMetrics;

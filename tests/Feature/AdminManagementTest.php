@@ -113,6 +113,26 @@ class AdminManagementTest extends TestCase
             ->assertDontSee($otherWorkspace->name);
     }
 
+    public function test_admin_workspace_details_enrich_hours_entries_with_the_correct_model_type(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $user = User::factory()->create();
+        $workspace = $this->workspaceFor($user);
+        $user->hoursEntries()->create([
+            'workspace_id' => $workspace->id,
+            'work_date' => '2026-08-19',
+            'start_time' => '09:00',
+            'end_time' => '17:00',
+            'break_type' => 'unpaid',
+            'break_minutes' => 30,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.workspaces.show', $workspace))
+            ->assertOk()
+            ->assertSee($workspace->name)
+            ->assertSee('07:30');
+    }
+
     public function test_admin_can_resolve_and_reopen_an_incident(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

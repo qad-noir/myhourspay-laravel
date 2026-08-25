@@ -45,7 +45,14 @@ class AdminBillingController extends Controller
         $recentWebhooks = BillingWebhookEvent::query()->latest()->limit(8)->get();
         $expiringGrants = EntitlementGrant::query()->active()->whereNotNull('expires_at')->with(['user', 'plan', 'feature'])->orderBy('expires_at')->limit(8)->get();
         $planDistribution = DB::table('subscription_items')->join('plan_prices', 'plan_prices.stripe_price_id', '=', 'subscription_items.stripe_price')->join('plans', 'plans.id', '=', 'plan_prices.plan_id')->where('plan_prices.kind', 'base')->select('plans.name', DB::raw('COUNT(DISTINCT subscription_items.subscription_id) as subscribers'))->groupBy('plans.id', 'plans.name')->orderByDesc('subscribers')->get();
-        $topFeatures = FeatureUsageDaily::query()->select('feature_key', DB::raw('SUM(usage_count) as uses'))->where('usage_date', '>=', today()->subDays(30))->groupBy('feature_key')->orderByDesc('uses')->limit(8)->get();
+        $topFeatures = FeatureUsageDaily::query()
+            ->join('features', 'features.id', '=', 'feature_usage_daily.feature_id')
+            ->select('features.key as feature_key', DB::raw('SUM(feature_usage_daily.usage_count) as uses'))
+            ->where('usage_date', '>=', today()->subDays(30))
+            ->groupBy('features.id', 'features.key')
+            ->orderByDesc('uses')
+            ->limit(8)
+            ->get();
 
         return view('admin.billing.overview', [
             'metrics' => $metrics,
