@@ -10,15 +10,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Cashier\Billable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    use Billable;
     use HasApiTokens;
 
     /** @use HasFactory<UserFactory> */
@@ -26,8 +28,8 @@ class User extends Authenticatable
 
     use HasProfilePhoto;
     use Notifiable;
-    use TwoFactorAuthenticatable;
     use SoftDeletes;
+    use TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -44,6 +46,8 @@ class User extends Authenticatable
         'is_admin',
         'suspended_at',
         'workspace_onboarding_reset_at',
+        'entitlement_version',
+        'billing_grace_ends_at',
     ];
 
     /**
@@ -83,6 +87,8 @@ class User extends Authenticatable
             'is_admin' => 'boolean',
             'suspended_at' => 'datetime',
             'workspace_onboarding_reset_at' => 'datetime',
+            'entitlement_version' => 'integer',
+            'billing_grace_ends_at' => 'datetime',
         ];
     }
 

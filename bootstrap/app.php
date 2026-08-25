@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureCurrentWorkspace;
 use App\Http\Middleware\EnsureEmailCodeVerified;
+use App\Http\Middleware\EnsureFeatureAccess;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Services\DatabaseSchemaIncident;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'workspace' => EnsureCurrentWorkspace::class,
             'active' => EnsureUserIsActive::class,
             'admin' => EnsureUserIsAdmin::class,
+            'feature' => EnsureFeatureAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
