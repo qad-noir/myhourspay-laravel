@@ -9,11 +9,15 @@ use App\Http\Middleware\EnsureWorkspaceIsWritable;
 use App\Services\BillingWebhookTracker;
 use App\Services\DatabaseSchemaIncident;
 use App\Services\UnexpectedApplicationIncident;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -67,7 +71,11 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.schema-mismatch', compact('reference'), 503);
         });
         $exceptions->render(function (Throwable $exception, Request $request) {
-            if (app()->environment('testing') || $exception instanceof HttpExceptionInterface) {
+            if ($exception instanceof HttpExceptionInterface
+                || $exception instanceof ValidationException
+                || $exception instanceof AuthenticationException
+                || $exception instanceof AuthorizationException
+                || $exception instanceof ModelNotFoundException) {
                 return null;
             }
 
