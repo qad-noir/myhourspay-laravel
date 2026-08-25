@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Admin\AdminOptionController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CalendarIntegrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\HoursController;
@@ -148,6 +149,14 @@ Route::middleware([
                 Route::get('/invoices/{invoice}', 'showInvoice')->middleware('feature:invoicing')->name('invoices.show');
                 Route::get('/invoices/{invoice}/pdf', 'invoicePdf')->middleware('feature:invoicing')->name('invoices.pdf');
                 Route::post('/invoices/{invoice}/status', 'updateInvoiceStatus')->middleware(['feature:invoicing', 'workspace.writable'])->name('invoices.status');
+            });
+            Route::prefix('pro/calendars')->name('pro.calendars.')->controller(CalendarIntegrationController::class)->middleware('feature:calendar_integrations')->group(function (): void {
+                Route::get('/{provider}/connect', 'redirect')->name('redirect');
+                Route::get('/{provider}/callback', 'callback')->name('callback');
+                Route::post('/connections/{connection}/sync', 'sync')->name('sync');
+                Route::delete('/connections/{connection}', 'disconnect')->name('disconnect');
+                Route::post('/events/{event}/convert', 'convert')->middleware('workspace.writable')->name('events.convert');
+                Route::post('/events/{event}/ignore', 'ignore')->name('events.ignore');
             });
             Route::get('/workspaces/create', [WorkspaceController::class, 'create'])->name('workspaces.create');
             Route::post('/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');

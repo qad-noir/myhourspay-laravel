@@ -44,7 +44,7 @@ class ProController extends Controller
             'preferences' => $access['smart_reminders'] ? NotificationPreference::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->get()->keyBy('type') : collect(),
             'templates' => $access['export_templates'] ? ReportTemplate::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->with('schedules')->get() : collect(),
             'invoices' => $access['invoicing'] ? $workspace->invoices()->with('client')->latest()->limit(20)->get() : collect(),
-            'connections' => $access['calendar_integrations'] ? CalendarConnection::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->withCount(['events' => fn ($query) => $query->where('status', 'suggested')])->get() : collect(),
+            'connections' => $access['calendar_integrations'] ? CalendarConnection::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->with(['events' => fn ($query) => $query->where('status', 'suggested')->orderBy('starts_at')->limit(25)])->withCount(['events' => fn ($query) => $query->where('status', 'suggested')])->get() : collect(),
         ]);
     }
 

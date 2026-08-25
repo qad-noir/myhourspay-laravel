@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'calendar' => [
+        'google' => [
+            'client_id' => env('GOOGLE_CALENDAR_CLIENT_ID'),
+            'client_secret' => env('GOOGLE_CALENDAR_CLIENT_SECRET'),
+            'redirect' => env('GOOGLE_CALENDAR_REDIRECT_URI'),
+        ],
+        'microsoft' => [
+            'client_id' => env('MICROSOFT_CALENDAR_CLIENT_ID'),
+            'client_secret' => env('MICROSOFT_CALENDAR_CLIENT_SECRET'),
+            'tenant' => env('MICROSOFT_CALENDAR_TENANT', 'common'),
+            'redirect' => env('MICROSOFT_CALENDAR_REDIRECT_URI'),
+        ],
+    ],
+
 ];
