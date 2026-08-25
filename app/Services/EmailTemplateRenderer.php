@@ -24,6 +24,7 @@ class EmailTemplateRenderer
             'INTRO' => '',
             'CONTENT' => '',
             'OTP_CODE' => '',
+            'CODE_DISPLAY' => 'none',
             'SITE_URL' => config('site.url'),
             'LOGO_URL' => $this->absoluteAssetUrl((string) config('site.logo_url')),
             'LOGO_MARK_URL' => $this->absoluteAssetUrl((string) config('site.logo_mark_url')),

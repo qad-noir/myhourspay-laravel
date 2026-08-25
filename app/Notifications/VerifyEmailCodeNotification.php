@@ -28,6 +28,7 @@ class VerifyEmailCodeNotification extends Notification
             'INTRO' => 'Welcome to myhourspay. Use this six-digit code to confirm your email address.',
             'CONTENT' => 'The code expires in 10 minutes. For your security, never share it with anyone.',
             'OTP_CODE' => $this->code,
+            'CODE_DISPLAY' => 'block',
             'ACTION_URL' => route('email-code.show'),
             'ACTION_TEXT' => 'Enter verification code',
         ]);

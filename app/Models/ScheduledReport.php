@@ -18,4 +18,14 @@ class ScheduledReport extends Model
     {
         return $this->belongsTo(ReportTemplate::class, 'report_template_id');
     }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }
