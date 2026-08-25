@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\HoursEntry;
+use App\Services\EarningsCalculator;
 use App\Services\HoursCalculator;
 use App\Services\ScaleCache;
 use Carbon\CarbonImmutable;
@@ -12,6 +13,7 @@ class HoursEntryObserver
     public function __construct(
         private readonly HoursCalculator $calculator,
         private readonly ScaleCache $cache,
+        private readonly EarningsCalculator $earnings,
     ) {}
 
     public function saving(HoursEntry $entry): void
@@ -25,6 +27,10 @@ class HoursEntryObserver
         $entry->week_start = CarbonImmutable::parse($entry->work_date, config('hours.timezone'))
             ->startOfWeek()
             ->toDateString();
+        if (! $entry->exists || $entry->isDirty('project_id') || $entry->hourly_rate_minor === null) {
+            $this->earnings->snapshot($entry);
+        }
+        $entry->earnings_minor = $this->earnings->calculateEntry($entry);
     }
 
     public function saved(HoursEntry $entry): void

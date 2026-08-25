@@ -22,6 +22,12 @@ class HoursEntry extends Model
         'break_type',
         'notes',
         'workspace_id',
+        'project_id',
+        'billable',
+        'hourly_rate_minor',
+        'overtime_multiplier_bps',
+        'currency',
+        'earnings_minor',
     ];
 
     protected function casts(): array
@@ -31,6 +37,10 @@ class HoursEntry extends Model
             'week_start' => 'date:Y-m-d',
             'break_minutes' => 'integer',
             'net_minutes' => 'integer',
+            'billable' => 'boolean',
+            'hourly_rate_minor' => 'integer',
+            'overtime_multiplier_bps' => 'integer',
+            'earnings_minor' => 'integer',
         ];
     }
 
@@ -42,6 +52,11 @@ class HoursEntry extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     public function scopeForUser(Builder $query, User|int $user): Builder
