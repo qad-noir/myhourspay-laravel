@@ -1,3 +1,8 @@
+@php
+    $workspace = app(App\Services\CurrentWorkspace::class)->for(auth()->user());
+    $showProjects = app(App\Services\FeatureAccess::class)->allows(auth()->user(), 'clients_projects', $workspace);
+    $projects = $showProjects ? $workspace->projects()->with('client')->where('active', true)->orderBy('name')->get() : collect();
+@endphp
 <div x-cloak x-show="open" @keydown.escape.window="confirmingDelete ? confirmingDelete = false : close()" class="hours-dialog" role="dialog" aria-modal="true" aria-labelledby="hours-dialog-title">
     <div class="hours-dialog__backdrop" @click="close()"></div>
     <div class="hours-dialog__panel" @click.stop>
@@ -9,6 +14,9 @@
             <div class="dashboard-form-grid"><div class="dashboard-form-field"><label for="start_time">Start time</label><input id="start_time" name="start_time" type="time" x-model="form.start_time" required></div><div class="dashboard-form-field"><label for="end_time">End time</label><input id="end_time" name="end_time" type="time" x-model="form.end_time" required></div></div>
             <div class="dashboard-form-field"><label for="break_type">Break type</label><select id="break_type" name="break_type" x-model="form.break_type" required><option value="unpaid">Unpaid break</option><option value="paid">Paid break</option></select></div>
             <div class="dashboard-form-field"><label for="break_minutes">Break <span>minutes</span></label><input id="break_minutes" name="break_minutes" type="number" min="0" max="{{ config('hours.maximum_break_minutes') }}" x-model.number="form.break_minutes" required><small x-text="form.break_type === 'paid' ? 'This break will be included in your hours.' : 'This break will be deducted from your hours.'"></small></div>
+            @if($showProjects)
+                <div class="dashboard-form-grid"><div class="dashboard-form-field"><label for="project_id">Project <span>optional</span></label><select id="project_id" name="project_id" x-model="form.project_id"><option value="">No project</option>@foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}{{ $project->client ? ' · '.$project->client->name : '' }}</option>@endforeach</select></div><div class="dashboard-form-field dashboard-checkbox-field"><label><input type="hidden" name="billable" value="0"><input type="checkbox" name="billable" value="1" x-model="form.billable"> Billable time</label><small>Uses the project or effective workspace rate.</small></div></div>
+            @endif
             <div class="dashboard-form-field"><label for="notes">Notes <span>optional</span></label><textarea id="notes" name="notes" rows="3" maxlength="{{ config('hours.maximum_notes_length') }}" x-model="form.notes"></textarea></div>
             <div class="net-preview"><span><i><x-dashboard.icon name="clock" :size="15" /></i> Calculated net hours</span><strong x-text="preview"></strong><small>Preview only · confirmed by the server</small></div>
             <footer><button x-show="editing" type="button" @click="confirmingDelete = true" class="dashboard-button dashboard-button--danger">Delete</button><div><button type="button" @click="close()" class="dashboard-button dashboard-button--secondary">Cancel</button><button type="submit" class="dashboard-button dashboard-button--primary" data-submit-button><span x-text="editing ? 'Save changes' : 'Add hours'"></span></button></div></footer>

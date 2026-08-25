@@ -6,8 +6,8 @@ use App\Exports\HoursReportExport;
 use App\Http\Requests\StoreHoursEntryRequest;
 use App\Http\Requests\UpdateHoursEntryRequest;
 use App\Models\HoursEntry;
-use App\Services\HoursCalculator;
 use App\Services\CurrentWorkspace;
+use App\Services\HoursCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +32,7 @@ class HoursController extends Controller
         $monthEnd = $monthStart->endOfMonth();
         $gridStart = $monthStart->startOfWeek();
         $gridEnd = $monthEnd->endOfWeek();
-        $entries = $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($gridStart->toDateString(), $gridEnd->toDateString())->orderBy('work_date')->get();
+        $entries = $request->user()->hoursEntries()->with('project')->forWorkspace($workspace)->forPeriod($gridStart->toDateString(), $gridEnd->toDateString())->orderBy('work_date')->get();
         $summary = $calculator->summarizeEntries($entries, $gridStart->toDateString(), $gridEnd->toDateString());
         $monthEntries = array_values(array_filter($summary['entries'], fn (array $entry) => str_starts_with($entry['work_date'], $month)));
         $monthSummary = $calculator->summarizeEntries($monthEntries, $monthStart->toDateString(), $monthEnd->toDateString());
@@ -45,7 +45,7 @@ class HoursController extends Controller
         $workspace = $this->current->for($request->user());
         $calculator = $this->calculator->forWorkspace($workspace);
         [$start, $end] = $this->validatedRange($request, true);
-        $entries = $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($start, $end)->orderBy('work_date')->get();
+        $entries = $request->user()->hoursEntries()->with('project')->forWorkspace($workspace)->forPeriod($start, $end)->orderBy('work_date')->get();
         $summary = $calculator->summarizeEntries($entries, $start, $end);
         $month = $this->validatedMonth($request->query('month'));
         $monthStart = CarbonImmutable::createFromFormat('!Y-m-d', $month.'-01', config('hours.timezone'));
@@ -59,7 +59,7 @@ class HoursController extends Controller
                 'title' => $entry['net_formatted'].' worked',
                 'start' => $entry['work_date'],
                 'allDay' => true,
-                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted'])->all(),
+                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted', 'project_id', 'billable', 'earnings_minor', 'currency'])->all(),
             ], $summary['entries']),
             'summary' => $summary,
             'monthSummary' => $monthSummary,

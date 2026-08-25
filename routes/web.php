@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
+use App\Http\Controllers\ProController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -130,6 +131,24 @@ Route::middleware([
             });
 
             Route::get('/dashboard', DashboardController::class)->name('dashboard');
+            Route::get('/pro', [ProController::class, 'index'])->name('pro.index');
+            Route::prefix('pro')->name('pro.')->controller(ProController::class)->group(function (): void {
+                Route::post('/clients', 'storeClient')->middleware(['feature:clients_projects', 'workspace.writable'])->name('clients.store');
+                Route::put('/clients/{client}', 'updateClient')->middleware(['feature:clients_projects', 'workspace.writable'])->name('clients.update');
+                Route::delete('/clients/{client}', 'deleteClient')->middleware(['feature:clients_projects', 'workspace.writable'])->name('clients.destroy');
+                Route::post('/projects', 'storeProject')->middleware(['feature:clients_projects', 'workspace.writable'])->name('projects.store');
+                Route::delete('/projects/{project}', 'deleteProject')->middleware(['feature:clients_projects', 'workspace.writable'])->name('projects.destroy');
+                Route::post('/rates', 'storeRate')->middleware(['feature:earnings', 'workspace.writable'])->name('rates.store');
+                Route::post('/schedules', 'storeExpectedSchedule')->middleware(['feature:recurring_schedules', 'workspace.writable'])->name('schedules.store');
+                Route::post('/schedules/{schedule}/convert', 'convertSchedule')->middleware(['feature:recurring_schedules', 'workspace.writable'])->name('schedules.convert');
+                Route::put('/reminders', 'updateReminders')->middleware('feature:smart_reminders')->name('reminders.update');
+                Route::post('/report-templates', 'storeTemplate')->middleware(['feature:export_templates', 'workspace.writable'])->name('templates.store');
+                Route::post('/report-templates/{template}/schedule', 'scheduleReport')->middleware(['feature:scheduled_reports', 'workspace.writable'])->name('templates.schedule');
+                Route::post('/invoices', 'createInvoice')->middleware(['feature:invoicing', 'workspace.writable'])->name('invoices.store');
+                Route::get('/invoices/{invoice}', 'showInvoice')->middleware('feature:invoicing')->name('invoices.show');
+                Route::get('/invoices/{invoice}/pdf', 'invoicePdf')->middleware('feature:invoicing')->name('invoices.pdf');
+                Route::post('/invoices/{invoice}/status', 'updateInvoiceStatus')->middleware(['feature:invoicing', 'workspace.writable'])->name('invoices.status');
+            });
             Route::get('/workspaces/create', [WorkspaceController::class, 'create'])->name('workspaces.create');
             Route::post('/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
             Route::put('/settings/hours', [HoursSettingsController::class, 'update'])->middleware('workspace.writable')->name('settings.hours.update');

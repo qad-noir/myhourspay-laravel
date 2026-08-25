@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Concerns;
 
+use App\Services\CurrentWorkspace;
 use App\Services\HoursCalculator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use InvalidArgumentException;
 
@@ -13,7 +15,7 @@ trait ValidatesHoursEntry
         if (! $this->filled('break_type')) {
             $entry = $this->route('hoursEntry');
             $default = $entry?->break_type
-                ?? app(\App\Services\CurrentWorkspace::class)->for($this->user())->default_break_type
+                ?? app(CurrentWorkspace::class)->for($this->user())->default_break_type
                 ?? 'unpaid';
             $this->merge(['break_type' => $default]);
         }
@@ -28,6 +30,8 @@ trait ValidatesHoursEntry
             'break_minutes' => ['required', 'integer', 'min:0', 'max:'.config('hours.maximum_break_minutes')],
             'break_type' => ['required', 'in:paid,unpaid'],
             'notes' => ['nullable', 'string', 'max:'.config('hours.maximum_notes_length')],
+            'project_id' => ['nullable', Rule::exists('projects', 'id')->where('workspace_id', app(CurrentWorkspace::class)->for($this->user())->id)],
+            'billable' => ['nullable', 'boolean'],
         ];
     }
 

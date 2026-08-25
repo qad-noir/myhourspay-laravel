@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HoursEntry extends Model
@@ -57,6 +58,11 @@ class HoursEntry extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function invoiceLine(): HasOne
+    {
+        return $this->hasOne(ClientInvoiceLine::class);
     }
 
     public function scopeForUser(Builder $query, User|int $user): Builder

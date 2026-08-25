@@ -314,7 +314,7 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
     open: openInitially,
     editing: Boolean(initialEntry),
     confirmingDelete: false,
-    form: initialEntry ? { break_type: 'unpaid', ...initialEntry } : { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, notes: '' },
+    form: initialEntry ? { break_type: 'unpaid', project_id: '', billable: false, ...initialEntry } : { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' },
     init() {
         if (this.open) {
             document.body.classList.add('dashboard-dialog-open');
@@ -324,7 +324,7 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
     openEntry(date, entry = null) {
         this.editing = Boolean(entry);
         this.confirmingDelete = false;
-        this.form = entry ? { break_type: 'unpaid', ...entry } : { id: null, work_date: date, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, notes: '' };
+        this.form = entry ? { break_type: 'unpaid', project_id: '', billable: false, ...entry } : { id: null, work_date: date, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' };
         this.open = true;
         document.body.classList.add('dashboard-dialog-open');
         this.$nextTick(() => document.getElementById('work_date')?.focus());
