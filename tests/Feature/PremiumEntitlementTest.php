@@ -10,6 +10,7 @@ use App\Models\Workspace;
 use App\Services\BillingSettings;
 use App\Services\FeatureAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PremiumEntitlementTest extends TestCase
@@ -28,6 +29,19 @@ class PremiumEntitlementTest extends TestCase
 
         $this->assertFalse($features->allows($user, 'advanced_reports'));
         $this->assertSame(1, $features->value($user, 'workspace_limit'));
+    }
+
+    public function test_effective_plan_cache_stores_a_scalar_identifier_instead_of_a_serialized_model(): void
+    {
+        $user = User::factory()->create();
+        $service = app(FeatureAccess::class);
+
+        $plan = $service->effectivePlan($user);
+        $cacheKey = implode(':', ['effective-plan-id-v2', app(BillingSettings::class)->entitlementRevision(), $user->id, $user->entitlement_version ?? 1]);
+
+        $this->assertSame('free', $plan->key);
+        $this->assertIsInt(Cache::get($cacheKey));
+        $this->assertSame('free', $service->effectivePlan($user)->key);
     }
 
     public function test_active_plan_and_feature_grants_override_the_free_plan(): void

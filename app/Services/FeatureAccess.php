@@ -53,9 +53,9 @@ class FeatureAccess
     public function effectivePlan(User $user, ?Workspace $workspace = null): Plan
     {
         $billingUser = $this->billingUser($user, $workspace);
-        $cacheKey = implode(':', ['effective-plan', $this->settings->entitlementRevision(), $billingUser->id, $billingUser->entitlement_version ?? 1]);
+        $cacheKey = implode(':', ['effective-plan-id-v2', $this->settings->entitlementRevision(), $billingUser->id, $billingUser->entitlement_version ?? 1]);
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($billingUser): Plan {
+        $planId = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($billingUser): int {
             $grant = EntitlementGrant::query()->active()
                 ->where('user_id', $billingUser->id)
                 ->whereNotNull('plan_id')
@@ -64,7 +64,7 @@ class FeatureAccess
                 ->sortByDesc(fn (EntitlementGrant $grant): int => $grant->plan?->tier ?? -1)
                 ->first();
             if ($grant?->plan?->active) {
-                return $grant->plan;
+                return $grant->plan->id;
             }
 
             $subscription = $billingUser->subscription('default');
@@ -77,12 +77,14 @@ class FeatureAccess
                 $priceIds = $subscription->items()->pluck('stripe_price')->filter()->all();
                 $plan = Plan::query()->whereHas('prices', fn ($query) => $query->where('kind', 'base')->whereIn('stripe_price_id', $priceIds))->orderByDesc('tier')->first();
                 if ($plan) {
-                    return $plan;
+                    return $plan->id;
                 }
             }
 
-            return Plan::query()->where('key', 'free')->firstOrFail();
+            return Plan::query()->where('key', 'free')->valueOrFail('id');
         });
+
+        return Plan::query()->findOrFail($planId);
     }
 
     public function invalidate(User $user): void

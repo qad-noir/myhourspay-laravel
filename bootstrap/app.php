@@ -7,11 +7,13 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Services\BillingWebhookTracker;
 use App\Services\DatabaseSchemaIncident;
+use App\Services\UnexpectedApplicationIncident;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -61,5 +63,25 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response()->view('errors.schema-mismatch', compact('reference'), 503);
+        });
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (app()->environment('testing') || $exception instanceof HttpExceptionInterface) {
+                return null;
+            }
+
+            $reference = app(UnexpectedApplicationIncident::class)->record($exception, $request);
+            $message = "We couldn’t complete this request. The error has been logged and administrators have been notified. Reference: {$reference}.";
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message, 'reference' => $reference], 500);
+            }
+
+            if (! $request->isMethodSafe()) {
+                return redirect()->back()
+                    ->withInput($request->except(['_token', 'password', 'password_confirmation', 'current_password', 'code', 'recovery_code', 'token']))
+                    ->withErrors(['service' => $message]);
+            }
+
+            return response()->view('errors.unexpected', compact('reference'), 500);
         });
     })->create();
