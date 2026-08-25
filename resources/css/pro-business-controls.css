@@ -1,0 +1,193 @@
+/* Accessible controls shared by Pro and Business tools. */
+.ui-switch {
+    position: relative !important;
+    display: flex !important;
+    align-items: center;
+    gap: 11px !important;
+    border: 1px solid #e7e2e9;
+    border-radius: 12px;
+    padding: 12px !important;
+    color: #4d4652;
+    background: #fff;
+    cursor: pointer;
+}
+
+.ui-switch > input,
+.business-check-option > input {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-height: 1px !important;
+    margin: 0 !important;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0;
+    background: transparent !important;
+    white-space: nowrap;
+}
+
+.ui-switch__track {
+    display: block;
+    position: relative;
+    width: 37px;
+    height: 21px;
+    flex: none;
+    border: 1px solid #d8d2dc;
+    border-radius: 99px;
+    background: #eeeaf0;
+    transition: border-color .18s, background .18s, box-shadow .18s;
+}
+
+.ui-switch__track > span {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(37, 28, 43, .2);
+    transition: transform .18s;
+}
+
+.ui-switch > span:last-child,
+.ui-switch strong,
+.ui-switch small {
+    display: block;
+}
+
+.ui-switch strong { color: #3f3844; font-size: 9px; }
+.ui-switch small { margin-top: 3px; color: #918a95; font-size: 7px; font-weight: 500; line-height: 1.4; }
+.ui-switch input:checked + .ui-switch__track { border-color: #ff6b35; background: #ff6b35; }
+.ui-switch input:checked + .ui-switch__track > span { transform: translateX(16px); }
+.ui-switch input:focus-visible + .ui-switch__track { box-shadow: 0 0 0 4px rgba(130, 104, 255, .18); }
+.ui-switch:hover .ui-switch__track { border-color: #ff9d79; }
+
+.business-options-field,
+.pro-reminder-form fieldset {
+    min-width: 0;
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+.business-options-field legend,
+.pro-reminder-form legend { padding: 0; color: #4d4652; font-size: 9px; font-weight: 800; }
+.business-options-field > p,
+.pro-reminder-form fieldset > p { margin: 5px 0 10px; color: #96909a; font-size: 8px; line-height: 1.45; }
+
+.business-check-option {
+    display: flex !important;
+    position: relative;
+    align-items: center;
+    gap: 7px !important;
+    border: 1px solid #e5e0e7 !important;
+    border-radius: 10px !important;
+    padding: 8px 10px !important;
+    color: #665f6b !important;
+    background: #fff !important;
+    cursor: pointer;
+    transition: border-color .16s, color .16s, background .16s;
+}
+
+.business-check-option__box {
+    display: grid;
+    width: 17px;
+    height: 17px;
+    flex: none;
+    place-items: center;
+    border: 1px solid #d6d0da;
+    border-radius: 5px;
+    color: transparent;
+    background: #fff;
+    transition: border-color .16s, color .16s, background .16s, box-shadow .16s;
+}
+
+.business-check-option__box svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.business-check-option input:checked + .business-check-option__box { border-color: #ff6b35; color: #fff; background: #ff6b35; }
+.business-check-option input:checked ~ span:last-child { color: #a44324; }
+.business-check-option input:focus-visible + .business-check-option__box { box-shadow: 0 0 0 4px rgba(130, 104, 255, .17); }
+.business-check-option:hover { border-color: #ffc0a9 !important; background: #fff8f4 !important; }
+
+.business-column-picker { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.business-column-picker label { border-radius: 10px !important; padding: 8px 10px !important; }
+.business-payroll-form { grid-template-columns: minmax(150px, 1fr) minmax(120px, .7fr) minmax(360px, 2.1fr) auto; }
+.business-webhook-form { grid-template-columns: minmax(130px, .8fr) minmax(210px, 1.25fr) minmax(180px, 1fr) minmax(330px, 1.7fr) auto; }
+.business-branding-form { grid-template-columns: minmax(250px, 1.5fr) minmax(120px, .65fr) minmax(120px, .65fr) minmax(220px, 1.15fr) auto; }
+.business-branding-form label > small { color: #98919b; font-size: 7px; font-weight: 500; }
+
+.business-file-input {
+    height: 46px !important;
+    min-height: 46px !important;
+    padding: 4px !important;
+    border: 1px solid #ded9e1 !important;
+    border-radius: 10px !important;
+    color: #77707c !important;
+    background: #fff !important;
+    font: 600 8px "DM Sans", sans-serif !important;
+}
+
+.business-file-input::file-selector-button { height: 36px; margin-right: 10px; border: 0; border-radius: 7px; padding: 0 12px; color: #6a626e; background: #f2eff4; font: 800 8px "DM Sans", sans-serif; cursor: pointer; }
+.business-file-input:hover::file-selector-button { color: #a74626; background: #fff0e9; }
+.business-colour-input { width: 100% !important; height: 46px !important; min-height: 46px !important; border: 1px solid #ded9e1 !important; border-radius: 10px !important; padding: 4px !important; background: #fff !important; cursor: pointer; }
+.business-colour-input::-webkit-color-swatch-wrapper { padding: 0; }
+.business-colour-input::-webkit-color-swatch,
+.business-colour-input::-moz-color-swatch { border: 0; border-radius: 7px; }
+
+.pro-reminder-form { display: grid; padding: 18px; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.pro-reminder-trigger-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.pro-reminder-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; border-top: 1px solid #eeeaf0; padding-top: 16px; }
+.pro-reminder-channels { display: flex; flex-wrap: wrap; gap: 9px; }
+.pro-reminder-channels .ui-switch { min-width: 210px; }
+
+.business-support-form { display: grid; align-items: end; padding: 18px; grid-template-columns: minmax(210px, .75fr) minmax(340px, 1.3fr) auto; gap: 13px; }
+.business-support-form__intro { display: flex; align-items: center; grid-column: 1 / -1; border: 1px solid #e9e4eb; border-radius: 13px; padding: 14px; background: #faf9fb; gap: 12px; }
+.business-support-form__intro > span { display: grid; width: 39px; height: 39px; flex: none; place-items: center; border-radius: 11px; color: #d45229; background: #fff0e9; }
+.business-support-form__intro svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.business-support-form__intro strong { font-size: 10px; }
+.business-support-form__intro p { margin: 4px 0 0; color: #8e8792; font-size: 8px; }
+.business-support-form label { display: grid; gap: 6px; color: #716a75; font-size: 8px; font-weight: 800; }
+.business-support-form input,
+.business-support-form textarea { width: 100%; border: 1px solid #ded9e1; border-radius: 10px; padding: 0 11px; color: #302a34; background: #fff; font: 600 9px "DM Sans", sans-serif; outline: none; }
+.business-support-form input { height: 46px; }
+.business-support-form textarea { min-height: 120px; padding: 11px; resize: vertical; }
+.business-support-form input:focus,
+.business-support-form textarea:focus { border-color: #ff9b77; box-shadow: 0 0 0 3px rgba(255, 107, 53, .1); }
+.business-support-form footer { display: flex; align-items: center; justify-content: space-between; grid-column: 1 / -1; gap: 20px; }
+.business-support-form footer small { color: #96909a; font-size: 8px; }
+.business-empty-state { grid-column: 1 / -1; border: 1px dashed #ddd7e0; border-radius: 12px; padding: 19px; color: #766f7a; background: #faf9fb; text-align: center; }
+.business-empty-state p { margin: 5px 0 0; color: #9a939d; font-size: 8px; }
+
+@media (max-width: 1100px) {
+    .pro-reminder-trigger-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .business-payroll-form,
+    .business-webhook-form,
+    .business-branding-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .business-options-field,
+    .business-payroll-form > button,
+    .business-webhook-form > button,
+    .business-branding-form > button { grid-column: 1 / -1; }
+    .business-support-form { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 650px) {
+    .pro-reminder-trigger-grid,
+    .business-column-picker { grid-template-columns: 1fr; }
+    .pro-reminder-footer,
+    .business-support-form footer { align-items: stretch; flex-direction: column; }
+    .pro-reminder-channels,
+    .pro-reminder-channels .ui-switch,
+    .pro-reminder-footer > button,
+    .business-support-form footer > button { width: 100%; }
+    .business-payroll-form,
+    .business-webhook-form,
+    .business-branding-form,
+    .business-support-form { grid-template-columns: 1fr; }
+    .business-payroll-form > *,
+    .business-webhook-form > *,
+    .business-branding-form > *,
+    .business-support-form > * { grid-column: 1 !important; }
+}

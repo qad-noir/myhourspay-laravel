@@ -7,6 +7,7 @@ use App\Models\ClientInvoice;
 use App\Models\CompensationRate;
 use App\Models\ExpectedSchedule;
 use App\Models\HoursEntry;
+use App\Models\NotificationPreference;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
@@ -87,6 +88,34 @@ class ProToolsTest extends TestCase
             'user_id' => $user->id,
             'work_date' => '2026-08-25',
         ]);
+    }
+
+    public function test_reminder_controls_persist_selected_types_and_delivery_channels(): void
+    {
+        [$user, $workspace] = $this->workspaceUser();
+
+        $this->actingAs($user)->put(route('pro.reminders.update'), [
+            'types' => ['missing_entry', 'overtime'],
+            'in_app' => 1,
+        ])->assertSessionHasNoErrors();
+
+        $missing = NotificationPreference::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('type', 'missing_entry')
+            ->firstOrFail();
+        $weekly = NotificationPreference::query()
+            ->where('workspace_id', $workspace->id)
+            ->where('type', 'weekly_target')
+            ->firstOrFail();
+
+        $this->assertTrue($missing->enabled);
+        $this->assertSame(['database'], $missing->channels);
+        $this->assertFalse($weekly->enabled);
+
+        $this->actingAs($user)->get(route('pro.index'))
+            ->assertOk()
+            ->assertSee('pro-reminder-trigger-grid', false)
+            ->assertSee('role="switch"', false);
     }
 
     public function test_invoice_snapshots_billable_time_and_prevents_double_invoicing(): void

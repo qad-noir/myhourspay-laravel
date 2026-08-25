@@ -10,9 +10,15 @@ import TomSelect from 'tom-select';
 import 'tom-select/dist/css/tom-select.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import '../css/pro-business-controls.css';
 
 const initializeAdminTables = () => {
-    document.querySelectorAll('[data-admin-table]:not([data-bound])').forEach((table) => {
+    document.querySelectorAll('[data-admin-table]').forEach((table) => {
+        if (DataTable.isDataTable(table)) return;
+
+        // Livewire history and the browser back/forward cache can restore the
+        // table element without the DataTables instance that set this marker.
+        delete table.dataset.bound;
         table.dataset.bound = 'true';
         const columns = JSON.parse(table.dataset.columns || '[]');
         const filters = document.querySelector(`[data-table-filters="${table.id}"]`);
@@ -175,6 +181,17 @@ document.addEventListener('livewire:navigated', initializeAdminRemoteSelects);
 window.addEventListener('pageshow', () => {
     initializeAdminTables();
     initializeAdminRemoteSelects();
+});
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+
+    initializeAdminTables();
+    document.querySelectorAll('[data-admin-table]').forEach((table) => {
+        if (!DataTable.isDataTable(table)) return;
+        const dataTable = new DataTable(table);
+        dataTable.columns.adjust();
+        dataTable.responsive?.recalc();
+    });
 });
 document.addEventListener('click', (event) => {
     document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {

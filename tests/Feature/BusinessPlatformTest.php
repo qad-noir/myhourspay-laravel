@@ -28,7 +28,11 @@ class BusinessPlatformTest extends TestCase
             ->assertOk()
             ->assertSee('Run Northstar with clarity')
             ->assertSee('Workspace members')
-            ->assertSee('Signed outbound webhooks');
+            ->assertSee('Signed outbound webhooks')
+            ->assertSee('role="switch"', false)
+            ->assertSee('business-check-option', false)
+            ->assertSee('business-file-input', false)
+            ->assertSee('Business requests are prioritised');
     }
 
     public function test_invitation_acceptance_adds_a_role_without_granting_access_early(): void

@@ -23,14 +23,53 @@
 <div class="pro-record-list">@foreach($schedules as $schedule)<article><span class="pro-avatar">{{ ['M','T','W','T','F','S','S'][$schedule->day_of_week-1] }}</span><div><strong>{{ Carbon\CarbonImmutable::now()->startOfWeek()->addDays($schedule->day_of_week-1)->format('l') }} · {{ substr($schedule->start_time,0,5) }}–{{ substr($schedule->end_time,0,5) }}</strong><small>{{ $schedule->break_minutes }}m {{ $schedule->break_type }} break · user confirms every conversion</small></div><form method="POST" action="{{ route('pro.schedules.convert',$schedule) }}">@csrf<input type="date" name="work_date" required><button>Convert to entry</button></form></article>@endforeach</div>@endif</section>
 
 <section class="dashboard-panel pro-tool-panel"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Smart reminders</p><h2>Useful nudges, under your control</h2></div></div>
-@if(!$access['smart_reminders'])<x-pro.locked feature="smart reminders" />@else<form method="POST" action="{{ route('pro.reminders.update') }}" class="pro-reminder-form">@csrf @method('PUT')<div>@foreach(['missing_entry'=>'Missing hours','weekly_target'=>'Weekly target','overtime'=>'Overtime reached','trial_ending'=>'Trial ending','payment_failed'=>'Payment failed'] as $key=>$label)<label><input type="checkbox" name="types[]" value="{{ $key }}" @checked($preferences->get($key)?->enabled)> {{ $label }}</label>@endforeach</div><div><label><input type="checkbox" name="email" value="1" checked> Email</label><label><input type="checkbox" name="in_app" value="1" checked> In app</label><button class="dashboard-button dashboard-button--primary">Save reminders</button></div></form>@endif</section>
+@if(!$access['smart_reminders'])<x-pro.locked feature="smart reminders" />@else
+@php
+    $selectedReminderTypes = old('types', $preferences->filter(fn ($preference) => $preference->enabled)->keys()->all());
+    $savedReminderChannels = collect($preferences->first()?->channels ?? ['mail', 'database']);
+@endphp
+<form method="POST" action="{{ route('pro.reminders.update') }}" class="pro-reminder-form">
+    @csrf @method('PUT')
+    <fieldset>
+        <legend>Notify me when</legend>
+        <p>Choose the moments where a useful nudge helps you stay on track.</p>
+        <div class="pro-reminder-trigger-grid">
+            @foreach(['missing_entry'=>'Missing hours','weekly_target'=>'Weekly target','overtime'=>'Overtime reached','trial_ending'=>'Trial ending','payment_failed'=>'Payment failed'] as $key=>$label)
+                <label class="business-check-option">
+                    <input type="checkbox" name="types[]" value="{{ $key }}" @checked(in_array($key, $selectedReminderTypes, true))>
+                    <span class="business-check-option__box" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m4 8 2.5 2.5L12 5"/></svg></span>
+                    <span>{{ $label }}</span>
+                </label>
+            @endforeach
+        </div>
+    </fieldset>
+    <div class="pro-reminder-footer">
+        <fieldset>
+            <legend>Delivery channels</legend>
+            <div class="pro-reminder-channels">
+                <label class="ui-switch">
+                    <input type="checkbox" role="switch" name="email" value="1" @checked(old('email', $savedReminderChannels->contains('mail')))>
+                    <span class="ui-switch__track" aria-hidden="true"><span></span></span>
+                    <span><strong>Email</strong><small>Receive reminders in your inbox.</small></span>
+                </label>
+                <label class="ui-switch">
+                    <input type="checkbox" role="switch" name="in_app" value="1" @checked(old('in_app', $savedReminderChannels->contains('database')))>
+                    <span class="ui-switch__track" aria-hidden="true"><span></span></span>
+                    <span><strong>In app</strong><small>Keep notifications inside myhourspay.</small></span>
+                </label>
+            </div>
+        </fieldset>
+        <button class="dashboard-button dashboard-button--primary">Save reminders</button>
+    </div>
+</form>
+@endif</section>
 
 <section id="reports" class="dashboard-panel pro-tool-panel"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Report automation</p><h2>Reusable and scheduled reports</h2></div><span>{{ $templates->count() }} templates</span></div>
 @if(!$access['export_templates'])<x-pro.locked feature="report templates" />@else<form method="POST" action="{{ route('pro.templates.store') }}" class="pro-inline-form">@csrf<label>Template name<input name="name" required></label><label>Format<select name="format"><option value="xlsx">Excel</option><option value="pdf">PDF</option><option value="csv">CSV</option></select></label><button class="dashboard-button dashboard-button--primary">Save template</button></form><div class="pro-record-list">@foreach($templates as $template)<article><span class="pro-avatar">{{ str($template->format)->upper() }}</span><div><strong>{{ $template->name }}</strong><small>{{ collect($template->columns)->join(', ') ?: 'Standard columns' }} · {{ $template->schedules->count() }} schedules</small></div>@if($access['scheduled_reports'])<form method="POST" action="{{ route('pro.templates.schedule',$template) }}">@csrf<select name="frequency"><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><input name="recipients" type="email" value="{{ auth()->user()->email }}" required><button>Schedule</button></form>@endif</article>@endforeach</div>@endif</section>
 
 <section id="integrations" class="dashboard-panel pro-tool-panel"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Calendar integrations</p><h2>Review events before logging time</h2></div><span>{{ $connections->count() }}/{{ $access['calendar_integrations']?app(App\Services\FeatureAccess::class)->value(auth()->user(),'calendar_integrations',$workspace):0 }} connected</span></div>@if(!$access['calendar_integrations'])<x-pro.locked feature="calendar integrations" />@else
 <div class="calendar-provider-grid">@foreach(['google'=>'Google Calendar','microsoft'=>'Microsoft Outlook'] as $provider=>$label)@php($connection=$connections->firstWhere('provider',$provider))<article><strong>{{ $label }}</strong><p>Imported events stay as suggestions until you explicitly convert them.</p>@if($connection)<span>{{ $connection->events_count }} waiting · last synced {{ $connection->last_synced_at?->diffForHumans() ?? 'never' }}</span><div class="calendar-provider-actions"><form method="POST" action="{{ route('pro.calendars.sync',$connection) }}">@csrf<button class="dashboard-button dashboard-button--secondary">Refresh events</button></form><form method="POST" action="{{ route('pro.calendars.disconnect',$connection) }}" data-confirm="Disconnect this calendar? Confirmed hours will be retained.">@csrf @method('DELETE')<button class="dashboard-button dashboard-button--danger">Disconnect</button></form></div>@else<a class="dashboard-button dashboard-button--primary" href="{{ route('pro.calendars.redirect',$provider) }}">Connect {{ $label }}</a>@endif</article>@endforeach</div>
-@foreach($connections as $connection)@if($connection->events->isNotEmpty())<div class="calendar-suggestion-list"><header><strong>{{ str($connection->provider)->headline() }} suggestions</strong><span>Review before adding to worked hours</span></header>@foreach($connection->events as $event)<article><div><strong>{{ $event->summary }}</strong><small>{{ $event->starts_at->timezone(config('hours.timezone'))->format('D, d M Y · H:i') }}–{{ $event->ends_at->timezone(config('hours.timezone'))->format('H:i') }}</small></div><div><form method="POST" action="{{ route('pro.calendars.events.convert',$event) }}">@csrf<input type="hidden" name="break_minutes" value="0"><input type="hidden" name="break_type" value="unpaid"><button class="dashboard-button dashboard-button--primary">Add as hours</button></form><form method="POST" action="{{ route('pro.calendars.events.ignore',$event) }}">@csrf<button class="dashboard-button dashboard-button--secondary">Ignore</button></form></div></article>@endforeach</div>@endif @endforeach
+@foreach($connections as $connection)@if($connection->events->isNotEmpty())<div class="calendar-suggestion-list"><header><strong>{{ str($connection->provider)->headline() }} suggestions</strong><span>Review before adding to worked hours</span></header>@foreach($connection->events as $event)<article><div><strong>{{ $event->summary }}</strong><small>{{ $event->starts_at->timezone(config('hours.timezone'))->format('D, d M Y · H:i') }}–{{ $event->ends_at->timezone(config('hours.timezone'))->format('H:i') }}</small></div><div><form method="POST" action="{{ route('pro.calendars.events.convert',$event) }}">@csrf<input type="hidden" name="break_minutes" value="0"><input type="hidden" name="break_type" value="unpaid"><button class="dashboard-button dashboard-button--primary">Add as hours</button></form><form method="POST" action="{{ route('pro.calendars.events.ignore',$event) }}" data-confirm="Ignore this calendar suggestion? It will no longer appear for review." data-confirm-button="Ignore suggestion">@csrf<button class="dashboard-button dashboard-button--secondary">Ignore</button></form></div></article>@endforeach</div>@endif @endforeach
 @endif</section>
 
 <section id="invoices" class="dashboard-panel pro-tool-panel"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Client invoices</p><h2>Snapshot time and rates once</h2></div><span>{{ $invoices->count() }} recent</span></div>
