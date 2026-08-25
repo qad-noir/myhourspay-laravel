@@ -7,6 +7,7 @@ use App\Http\Requests\StoreHoursEntryRequest;
 use App\Http\Requests\UpdateHoursEntryRequest;
 use App\Models\HoursEntry;
 use App\Services\CurrentWorkspace;
+use App\Services\FeatureAccess;
 use App\Services\HoursCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
@@ -15,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -59,7 +61,7 @@ class HoursController extends Controller
                 'title' => $entry['net_formatted'].' worked',
                 'start' => $entry['work_date'],
                 'allDay' => true,
-                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted', 'project_id', 'billable', 'earnings_minor', 'currency'])->all(),
+                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted', 'project_id', 'billable', 'earnings_minor', 'currency'])->merge(['project_name' => data_get($entry, 'project.name'), 'client_name' => data_get($entry, 'project.client.name')])->all(),
             ], $summary['entries']),
             'summary' => $summary,
             'monthSummary' => $monthSummary,
@@ -108,8 +110,19 @@ class HoursController extends Controller
     {
         [$start, $end] = $this->validatedRange($request);
         $summary = $this->reportSummary($request, $start, $end);
+        $workspace = $this->current->for($request->user());
+        $advanced = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace);
+        $projects = $advanced ? $workspace->projects()->with('client')->where('active', true)->orderBy('name')->get() : collect();
+        $clients = $advanced ? $workspace->clients()->where('active', true)->orderBy('name')->get() : collect();
+        $days = CarbonImmutable::parse($start)->diffInDays(CarbonImmutable::parse($end)) + 1;
+        $previousEnd = CarbonImmutable::parse($start)->subDay();
+        $previousStart = $previousEnd->subDays($days - 1);
+        $previous = $advanced ? $this->reportSummary($request, $previousStart->toDateString(), $previousEnd->toDateString()) : null;
+        $summary['earnings_minor'] = collect($summary['entries'])->sum('earnings_minor');
+        $previous['earnings_minor'] = $previous ? collect($previous['entries'])->sum('earnings_minor') : 0;
+        $exportQuery = array_filter(['start' => $start, 'end' => $end, 'client_id' => $request->query('client_id'), 'project_id' => $request->query('project_id'), 'billable' => $request->query('billable')], fn ($value) => $value !== null && $value !== '');
 
-        return view('hours.report', compact('start', 'end', 'summary'));
+        return view('hours.report', compact('start', 'end', 'summary', 'previous', 'previousStart', 'previousEnd', 'advanced', 'projects', 'clients', 'exportQuery'));
     }
 
     public function csv(Request $request, HoursReportExport $export): StreamedResponse
@@ -131,9 +144,9 @@ class HoursController extends Controller
             fputcsv($stream, ['Unpaid breaks deducted', $summary['unpaid_break_formatted']]);
             fputcsv($stream, ['Workspace default break', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes']);
             fputcsv($stream, []);
-            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Notes']);
+            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes']);
             foreach ($summary['entries'] as $entry) {
-                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], $export->safeText($entry['notes'] ?? '')]);
+                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], data_get($entry, 'project.client.name'), data_get($entry, 'project.name'), ($entry['billable'] ?? false) ? 'Yes' : 'No', isset($entry['hourly_rate_minor']) ? number_format($entry['hourly_rate_minor'] / 100, 2, '.', '') : '', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', $export->safeText($entry['notes'] ?? '')]);
             }
             fclose($stream);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
@@ -164,11 +177,18 @@ class HoursController extends Controller
     {
         $workspace = $this->current->for($request->user());
         $calculator = $this->calculator->forWorkspace($workspace);
-        $periodEntries = $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($start, $end)->orderBy('work_date')->get();
+        $filters = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace)
+            ? Validator::make($request->only(['client_id', 'project_id', 'billable']), ['client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')->where('workspace_id', $workspace->id)], 'project_id' => ['nullable', 'integer', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)], 'billable' => ['nullable', Rule::in(['0', '1'])]])->validate()
+            : [];
+        $filtered = fn ($query) => $query
+            ->when($filters['client_id'] ?? null, fn ($query, $client) => $query->whereHas('project', fn ($project) => $project->where('client_id', $client)))
+            ->when($filters['project_id'] ?? null, fn ($query, $project) => $query->where('project_id', $project))
+            ->when(array_key_exists('billable', $filters), fn ($query) => $query->where('billable', (bool) $filters['billable']));
+        $periodEntries = $filtered($request->user()->hoursEntries()->with('project.client')->forWorkspace($workspace)->forPeriod($start, $end))->orderBy('work_date')->get();
         $weekStart = CarbonImmutable::parse($start, config('hours.timezone'))->startOfWeek()->toDateString();
         $weekEnd = CarbonImmutable::parse($end, config('hours.timezone'))->endOfWeek()->toDateString();
         $weekSummary = $calculator->summarizeEntries(
-            $request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($weekStart, $weekEnd)->orderBy('work_date')->get(),
+            $filtered($request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($weekStart, $weekEnd))->orderBy('work_date')->get(),
             $start,
             $end,
         );

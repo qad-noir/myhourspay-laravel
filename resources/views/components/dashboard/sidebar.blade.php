@@ -18,6 +18,7 @@
         <a wire:navigate href="{{ route('hours.reports.index') }}" @if(request()->routeIs('hours.reports.index')) aria-current="page" @endif><span><x-dashboard.icon name="reports" /></span> Reports</a>
         <a wire:navigate href="{{ route('hours.reports.index') }}#exports" @if(request()->routeIs('hours.reports.excel', 'hours.reports.csv', 'hours.reports.print')) aria-current="page" @endif><span><x-dashboard.icon name="exports" /></span> Exports</a>
         <a wire:navigate href="{{ route('pro.index') }}" @if(request()->routeIs('pro.*')) aria-current="page" @endif><span><x-dashboard.icon name="trend" /></span> Pro tools</a>
+        <a wire:navigate href="{{ route('business.index') }}" @if(request()->routeIs('business.*')) aria-current="page" @endif><span><x-dashboard.icon name="team" /></span> Business tools</a>
         <p>Account</p>
         <a wire:navigate href="{{ route('profile.show') }}" @if(request()->routeIs('profile.show')) aria-current="page" @endif><span><x-dashboard.icon name="settings" /></span> Settings</a>
         <a wire:navigate href="{{ route('billing.index') }}" @if(request()->routeIs('billing.*')) aria-current="page" @endif><span><x-dashboard.icon name="reports" /></span> Plans & billing</a>

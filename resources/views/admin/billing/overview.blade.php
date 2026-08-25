@@ -2,7 +2,7 @@
 @section('title', 'Monetisation')
 @section('content')
 <section class="admin-metrics billing-admin-metrics">
-    @foreach([['Active subscribers',$metrics['active_subscribers']],['Trials',$metrics['trials']],['Past due',$metrics['past_due']],['Active grants',$metrics['active_grants']],['Expiring soon',$metrics['expiring_grants']],['Feature uses · 30d',$metrics['feature_uses']]] as [$label,$value])
+    @foreach([['Active subscribers',$metrics['active_subscribers']],['Trials',$metrics['trials']],['Past due',$metrics['past_due']],['Trial conversions · 30d',$metrics['trial_conversions']],['Churn · 30d',$metrics['churn_30d']],['Active seats',$metrics['active_seats']],['Active grants',$metrics['active_grants']],['Expiring soon',$metrics['expiring_grants']],['Feature uses · 30d',$metrics['feature_uses']]] as [$label,$value])
         <article><span>{{ $label }}</span><strong>{{ number_format($value) }}</strong></article>
     @endforeach
 </section>
@@ -33,4 +33,5 @@
     <section class="admin-card"><header><div><h2>Recent Stripe events</h2><p>Signed webhook processing receipts</p></div><a wire:navigate href="{{ route('admin.billing.health') }}">View health →</a></header><div class="admin-audit">@forelse($recentWebhooks as $event)<div><strong>{{ $event->type }}</strong><span>{{ str($event->status)->headline() }} · {{ $event->created_at->diffForHumans() }}</span></div>@empty<p>No Stripe events received.</p>@endforelse</div></section>
     <section class="admin-card"><header><div><h2>Expiring grants</h2><p>Upcoming entitlement changes</p></div><a wire:navigate href="{{ route('admin.billing.grants') }}">Manage →</a></header><div class="admin-audit">@forelse($expiringGrants as $grant)<div><strong>{{ $grant->user?->name }} · {{ $grant->plan?->name ?? $grant->feature?->name }}</strong><span>{{ $grant->expires_at->diffForHumans() }}</span></div>@empty<p>No grants expire in the next 14 days.</p>@endforelse</div></section>
 </div>
+<div class="admin-columns"><section class="admin-card"><header><div><h2>Plan distribution</h2><p>Active local subscription items by catalogue plan</p></div></header><div class="admin-audit">@forelse($planDistribution as $plan)<div><strong>{{ $plan->name }}</strong><span>{{ number_format($plan->subscribers) }} subscribers</span></div>@empty<p>No paid plan data yet.</p>@endforelse</div></section><section class="admin-card"><header><div><h2>Top premium capabilities</h2><p>Feature middleware usage over 30 days</p></div></header><div class="admin-audit">@forelse($topFeatures as $feature)<div><strong>{{ str($feature->feature_key)->replace('_',' ')->headline() }}</strong><span>{{ number_format($feature->uses) }} uses</span></div>@empty<p>No feature usage recorded yet.</p>@endforelse</div></section></div>
 @endsection

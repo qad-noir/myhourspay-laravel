@@ -19,6 +19,7 @@
             <a wire:navigate href="{{ route('admin.billing.overview') }}" @if(request()->routeIs('admin.billing.*')) aria-current="page" @endif><x-admin.icon name="billing"/>Monetisation</a>
             <a wire:navigate href="{{ route('admin.audit-logs.index') }}" @if(request()->routeIs('admin.audit-logs.*')) aria-current="page" @endif><x-admin.icon name="audit"/>Audit logs</a>
             <a wire:navigate href="{{ route('admin.incidents.index') }}" @if(request()->routeIs('admin.incidents.*')) aria-current="page" @endif><x-admin.icon name="incidents"/>Incidents</a>
+            <a wire:navigate href="{{ route('admin.support.index') }}" @if(request()->routeIs('admin.support.*')) aria-current="page" @endif><x-admin.icon name="support"/>Support queue</a>
             <a wire:navigate href="{{ route('admin.trash') }}" @if(request()->routeIs('admin.trash')) aria-current="page" @endif><x-admin.icon name="trash"/>Trash</a>
         </nav>
         <a wire:navigate href="{{ route('dashboard') }}" class="admin-back"><x-admin.icon name="back"/>Personal dashboard</a>

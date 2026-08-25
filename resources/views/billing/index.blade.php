@@ -53,7 +53,12 @@
                     @endforeach
                 </ul>
                 @if($plan->purchasable)
-                    @if($checkoutEnabled)
+                    @if($subscription)
+                        <div class="billing-plan__actions">
+                            <form method="POST" action="{{ route('billing.change') }}" data-confirm="Change to this monthly plan? Upgrades apply now; downgrades apply at renewal.">@csrf<input type="hidden" name="plan" value="{{ $plan->key }}"><input type="hidden" name="interval" value="monthly"><button>Change to monthly</button></form>
+                            <form method="POST" action="{{ route('billing.change') }}" data-confirm="Change to this annual plan at the applicable billing time?">@csrf<input type="hidden" name="plan" value="{{ $plan->key }}"><input type="hidden" name="interval" value="yearly"><button class="is-secondary">Change to annual</button></form>
+                        </div>
+                    @elseif($checkoutEnabled && !$subscription)
                         <div class="billing-plan__actions">
                             <form method="POST" action="{{ route('billing.checkout') }}">@csrf<input type="hidden" name="plan" value="{{ $plan->key }}"><input type="hidden" name="interval" value="monthly"><button>Start 14-day trial monthly</button></form>
                             <form method="POST" action="{{ route('billing.checkout') }}">@csrf<input type="hidden" name="plan" value="{{ $plan->key }}"><input type="hidden" name="interval" value="yearly"><button class="is-secondary">Choose annual</button></form>

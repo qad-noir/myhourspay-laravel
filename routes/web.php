@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\AdminDataController;
 use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Admin\AdminOptionController;
+use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CalendarIntegrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
@@ -110,6 +112,11 @@ Route::middleware([
             Route::get('/grants', 'grants')->name('grants');
             Route::get('/webhooks', 'webhooks')->name('webhooks');
         });
+        Route::prefix('support')->name('support.')->controller(AdminSupportController::class)->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{supportRequest}', 'show')->name('show');
+            Route::put('/{supportRequest}', 'update')->name('update');
+        });
     });
     Route::get('/verify-email-code', [EmailVerificationCodeController::class, 'show'])->name('email-code.show');
     Route::post('/verify-email-code', [EmailVerificationCodeController::class, 'verify'])->middleware('throttle:10,1')->name('email-code.verify');
@@ -119,12 +126,14 @@ Route::middleware([
         Route::get('/workspaces/onboarding', [WorkspaceController::class, 'onboarding'])->name('workspaces.onboarding');
         Route::get('/workspaces/name-availability', [WorkspaceController::class, 'availability'])->name('workspaces.name-availability');
         Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+        Route::get('/business/invitations/{invitation}/accept', [BusinessController::class, 'acceptInvitation'])->name('business.invitations.accept');
 
         Route::middleware('workspace')->group(function (): void {
             Route::prefix('billing')->name('billing.')->controller(BillingController::class)->group(function (): void {
                 Route::get('/', 'index')->name('index');
                 Route::post('/checkout', 'checkout')->name('checkout');
                 Route::post('/portal', 'portal')->name('portal');
+                Route::post('/change', 'change')->name('change');
                 Route::post('/cancel', 'cancel')->name('cancel');
                 Route::post('/resume', 'resume')->name('resume');
                 Route::get('/success', 'success')->name('success');
@@ -132,6 +141,23 @@ Route::middleware([
             });
 
             Route::get('/dashboard', DashboardController::class)->name('dashboard');
+            Route::get('/business', [BusinessController::class, 'index'])->name('business.index');
+            Route::prefix('business')->name('business.')->controller(BusinessController::class)->group(function (): void {
+                Route::post('/invitations', 'invite')->middleware('feature:team_members')->name('invitations.store');
+                Route::put('/members/{member}', 'updateMember')->middleware('feature:roles_permissions')->name('members.update');
+                Route::delete('/members/{member}', 'removeMember')->middleware('feature:team_members')->name('members.destroy');
+                Route::post('/timesheets', 'submitTimesheet')->middleware('feature:timesheet_approvals')->name('timesheets.submit');
+                Route::post('/timesheets/{timesheet}/review', 'reviewTimesheet')->middleware('feature:timesheet_approvals')->name('timesheets.review');
+                Route::post('/leave/types', 'storeLeaveType')->middleware('feature:leave_tracking')->name('leave-types.store');
+                Route::post('/leave', 'requestLeave')->middleware('feature:leave_tracking')->name('leave.store');
+                Route::post('/leave/{leaveRequest}/review', 'reviewLeave')->middleware('feature:leave_tracking')->name('leave.review');
+                Route::post('/payroll/profiles', 'storePayrollProfile')->middleware('feature:payroll_exports')->name('payroll-profiles.store');
+                Route::get('/payroll/{profile}', 'payroll')->middleware('feature:payroll_exports')->name('payroll.download');
+                Route::put('/branding', 'updateBranding')->middleware('feature:custom_branding')->name('branding.update');
+                Route::post('/support', 'support')->middleware('feature:priority_support')->name('support.store');
+                Route::post('/webhooks', 'storeWebhook')->middleware('feature:outbound_webhooks')->name('webhooks.store');
+                Route::delete('/webhooks/{endpoint}', 'deleteWebhook')->middleware('feature:outbound_webhooks')->name('webhooks.destroy');
+            });
             Route::get('/pro', [ProController::class, 'index'])->name('pro.index');
             Route::prefix('pro')->name('pro.')->controller(ProController::class)->group(function (): void {
                 Route::post('/clients', 'storeClient')->middleware(['feature:clients_projects', 'workspace.writable'])->name('clients.store');

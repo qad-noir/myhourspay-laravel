@@ -122,6 +122,21 @@ class User extends Authenticatable
         return $this->hasMany(EntitlementGrant::class);
     }
 
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class);
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function supportRequests(): HasMany
+    {
+        return $this->hasMany(SupportRequest::class);
+    }
+
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new PasswordResetNotification($token));

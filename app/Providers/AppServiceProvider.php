@@ -11,9 +11,12 @@ use App\Observers\WorkspaceObserver;
 use App\Policies\HoursEntryPolicy;
 use App\Services\BillingWebhookTracker;
 use App\Services\FeatureAccess;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
@@ -50,6 +53,12 @@ class AppServiceProvider extends ServiceProvider
             return $user?->is_admin
                 ? HoursEntry::query()->findOrFail($value)
                 : $user?->hoursEntries()->findOrFail($value);
+        });
+        RateLimiter::for('premium-api', function (Request $request): Limit {
+            $workspace = $request->route('workspace');
+            $limit = $request->user() ? app(FeatureAccess::class)->value($request->user(), 'api_access', $workspace instanceof Workspace ? $workspace : null) : 60;
+
+            return Limit::perMinute(max(1, min(5000, is_numeric($limit) ? (int) $limit : 120)))->by($request->user()?->id ?: $request->ip());
         });
     }
 }

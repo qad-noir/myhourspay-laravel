@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Concerns;
 
+use App\Models\Timesheet;
 use App\Services\CurrentWorkspace;
 use App\Services\HoursCalculator;
+use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use InvalidArgumentException;
@@ -52,6 +54,12 @@ trait ValidatesHoursEntry
                 );
             } catch (InvalidArgumentException $exception) {
                 $validator->errors()->add('end_time', $exception->getMessage());
+            }
+
+            $weekStart = CarbonImmutable::parse((string) $this->input('work_date'))->startOfWeek()->toDateString();
+            $locked = Timesheet::query()->where('workspace_id', app(CurrentWorkspace::class)->for($this->user())->id)->where('user_id', $this->user()->id)->whereDate('week_start', $weekStart)->whereIn('status', ['approved', 'locked'])->exists();
+            if ($locked) {
+                $validator->errors()->add('work_date', 'This week belongs to an approved timesheet. A manager must reopen it before hours can change.');
             }
         }];
     }

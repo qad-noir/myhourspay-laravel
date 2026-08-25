@@ -24,6 +24,7 @@ class HoursEntry extends Model
         'notes',
         'workspace_id',
         'project_id',
+        'timesheet_id',
         'billable',
         'hourly_rate_minor',
         'overtime_multiplier_bps',
@@ -63,6 +64,11 @@ class HoursEntry extends Model
     public function invoiceLine(): HasOne
     {
         return $this->hasOne(ClientInvoiceLine::class);
+    }
+
+    public function timesheet(): BelongsTo
+    {
+        return $this->belongsTo(Timesheet::class);
     }
 
     public function scopeForUser(Builder $query, User|int $user): Builder

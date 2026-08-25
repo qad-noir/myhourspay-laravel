@@ -123,7 +123,25 @@ class HoursModuleTest extends TestCase
         $sheet = IOFactory::load($excel->baseResponse->getFile()->getPathname())->getActiveSheet();
         $values = $sheet->toArray();
         $serialized = json_encode($values);
-        $this->assertSame(['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Notes'], $sheet->rangeToArray('A15:L15')[0]);
+        $this->assertSame([
+            'Date',
+            'Weekday',
+            'Start',
+            'End',
+            'Break type',
+            'Break minutes',
+            'Hours worked',
+            'ISO week',
+            'Weekly total',
+            'Weekly variance',
+            'Weekly overtime',
+            'Client',
+            'Project',
+            'Billable',
+            'Rate',
+            'Earnings',
+            'Notes',
+        ], $sheet->rangeToArray('A15:Q15')[0]);
         $this->assertSame('Overtime', $sheet->getCell('A9')->getValue());
         $this->assertSame('Breaks logged', $sheet->getCell('A10')->getValue());
         $this->assertStringContainsString("'=HYPERLINK", $serialized);

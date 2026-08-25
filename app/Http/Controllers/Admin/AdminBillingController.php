@@ -18,6 +18,7 @@ use App\Services\OperationalIncidentRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -36,10 +37,15 @@ class AdminBillingController extends Controller
             'expiring_grants' => EntitlementGrant::query()->active()->whereNotNull('expires_at')->where('expires_at', '<=', now()->addDays(14))->count(),
             'webhook_failures' => BillingWebhookEvent::query()->where('status', 'failed')->count(),
             'feature_uses' => FeatureUsageDaily::query()->where('usage_date', '>=', today()->subDays(30))->sum('usage_count'),
+            'trial_conversions' => Subscription::query()->where('stripe_status', 'active')->whereNotNull('trial_ends_at')->where('created_at', '>=', now()->subDays(30))->count(),
+            'churn_30d' => Subscription::query()->whereNotNull('ends_at')->where('ends_at', '>=', now()->subDays(30))->count(),
+            'active_seats' => DB::table('workspace_user')->join('users', 'users.id', '=', 'workspace_user.user_id')->whereNull('users.deleted_at')->whereNull('users.suspended_at')->distinct()->count('users.id'),
         ]);
 
         $recentWebhooks = BillingWebhookEvent::query()->latest()->limit(8)->get();
         $expiringGrants = EntitlementGrant::query()->active()->whereNotNull('expires_at')->with(['user', 'plan', 'feature'])->orderBy('expires_at')->limit(8)->get();
+        $planDistribution = DB::table('subscription_items')->join('plan_prices', 'plan_prices.stripe_price_id', '=', 'subscription_items.stripe_price')->join('plans', 'plans.id', '=', 'plan_prices.plan_id')->where('plan_prices.kind', 'base')->select('plans.name', DB::raw('COUNT(DISTINCT subscription_items.subscription_id) as subscribers'))->groupBy('plans.id', 'plans.name')->orderByDesc('subscribers')->get();
+        $topFeatures = FeatureUsageDaily::query()->select('feature_key', DB::raw('SUM(usage_count) as uses'))->where('usage_date', '>=', today()->subDays(30))->groupBy('feature_key')->orderByDesc('uses')->limit(8)->get();
 
         return view('admin.billing.overview', [
             'metrics' => $metrics,
@@ -48,6 +54,8 @@ class AdminBillingController extends Controller
             'checkoutEnabled' => $settings->boolean('checkout_enabled'),
             'enforcementEnabled' => $settings->boolean('paid_enforcement_enabled'),
             'launchDate' => $settings->get('monetization_launched_at'),
+            'planDistribution' => $planDistribution,
+            'topFeatures' => $topFeatures,
         ]);
     }
 

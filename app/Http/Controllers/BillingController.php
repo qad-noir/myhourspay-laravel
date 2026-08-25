@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Laravel\Cashier\Cashier;
 use Throwable;
 
 class BillingController extends Controller
@@ -105,6 +106,41 @@ class BillingController extends Controller
             $reference = $this->recordFailure($request, $exception, 'billing.portal_failed', $incidents);
 
             return back()->withErrors(['billing' => 'The secure billing portal is temporarily unavailable. Reference: '.$reference]);
+        }
+    }
+
+    public function change(Request $request, FeatureAccess $features, OperationalIncidentRecorder $incidents): RedirectResponse
+    {
+        $data = $request->validate(['plan' => ['required', Rule::exists('plans', 'key')->where('purchasable', true)->where('active', true)], 'interval' => ['required', Rule::in(['monthly', 'yearly'])]]);
+        $subscription = $request->user()->subscription('default');
+        if (! $subscription || ! $subscription->valid()) {
+            return back()->withErrors(['billing' => 'Start a subscription before changing its plan.']);
+        }
+        $target = PlanPrice::query()->whereHas('plan', fn ($query) => $query->where('key', $data['plan']))->where('interval', $data['interval'])->where('kind', 'base')->where('active', true)->with('plan')->firstOrFail();
+        if (! $target->stripe_price_id) {
+            return back()->withErrors(['billing' => 'This billing option has not been configured yet.']);
+        }
+        $current = $features->effectivePlan($request->user());
+        try {
+            if ($target->plan->tier > $current->tier) {
+                $subscription->swapAndInvoice($target->stripe_price_id);
+                $message = 'Your upgrade was applied immediately and Stripe calculated the proration.';
+            } else {
+                $stripeSubscription = $subscription->asStripeSubscription();
+                $schedule = $stripeSubscription->schedule
+                    ? Cashier::stripe()->subscriptionSchedules->retrieve(is_string($stripeSubscription->schedule) ? $stripeSubscription->schedule : $stripeSubscription->schedule->id)
+                    : Cashier::stripe()->subscriptionSchedules->create(['from_subscription' => $subscription->stripe_id]);
+                $currentItems = collect($stripeSubscription->items->data)->map(fn ($item) => ['price' => $item->price->id, 'quantity' => $item->quantity ?: 1])->values()->all();
+                Cashier::stripe()->subscriptionSchedules->update($schedule->id, ['end_behavior' => 'release', 'phases' => [['items' => $currentItems, 'start_date' => $stripeSubscription->current_period_start, 'end_date' => $stripeSubscription->current_period_end, 'proration_behavior' => 'none'], ['items' => [['price' => $target->stripe_price_id, 'quantity' => 1]], 'start_date' => $stripeSubscription->current_period_end, 'iterations' => 1, 'proration_behavior' => 'none']]]);
+                $message = 'Your plan change is scheduled for the next renewal. No immediate proration was charged.';
+            }
+            $features->invalidate($request->user());
+
+            return back()->with('status', $message);
+        } catch (Throwable $exception) {
+            $reference = $this->recordFailure($request, $exception, 'billing.plan_change_failed', $incidents);
+
+            return back()->withErrors(['billing' => 'We could not change the subscription. No local access change was applied. Reference: '.$reference]);
         }
     }
 

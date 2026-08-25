@@ -27,4 +27,9 @@ class ClientInvoice extends Model
     {
         return $this->hasMany(ClientInvoiceLine::class);
     }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 }

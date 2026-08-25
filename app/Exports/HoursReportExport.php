@@ -44,7 +44,7 @@ class HoursReportExport
         $sheet->setCellValue('A13', 'Workspace default break');
         $sheet->setCellValue('B13', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes');
 
-        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Notes'];
+        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes'];
         $sheet->fromArray($headings, null, 'A15');
 
         $row = 16;
@@ -53,7 +53,7 @@ class HoursReportExport
                 $entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'],
                 ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'],
                 $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''),
-                $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], $this->safeText($entry['notes'] ?? ''),
+                $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], data_get($entry, 'project.client.name'), data_get($entry, 'project.name'), ($entry['billable'] ?? false) ? 'Yes' : 'No', isset($entry['hourly_rate_minor']) ? number_format($entry['hourly_rate_minor'] / 100, 2, '.', '') : '', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', $this->safeText($entry['notes'] ?? ''),
             ];
             foreach ($values as $column => $value) {
                 $coordinate = chr(65 + $column).$row;
@@ -66,15 +66,15 @@ class HoursReportExport
             $row++;
         }
 
-        $sheet->mergeCells('A1:L1');
+        $sheet->mergeCells('A1:Q1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(18)->setColor(new Color('FFFFFFFF'));
-        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F766E');
-        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A15:L15')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A15:L15')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
+        $sheet->getStyle('A1:Q1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F766E');
+        $sheet->getStyle('A1:Q1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A15:Q15')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A15:Q15')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF115E59');
         $sheet->freezePane('A16');
-        $sheet->setAutoFilter('A15:L'.max(15, $row - 1));
-        foreach (range('A', 'L') as $column) {
+        $sheet->setAutoFilter('A15:Q'.max(15, $row - 1));
+        foreach (range('A', 'Q') as $column) {
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 

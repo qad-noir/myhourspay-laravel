@@ -14,11 +14,16 @@ class HoursEntryPolicy
 
     public function update(User $user, HoursEntry $entry): bool
     {
-        return $this->view($user, $entry);
+        return $this->view($user, $entry) && ! $this->locked($entry);
     }
 
     public function delete(User $user, HoursEntry $entry): bool
     {
-        return $this->view($user, $entry);
+        return $this->view($user, $entry) && ! $this->locked($entry);
+    }
+
+    private function locked(HoursEntry $entry): bool
+    {
+        return $entry->timesheet_id !== null && ($entry->relationLoaded('timesheet') ? $entry->timesheet?->isLocked() : $entry->timesheet()->whereIn('status', ['approved', 'locked'])->exists());
     }
 }

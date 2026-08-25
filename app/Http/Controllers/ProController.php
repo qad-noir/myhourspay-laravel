@@ -198,7 +198,7 @@ class ProController extends Controller
     public function showInvoice(Request $request, ClientInvoice $invoice): View
     {
         $this->guardWorkspace($request, $invoice->workspace_id);
-        $invoice->load(['client', 'lines']);
+        $invoice->load(['client', 'lines', 'workspace.branding']);
 
         return view('pro.invoice', compact('invoice'));
     }
@@ -206,7 +206,7 @@ class ProController extends Controller
     public function invoicePdf(Request $request, ClientInvoice $invoice): Response
     {
         $this->guardWorkspace($request, $invoice->workspace_id);
-        $invoice->load(['client', 'lines']);
+        $invoice->load(['client', 'lines', 'workspace.branding']);
         $options = new Options;
         $options->set('isRemoteEnabled', false);
         $dompdf = new Dompdf($options);

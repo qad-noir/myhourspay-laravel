@@ -1,0 +1,138 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\OutboundWebhookDelivery;
+use App\Models\OutboundWebhookEndpoint;
+use App\Models\PayrollExportProfile;
+use App\Models\Timesheet;
+use App\Models\User;
+use App\Models\Workspace;
+use App\Notifications\WorkspaceInvitationNotification;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class BusinessPlatformTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_business_control_centre_renders_while_enforcement_is_disabled(): void
+    {
+        [$owner] = $this->workspaceUser();
+
+        $this->actingAs($owner)->get(route('business.index'))
+            ->assertOk()
+            ->assertSee('Run Northstar with clarity')
+            ->assertSee('Workspace members')
+            ->assertSee('Signed outbound webhooks');
+    }
+
+    public function test_invitation_acceptance_adds_a_role_without_granting_access_early(): void
+    {
+        Notification::fake();
+        [$owner, $workspace] = $this->workspaceUser();
+        $member = User::factory()->create(['email' => 'member@example.com']);
+        $token = null;
+
+        $this->actingAs($owner)->post(route('business.invitations.store'), ['email' => $member->email, 'role' => 'manager', 'position' => 'Team lead'])->assertSessionHasNoErrors();
+        $this->assertFalse($workspace->users()->whereKey($member->id)->exists());
+        Notification::assertSentOnDemand(WorkspaceInvitationNotification::class, function (WorkspaceInvitationNotification $notification) use (&$token): bool {
+            $token = $notification->token;
+
+            return true;
+        });
+        $invitation = $workspace->invitations()->sole();
+
+        $this->actingAs($member)->get(route('business.invitations.accept', ['invitation' => $invitation, 'token' => $token]))->assertRedirect(route('dashboard'));
+
+        $this->assertSame('accepted', $invitation->refresh()->status);
+        $this->assertSame('manager', $workspace->users()->whereKey($member->id)->firstOrFail()->pivot->role);
+        $this->assertSame($workspace->id, $member->refresh()->current_workspace_id);
+        $this->assertDatabaseHas('workspace_activity_logs', ['workspace_id' => $workspace->id, 'action' => 'workspace.invitation_accepted']);
+    }
+
+    public function test_approved_timesheet_locks_entries_until_reopened(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $member = User::factory()->create();
+        $workspace->users()->attach($member->id, ['role' => 'member', 'position' => 'Designer']);
+        $member->update(['current_workspace_id' => $workspace->id]);
+        $entry = $member->hoursEntries()->create(['workspace_id' => $workspace->id, 'work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '17:00', 'break_minutes' => 30, 'break_type' => 'unpaid']);
+
+        $this->actingAs($member)->post(route('business.timesheets.submit'), ['week_start' => '2026-08-24'])->assertSessionHasNoErrors();
+        $timesheet = Timesheet::query()->sole();
+        $this->assertSame($timesheet->id, $entry->refresh()->timesheet_id);
+        $this->actingAs($owner)->post(route('business.timesheets.review', $timesheet), ['decision' => 'approved'])->assertSessionHasNoErrors();
+
+        $this->actingAs($member)->patch(route('hours.entries.update', $entry), ['work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '16:00', 'break_minutes' => 30, 'break_type' => 'unpaid'])->assertForbidden();
+        $this->actingAs($member)->post(route('hours.entries.store'), ['work_date' => '2026-08-26', 'start_time' => '09:00', 'end_time' => '16:00', 'break_minutes' => 30, 'break_type' => 'unpaid'])->assertSessionHasErrors('work_date');
+
+        $this->actingAs($owner)->post(route('business.timesheets.review', $timesheet), ['decision' => 'reopened'])->assertSessionHasNoErrors();
+        $this->actingAs($member)->patch(route('hours.entries.update', $entry), ['work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '16:00', 'break_minutes' => 30, 'break_type' => 'unpaid'])->assertSessionHasNoErrors();
+    }
+
+    public function test_leave_is_reviewed_separately_and_never_creates_worked_hours(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $this->actingAs($owner)->post(route('business.leave-types.store'), ['name' => 'Annual leave', 'colour' => '#8268ff', 'paid' => 1])->assertSessionHasNoErrors();
+        $type = $workspace->leaveTypes()->sole();
+        $this->actingAs($owner)->post(route('business.leave.store'), ['leave_type_id' => $type->id, 'starts_on' => '2026-09-01', 'ends_on' => '2026-09-02', 'reason' => 'Rest'])->assertSessionHasNoErrors();
+        $leave = $workspace->leaveRequests()->sole();
+        $this->actingAs($owner)->post(route('business.leave.review', $leave), ['decision' => 'approved'])->assertSessionHasNoErrors();
+
+        $this->assertSame('approved', $leave->refresh()->status);
+        $this->assertDatabaseCount('hours_entries', 0);
+    }
+
+    public function test_payroll_export_contains_only_approved_timesheet_data(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $entry = $owner->hoursEntries()->create(['workspace_id' => $workspace->id, 'work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '17:00', 'break_minutes' => 30, 'break_type' => 'unpaid']);
+        $sheet = Timesheet::query()->create(['workspace_id' => $workspace->id, 'user_id' => $owner->id, 'week_start' => '2026-08-24', 'status' => 'approved', 'locked_at' => now()]);
+        $entry->update(['timesheet_id' => $sheet->id]);
+        $profile = PayrollExportProfile::query()->create(['workspace_id' => $workspace->id, 'name' => 'Payroll', 'format' => 'csv', 'columns' => ['employee', 'week', 'regular_minutes', 'overtime_minutes']]);
+
+        $this->actingAs($owner)->get(route('business.payroll.download', ['profile' => $profile, 'start' => '2026-08-01', 'end' => '2026-08-31']))
+            ->assertOk()->assertDownload('payroll-2026-08-01-2026-08-31.csv');
+    }
+
+    public function test_webhooks_are_signed_and_suspended_failures_create_incidents(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $endpoint = OutboundWebhookEndpoint::query()->create(['public_id' => (string) Str::uuid(), 'workspace_id' => $workspace->id, 'name' => 'Payroll', 'url' => 'https://hooks.example.com/mhp', 'secret' => str_repeat('s', 32), 'events' => ['timesheet.approved'], 'active' => true, 'consecutive_failures' => 4]);
+        OutboundWebhookDelivery::query()->create(['public_id' => (string) Str::uuid(), 'outbound_webhook_endpoint_id' => $endpoint->id, 'event_type' => 'timesheet.approved', 'payload' => ['timesheet_id' => 7], 'attempts' => 4, 'status' => 'retrying', 'next_attempt_at' => now()->subMinute()]);
+        Http::fake(['https://hooks.example.com/*' => Http::response('failed', 500)]);
+        Log::shouldReceive('error')->once();
+
+        $this->artisan('webhooks:deliver')->assertFailed();
+
+        $this->assertNotNull($endpoint->refresh()->suspended_at);
+        $this->assertFalse($endpoint->active);
+        $this->assertDatabaseHas('operational_incidents', ['event_type' => 'webhooks.endpoint_suspended']);
+    }
+
+    public function test_scoped_api_rejects_foreign_workspaces_and_writes_hours_with_valid_scope(): void
+    {
+        [$user, $workspace] = $this->workspaceUser();
+        [$other, $foreign] = $this->workspaceUser('Foreign');
+        $token = $user->createToken('automation', ['hours:write'])->plainTextToken;
+
+        $this->withToken($token)->postJson('/api/v1/workspaces/'.$workspace->id.'/hours', ['work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '12:00', 'break_minutes' => 0, 'break_type' => 'paid'])->assertCreated();
+        $this->withToken($token)->getJson('/api/v1/workspaces/'.$foreign->id.'/hours')->assertNotFound();
+        $this->assertDatabaseHas('hours_entries', ['workspace_id' => $workspace->id, 'user_id' => $user->id, 'net_minutes' => 180]);
+    }
+
+    private function workspaceUser(string $name = 'Northstar'): array
+    {
+        $user = User::factory()->create();
+        $workspace = Workspace::query()->forceCreate(['owner_id' => $user->id, 'name' => $name, 'default_break_type' => 'unpaid', 'default_break_minutes' => 30, 'weekly_target_minutes' => 2400, 'currency' => 'GBP', 'overtime_multiplier_bps' => 15000]);
+        $workspace->users()->attach($user->id, ['role' => 'owner', 'position' => 'Owner']);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+
+        return [$user->fresh(), $workspace];
+    }
+}

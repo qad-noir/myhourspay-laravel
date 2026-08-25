@@ -12,3 +12,5 @@ Schedule::command('billing:expire-grants')->everyFiveMinutes()->withoutOverlappi
 Schedule::command('billing:reconcile-stripe')->hourly()->withoutOverlapping();
 Schedule::command('reports:deliver-scheduled')->everyTenMinutes()->withoutOverlapping();
 Schedule::command('reminders:send')->hourly()->withoutOverlapping();
+Schedule::command('webhooks:deliver')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('billing:reconcile-seats')->hourly()->withoutOverlapping();
