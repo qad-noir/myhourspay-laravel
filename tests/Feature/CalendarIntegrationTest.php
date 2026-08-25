@@ -66,17 +66,21 @@ class CalendarIntegrationTest extends TestCase
         $this->assertDatabaseCount('hours_entries', 1);
     }
 
-    public function test_configuration_failures_are_logged_and_create_an_admin_incident(): void
+    public function test_unconfigured_provider_is_logged_and_shown_as_unavailable_without_an_incident(): void
     {
         [$user] = $this->workspaceUser();
         config(['services.calendar.google.client_id' => null, 'services.calendar.google.client_secret' => null]);
-        Log::shouldReceive('error')->once()->withArgs(fn (string $message, array $context) => $message === 'Calendar integration operation failed.' && $context['event'] === 'calendar.oauth_start_failed');
+        Log::shouldReceive('notice')->once()->withArgs(fn (string $message, array $context) => $message === 'Calendar integration provider is unavailable because it is not configured.' && $context['provider'] === 'google');
+
+        $this->actingAs($user)->get(route('pro.index'))
+            ->assertOk()
+            ->assertSee('Not configured');
 
         $this->actingAs($user)->get(route('pro.calendars.redirect', 'google'))
             ->assertRedirect(route('pro.index').'#integrations')
             ->assertSessionHasErrors('calendar');
 
-        $this->assertDatabaseHas('operational_incidents', ['event_type' => 'calendar.oauth_start_failed', 'submitted_email' => $user->email]);
+        $this->assertDatabaseCount('operational_incidents', 0);
     }
 
     private function configureGoogle(): void

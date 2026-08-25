@@ -10,6 +10,15 @@ use RuntimeException;
 
 class CalendarIntegrationService
 {
+    public function configured(string $provider): bool
+    {
+        abort_unless(in_array($provider, ['google', 'microsoft'], true), 404);
+        $configuration = (array) config('services.calendar.'.$provider);
+
+        return filled($configuration['client_id'] ?? null)
+            && filled($configuration['client_secret'] ?? null);
+    }
+
     public function authorizationUrl(string $provider, string $state): string
     {
         $configuration = $this->configuration($provider);
@@ -121,7 +130,7 @@ class CalendarIntegrationService
     {
         abort_unless(in_array($provider, ['google', 'microsoft'], true), 404);
         $configuration = (array) config('services.calendar.'.$provider);
-        if (blank($configuration['client_id'] ?? null) || blank($configuration['client_secret'] ?? null)) {
+        if (! $this->configured($provider)) {
             throw new RuntimeException(ucfirst($provider).' Calendar is not configured.');
         }
 

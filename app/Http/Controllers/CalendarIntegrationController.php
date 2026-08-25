@@ -27,6 +27,18 @@ class CalendarIntegrationController extends Controller
     public function redirect(Request $request, string $provider, FeatureAccess $features): RedirectResponse
     {
         $workspace = $this->current->for($request->user());
+        if (! $this->calendars->configured($provider)) {
+            Log::notice('Calendar integration provider is unavailable because it is not configured.', [
+                'provider' => $provider,
+                'user_id' => $request->user()->id,
+                'workspace_id' => $workspace->id,
+            ]);
+
+            return redirect(route('pro.index').'#integrations')->withErrors([
+                'calendar' => ucfirst($provider).' Calendar is not available yet. Please choose another provider or contact '.config('site.contact.email').'.',
+            ]);
+        }
+
         $limit = $features->value($request->user(), 'calendar_integrations', $workspace);
         $connections = CalendarConnection::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->count();
         if ($limit !== null && $connections >= (int) $limit) {

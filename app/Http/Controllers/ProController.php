@@ -11,6 +11,7 @@ use App\Models\NotificationPreference;
 use App\Models\Project;
 use App\Models\ReportTemplate;
 use App\Models\ScheduledReport;
+use App\Services\CalendarIntegrationService;
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
 use Carbon\CarbonImmutable;
@@ -26,7 +27,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ProController extends Controller
 {
-    public function __construct(private readonly CurrentWorkspace $current, private readonly FeatureAccess $features) {}
+    public function __construct(
+        private readonly CurrentWorkspace $current,
+        private readonly FeatureAccess $features,
+        private readonly CalendarIntegrationService $calendars,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -45,6 +50,8 @@ class ProController extends Controller
             'templates' => $access['export_templates'] ? ReportTemplate::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->with('schedules')->get() : collect(),
             'invoices' => $access['invoicing'] ? $workspace->invoices()->with('client')->latest()->limit(20)->get() : collect(),
             'connections' => $access['calendar_integrations'] ? CalendarConnection::query()->where('workspace_id', $workspace->id)->where('user_id', $request->user()->id)->with(['events' => fn ($query) => $query->where('status', 'suggested')->orderBy('starts_at')->limit(25)])->withCount(['events' => fn ($query) => $query->where('status', 'suggested')])->get() : collect(),
+            'calendarProvidersConfigured' => collect(['google', 'microsoft'])
+                ->mapWithKeys(fn (string $provider) => [$provider => $this->calendars->configured($provider)]),
         ]);
     }
 

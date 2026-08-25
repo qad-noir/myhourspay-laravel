@@ -161,6 +161,11 @@
 .business-empty-state { grid-column: 1 / -1; border: 1px dashed #ddd7e0; border-radius: 12px; padding: 19px; color: #766f7a; background: #faf9fb; text-align: center; }
 .business-empty-state p { margin: 5px 0 0; color: #9a939d; font-size: 8px; }
 
+.calendar-provider-unavailable { display: grid; margin-top: 12px; gap: 7px; }
+.calendar-provider-unavailable span { width: max-content; border-radius: 99px; padding: 5px 8px; color: #7f5e25; background: #fff4d7; font-size: 7px; font-weight: 800; }
+.calendar-provider-unavailable small { color: #98919b; font-size: 8px; line-height: 1.45; }
+.calendar-provider-unavailable button[disabled] { cursor: not-allowed; opacity: .58; }
+
 @media (max-width: 1100px) {
     .pro-reminder-trigger-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .business-payroll-form,
