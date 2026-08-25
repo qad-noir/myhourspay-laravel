@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Workspace;
 use App\Services\CurrentWorkspace;
+use App\Services\WorkspaceAccess;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -22,8 +23,12 @@ class WorkspaceController extends Controller
         return view('workspaces.form', ['onboarding' => true]);
     }
 
-    public function create(): View
+    public function create(Request $request, WorkspaceAccess $access): View|RedirectResponse
     {
+        if (! $access->canCreateOwnedWorkspace($request->user())) {
+            return redirect()->route('billing.index')->withErrors(['plan' => 'Your current plan includes one writable workspace. Upgrade to create another workspace.']);
+        }
+
         return view('workspaces.form', ['onboarding' => false]);
     }
 
@@ -39,8 +44,11 @@ class WorkspaceController extends Controller
         ])->header('Cache-Control', 'private, no-store');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, WorkspaceAccess $access): RedirectResponse
     {
+        if (! $access->canCreateOwnedWorkspace($request->user())) {
+            return redirect()->route('billing.index')->withErrors(['plan' => 'Your current plan includes one writable workspace. Upgrade to create another workspace.']);
+        }
         $request->merge([
             'name' => trim((string) $request->input('name')),
             'position' => trim((string) $request->input('position')),

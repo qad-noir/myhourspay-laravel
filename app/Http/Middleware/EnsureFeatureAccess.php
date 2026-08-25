@@ -23,10 +23,13 @@ class EnsureFeatureAccess
         }
 
         if ($request->expectsJson()) {
+            $requiredPlan = $this->features->requiredPlan($feature);
+
             return response()->json([
                 'message' => 'This feature is not available on your current plan.',
                 'code' => 'feature_not_available',
                 'feature' => $feature,
+                'required_plan' => $requiredPlan?->key,
                 'upgrade_url' => route('billing.index'),
             ], 403);
         }

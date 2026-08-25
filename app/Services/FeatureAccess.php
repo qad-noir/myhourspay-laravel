@@ -97,6 +97,15 @@ class FeatureAccess
         return $this->settings->boolean('checkout_enabled');
     }
 
+    public function requiredPlan(string $featureKey): ?Plan
+    {
+        return Plan::query()
+            ->where('purchasable', true)
+            ->whereHas('features', fn ($query) => $query->where('features.key', $featureKey))
+            ->orderBy('tier')
+            ->first();
+    }
+
     private function billingUser(User $user, ?Workspace $workspace): User
     {
         if ($workspace && (int) $workspace->owner_id !== (int) $user->id) {

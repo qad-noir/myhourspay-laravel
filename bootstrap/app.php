@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureEmailCodeVerified;
 use App\Http\Middleware\EnsureFeatureAccess;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\EnsureWorkspaceIsWritable;
 use App\Services\BillingWebhookTracker;
 use App\Services\DatabaseSchemaIncident;
 use App\Services\UnexpectedApplicationIncident;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'active' => EnsureUserIsActive::class,
             'admin' => EnsureUserIsAdmin::class,
             'feature' => EnsureFeatureAccess::class,
+            'workspace.writable' => EnsureWorkspaceIsWritable::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

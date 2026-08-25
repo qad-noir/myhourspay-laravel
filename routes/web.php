@@ -132,18 +132,18 @@ Route::middleware([
             Route::get('/dashboard', DashboardController::class)->name('dashboard');
             Route::get('/workspaces/create', [WorkspaceController::class, 'create'])->name('workspaces.create');
             Route::post('/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
-            Route::put('/settings/hours', [HoursSettingsController::class, 'update'])->name('settings.hours.update');
+            Route::put('/settings/hours', [HoursSettingsController::class, 'update'])->middleware('workspace.writable')->name('settings.hours.update');
 
             Route::prefix('hours')->name('hours.')->controller(HoursController::class)->group(function (): void {
                 Route::get('/', 'index')->name('index');
                 Route::get('/events', 'events')->name('events');
-                Route::post('/entries', 'store')->name('entries.store');
-                Route::patch('/entries/{hoursEntry}', 'update')->name('entries.update');
-                Route::delete('/entries/{hoursEntry}', 'destroy')->name('entries.destroy');
+                Route::post('/entries', 'store')->middleware('workspace.writable')->name('entries.store');
+                Route::patch('/entries/{hoursEntry}', 'update')->middleware('workspace.writable')->name('entries.update');
+                Route::delete('/entries/{hoursEntry}', 'destroy')->middleware('workspace.writable')->name('entries.destroy');
                 Route::get('/reports', 'report')->name('reports.index');
-                Route::get('/reports/export/excel', 'excel')->name('reports.excel');
+                Route::get('/reports/export/excel', 'excel')->middleware('feature:excel_pdf_exports')->name('reports.excel');
                 Route::get('/reports/export/csv', 'csv')->name('reports.csv');
-                Route::get('/reports/print', 'print')->name('reports.print');
+                Route::get('/reports/print', 'print')->middleware('feature:excel_pdf_exports')->name('reports.print');
             });
         });
     });
