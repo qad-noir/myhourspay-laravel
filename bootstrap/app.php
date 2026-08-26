@@ -39,8 +39,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->report(function (Throwable $exception): void {
-            if (request()->routeIs('cashier.webhook')) {
-                app(BillingWebhookTracker::class)->failed(request(), $exception);
+            if (! app()->bound('request')) {
+                return;
+            }
+
+            $request = app('request');
+            if ($request instanceof Request && $request->routeIs('cashier.webhook')) {
+                app(BillingWebhookTracker::class)->failed($request, $exception);
             }
         });
         $exceptions->shouldRenderJsonWhen(

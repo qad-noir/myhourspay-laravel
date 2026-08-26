@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\OperationalIncident;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,21 @@ use Tests\TestCase;
 class UnexpectedApplicationIncidentTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_exception_reporting_is_safe_before_an_http_request_is_bound(): void
+    {
+        $handler = $this->app->make(ExceptionHandler::class);
+        $request = $this->app->make('request');
+        $this->app->offsetUnset('request');
+
+        try {
+            $this->assertFalse($this->app->bound('request'));
+            $handler->report(new RuntimeException('Early console bootstrap failure'));
+            $this->assertTrue(true);
+        } finally {
+            $this->app->instance('request', $request);
+        }
+    }
 
     public function test_unexpected_browser_errors_are_logged_recorded_and_rendered_safely(): void
     {
