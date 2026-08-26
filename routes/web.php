@@ -97,6 +97,7 @@ Route::middleware([
             Route::get('/features', 'features')->name('features');
             Route::put('/features/{feature}', 'updateFeature')->name('features.update');
             Route::get('/plans', 'plans')->name('plans');
+            Route::put('/plans/{plan}/prices/{planPrice}', 'updatePlanPrice')->name('plans.prices.update');
             Route::put('/plans/{plan}/features/{feature}', 'updatePlanFeature')->name('plans.features.update');
             Route::get('/subscribers', 'subscribers')->name('subscribers');
             Route::post('/subscribers/{user}/resync', 'resync')->name('subscribers.resync');

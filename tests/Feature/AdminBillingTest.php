@@ -6,6 +6,7 @@ use App\Models\EntitlementGrant;
 use App\Models\Feature;
 use App\Models\FeatureUsageDaily;
 use App\Models\Plan;
+use App\Models\PlanPrice;
 use App\Models\User;
 use App\Services\BillingSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -119,5 +120,60 @@ class AdminBillingTest extends TestCase
 
         $this->assertNotNull($grant->fresh()->revoked_at);
         $this->assertDatabaseHas('admin_audit_logs', ['action' => 'billing.grant_revoked', 'reason' => 'Trial concluded']);
+    }
+
+    public function test_administrator_versions_a_plan_price_without_overwriting_subscription_history(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $plan = Plan::query()->where('key', 'pro')->firstOrFail();
+        $current = $plan->prices()->where('kind', 'base')->where('interval', 'monthly')->where('active', true)->firstOrFail();
+
+        $this->actingAs($admin)->put(route('admin.billing.plans.prices.update', [$plan, $current]), [
+            'amount' => '6.25',
+            'stripe_price_id' => '',
+            'reason' => 'Test a revised monthly catalogue price',
+            'confirmed' => 1,
+        ])->assertRedirect(route('admin.billing.plans'))->assertSessionHasNoErrors();
+
+        $replacement = PlanPrice::query()
+            ->where('plan_id', $plan->id)
+            ->where('kind', 'base')
+            ->where('interval', 'monthly')
+            ->where('active', true)
+            ->sole();
+
+        $this->assertFalse($current->fresh()->active);
+        $this->assertNotSame($current->id, $replacement->id);
+        $this->assertSame(625, $replacement->amount);
+        $this->assertNull($replacement->stripe_price_id);
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'action' => 'billing.plan_price_versioned',
+            'reason' => 'Test a revised monthly catalogue price',
+            'target_id' => $replacement->id,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.billing.plans'))
+            ->assertOk()
+            ->assertSee('1 retired price retained for subscription history.');
+    }
+
+    public function test_checkout_cannot_be_enabled_with_an_incomplete_active_catalogue(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        config([
+            'cashier.key' => 'pk_test_example',
+            'cashier.secret' => 'sk_test_example',
+            'cashier.webhook.secret' => 'whsec_example',
+        ]);
+        PlanPrice::query()->where('active', true)->update(['stripe_price_id' => null]);
+
+        $this->actingAs($admin)->put(route('admin.billing.switches.update'), [
+            'key' => 'checkout_enabled',
+            'enabled' => 1,
+            'reason' => 'Attempt checkout launch',
+            'confirmed' => 1,
+        ])->assertSessionHasErrors('enabled');
+
+        $this->assertFalse(app(BillingSettings::class)->boolean('checkout_enabled'));
     }
 }

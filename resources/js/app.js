@@ -11,6 +11,7 @@ import 'tom-select/dist/css/tom-select.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import '../css/pro-business-controls.css';
+import '../css/admin-price-controls.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {

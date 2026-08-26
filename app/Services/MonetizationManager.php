@@ -6,6 +6,7 @@ use App\Models\EntitlementGrant;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MonetizationManager
 {
@@ -13,6 +14,10 @@ class MonetizationManager
 
     public function setSwitch(string $key, bool $enabled, User $actor): int
     {
+        if ($key === 'checkout_enabled' && $enabled) {
+            $this->assertCheckoutCatalogueReady();
+        }
+
         return DB::transaction(function () use ($key, $enabled, $actor): int {
             $launchGrantCount = 0;
             $wasEnabled = $this->settings->boolean($key);
@@ -26,6 +31,52 @@ class MonetizationManager
 
             return $launchGrantCount;
         });
+    }
+
+    private function assertCheckoutCatalogueReady(): void
+    {
+        if (blank(config('cashier.key')) || blank(config('cashier.secret')) || blank(config('cashier.webhook.secret'))) {
+            throw ValidationException::withMessages([
+                'enabled' => 'Configure the Stripe publishable key, secret key and webhook secret before enabling checkout.',
+            ]);
+        }
+
+        $missing = [];
+        $plans = Plan::query()
+            ->where('active', true)
+            ->where('purchasable', true)
+            ->with(['prices' => fn ($query) => $query->where('active', true)])
+            ->get();
+
+        foreach ($plans as $plan) {
+            foreach (['monthly', 'yearly'] as $interval) {
+                $ready = $plan->prices->contains(fn ($price): bool => $price->kind === 'base'
+                    && $price->interval === $interval
+                    && filled($price->stripe_price_id)
+                    && $price->tax_inclusive);
+                if (! $ready) {
+                    $missing[] = "{$plan->name} {$interval} plan price";
+                }
+            }
+
+            if ($plan->key === 'business') {
+                foreach (['monthly', 'yearly'] as $interval) {
+                    $ready = $plan->prices->contains(fn ($price): bool => $price->kind === 'seat'
+                        && $price->interval === $interval
+                        && filled($price->stripe_price_id)
+                        && $price->tax_inclusive);
+                    if (! $ready) {
+                        $missing[] = "Business {$interval} additional-seat price";
+                    }
+                }
+            }
+        }
+
+        if ($missing !== []) {
+            throw ValidationException::withMessages([
+                'enabled' => 'Checkout cannot be enabled until these active tax-inclusive catalogue entries have Stripe Price IDs: '.implode(', ', $missing).'.',
+            ]);
+        }
     }
 
     private function createLaunchGrants(User $actor): int

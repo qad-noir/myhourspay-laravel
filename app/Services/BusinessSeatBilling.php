@@ -32,15 +32,44 @@ class BusinessSeatBilling
         if (! $subscription || ! in_array($subscription->stripe_status, ['active', 'trialing'], true)) {
             throw new RuntimeException('An active Business subscription is required before adding another member.');
         }
-        $baseItem = $subscription->items()->whereNotIn('stripe_price', array_filter([config('billing.plans.business.prices.seat_monthly.stripe_price_id'), config('billing.plans.business.prices.seat_yearly.stripe_price_id')]))->first();
-        $interval = PlanPrice::query()->where('stripe_price_id', $baseItem?->stripe_price)->value('interval') ?? 'monthly';
-        $price = config('billing.plans.business.prices.seat_'.$interval.'.stripe_price_id');
+        $items = $subscription->items()->get();
+        $catalogue = PlanPrice::query()
+            ->with('plan:id,key')
+            ->whereNotNull('stripe_price_id')
+            ->whereIn('stripe_price_id', $items->pluck('stripe_price')->filter())
+            ->get()
+            ->keyBy('stripe_price_id');
+        $baseItem = $items->first(function ($item) use ($catalogue): bool {
+            $mapped = $catalogue->get($item->stripe_price);
+
+            return $mapped?->kind === 'base' && $mapped->plan?->key === 'business';
+        });
+        if (! $baseItem) {
+            throw new RuntimeException('An active Business subscription is required before adding another member.');
+        }
+
+        $basePrice = $catalogue->get($baseItem->stripe_price);
+        $interval = $basePrice?->interval ?? 'monthly';
+        $existingSeatItem = $items->first(function ($item) use ($catalogue): bool {
+            $mapped = $catalogue->get($item->stripe_price);
+
+            return $mapped?->kind === 'seat' && $mapped->plan?->key === 'business';
+        });
+        // Keep updating an existing retired Stripe Price ID so historical
+        // subscribers are never moved implicitly. New seat items use the
+        // current active catalogue version.
+        $price = $existingSeatItem?->stripe_price ?: PlanPrice::query()
+            ->whereHas('plan', fn ($query) => $query->where('key', 'business'))
+            ->where('kind', 'seat')
+            ->where('interval', $interval)
+            ->where('active', true)
+            ->value('stripe_price_id');
         $extra = max(0, $seats - $included);
         if (blank($price) && $extra > 0) {
             throw new RuntimeException('The Stripe additional-seat price is not configured.');
         }
         try {
-            $item = $price ? $subscription->items()->where('stripe_price', $price)->first() : null;
+            $item = $existingSeatItem;
             if ($extra > 0 && $item) {
                 $subscription->updateQuantity($extra, $price);
             } elseif ($extra > 0) {

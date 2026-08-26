@@ -8,6 +8,7 @@ use App\Models\EntitlementGrant;
 use App\Models\Feature;
 use App\Models\FeatureUsageDaily;
 use App\Models\Plan;
+use App\Models\PlanPrice;
 use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Services\AdminAudit;
@@ -15,6 +16,7 @@ use App\Services\BillingSettings;
 use App\Services\FeatureAccess;
 use App\Services\MonetizationManager;
 use App\Services\OperationalIncidentRecorder;
+use App\Services\PlanPriceVersioner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -111,12 +113,91 @@ class AdminBillingController extends Controller
         return back()->with('status', "{$feature->name} is now {$feature->mode}.");
     }
 
-    public function plans(): View
+    public function plans(BillingSettings $settings): View
     {
-        $plans = Plan::query()->with(['prices', 'features'])->orderBy('tier')->get();
+        $plans = Plan::query()->with([
+            'prices' => fn ($query) => $query
+                ->orderByDesc('active')
+                ->orderBy('kind')
+                ->orderBy('interval')
+                ->orderByDesc('id'),
+            'features',
+        ])->orderBy('tier')->get();
         $features = Feature::query()->orderBy('category')->orderBy('name')->get();
 
-        return view('admin.billing.plans', compact('plans', 'features'));
+        return view('admin.billing.plans', [
+            'plans' => $plans,
+            'features' => $features,
+            'checkoutEnabled' => $settings->boolean('checkout_enabled'),
+        ]);
+    }
+
+    public function updatePlanPrice(
+        Request $request,
+        Plan $plan,
+        PlanPrice $planPrice,
+        PlanPriceVersioner $versioner,
+        BillingSettings $settings,
+        AdminAudit $audit,
+    ): RedirectResponse {
+        if ($planPrice->plan_id !== $plan->id) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'amount' => ['required', 'numeric', 'decimal:0,2', 'min:0.01', 'max:1000000'],
+            'stripe_price_id' => [
+                'nullable',
+                'string',
+                'max:190',
+                'regex:/^price_[A-Za-z0-9_]+$/',
+                Rule::unique('plan_prices', 'stripe_price_id'),
+            ],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+            'confirmed' => ['accepted'],
+        ]);
+
+        $before = $planPrice->only([
+            'id',
+            'plan_id',
+            'interval',
+            'kind',
+            'currency',
+            'amount',
+            'stripe_price_id',
+            'tax_inclusive',
+            'active',
+        ]);
+        $newPrice = $versioner->replace(
+            $plan,
+            $planPrice,
+            (int) round(((float) $validated['amount']) * 100),
+            $validated['stripe_price_id'] ?? null,
+        );
+
+        $settings->touchEntitlements($request->user());
+        $audit->record(
+            $request,
+            'billing.plan_price_versioned',
+            $newPrice,
+            $before,
+            $newPrice->only([
+                'id',
+                'plan_id',
+                'interval',
+                'kind',
+                'currency',
+                'amount',
+                'stripe_price_id',
+                'tax_inclusive',
+                'active',
+            ]),
+            $validated['reason'],
+        );
+        Cache::forget('admin:monetization:overview');
+
+        return redirect()->route('admin.billing.plans')
+            ->with('status', "{$plan->name} {$newPrice->interval} {$newPrice->kind} price was versioned safely.");
     }
 
     public function updatePlanFeature(Request $request, Plan $plan, Feature $feature, BillingSettings $settings, AdminAudit $audit): RedirectResponse
@@ -212,7 +293,9 @@ class AdminBillingController extends Controller
     public function health(): View
     {
         return view('admin.billing.health', [
-            'priceHealth' => Plan::query()->where('purchasable', true)->with('prices')->get(),
+            'priceHealth' => Plan::query()->where('purchasable', true)->with([
+                'prices' => fn ($query) => $query->where('active', true)->orderBy('kind')->orderBy('interval'),
+            ])->get(),
             'stripeConfigured' => filled(config('cashier.key')) && filled(config('cashier.secret')) && filled(config('cashier.webhook.secret')),
         ]);
     }
