@@ -1,33 +1,63 @@
 .admin-plan-prices {
     display: grid;
     align-content: start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 }
 
+.admin-plan-grid {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-plan-card { min-width: 0; overflow: hidden; }
+
+.admin-plan-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin: -2px 0 1px;
+}
+
+.admin-plan-prices > .admin-plan-section-heading,
+.admin-plan-prices > .admin-price-history-note { grid-column: 1 / -1; }
+
+.admin-plan-section-heading div > span,
+.admin-plan-section-heading div > strong { display: block; }
+.admin-plan-section-heading div > span { color: #df552b; font-size: 7px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.admin-plan-section-heading div > strong { margin-top: 4px; color: #332c37; font-size: 10px; }
+.admin-plan-section-heading > small { border-radius: 99px; padding: 5px 8px; color: #7d7581; background: #f2eff4; font-size: 7px; font-weight: 800; white-space: nowrap; }
+
 .admin-price-editor {
     display: grid;
+    overflow: hidden;
     min-width: 0;
     border: 1px solid #e7e2e9;
     border-radius: 13px;
     padding: 14px;
     background: #faf9fb;
-    grid-template-columns: minmax(130px, .75fr) minmax(170px, 1fr) minmax(220px, 1.25fr);
+    grid-template-columns: minmax(108px, .65fr) minmax(0, 1.35fr);
     gap: 11px;
 }
 
 .admin-price-editor__heading {
-    display: grid;
-    align-content: center;
-    grid-row: span 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    grid-column: 1 / -1;
+    gap: 14px;
+    border-bottom: 1px solid #ebe7ed;
+    padding-bottom: 12px;
 }
 
-.admin-price-editor__heading > span,
-.admin-price-editor__heading > small,
+.admin-price-editor__heading > div > span,
+.admin-price-editor__heading > div > small,
 .admin-price-editor__heading > strong {
     display: block;
 }
 
-.admin-price-editor__heading > span {
+.admin-price-editor__heading > div > span {
     color: #8f8792;
     font-size: 7px;
     font-weight: 800;
@@ -35,16 +65,16 @@
     text-transform: uppercase;
 }
 
-.admin-price-editor__heading > small {
+.admin-price-editor__heading > div > small {
     margin-top: 4px;
     color: #a099a3;
     font-size: 7px;
 }
 
 .admin-price-editor__heading > strong {
-    margin-top: 9px;
     color: #28222d;
     font: 800 20px Manrope, sans-serif;
+    white-space: nowrap;
 }
 
 .admin-price-editor label {
@@ -109,26 +139,31 @@
 }
 
 .admin-price-editor__current {
-    overflow: hidden;
+    grid-column: 1 / -1;
     align-self: center;
     margin: 0;
+    border: 1px solid #ece8ee;
+    border-radius: 8px;
+    padding: 8px 9px;
     color: #938c97;
+    background: #fff;
     font-size: 7px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .admin-price-editor__current code {
     color: #716a75;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    overflow-wrap: anywhere;
 }
 
 .admin-price-editor__reason {
-    grid-column: 2 / 3;
+    grid-column: 1 / -1;
 }
 
 .admin-price-editor > button {
+    grid-column: 1 / -1;
     align-self: end;
+    width: 100%;
     height: 41px;
     border: 0;
     border-radius: 9px;
@@ -142,6 +177,7 @@
 
 .admin-price-editor--free {
     display: block;
+    grid-column: 1 / -1;
 }
 
 .admin-price-editor--free strong {
@@ -160,7 +196,66 @@
     padding-top: 10px;
 }
 
+.admin-plan-features {
+    max-height: min(690px, 70vh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.admin-plan-section-heading--features {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    margin: 0;
+    border-bottom: 1px solid #ebe7ed;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, .96);
+    backdrop-filter: blur(8px);
+}
+
+.admin-entitlement-columns {
+    position: sticky;
+    z-index: 2;
+    top: 55px;
+    display: grid;
+    border-bottom: 1px solid #ebe7ed;
+    padding: 8px 16px;
+    color: #918a95;
+    background: rgba(250, 249, 251, .97);
+    grid-template-columns: minmax(200px, 1fr) minmax(160px, 220px) minmax(220px, 1fr) 104px;
+    gap: 12px;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+}
+
+.admin-plan-features .admin-entitlement-row {
+    display: grid;
+    align-items: start;
+    padding: 14px 16px;
+    grid-template-columns: minmax(200px, 1fr) minmax(160px, 220px) minmax(220px, 1fr) 104px;
+    gap: 11px 12px;
+}
+
+.admin-entitlement-copy { min-width: 0; }
+.admin-entitlement-copy strong,
+.admin-entitlement-copy small { display: block; }
+.admin-entitlement-copy strong { color: #302a34; font-size: 11px; line-height: 1.35; }
+.admin-entitlement-copy small { width: max-content; margin-top: 6px; border-radius: 99px; padding: 4px 7px; color: #7d7480; background: #f1eef3; font-size: 7px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.admin-entitlement-control { min-width: 0; }
+.admin-entitlement-control .admin-check { min-height: 34px; justify-content: flex-end; }
+.admin-entitlement-reason { display: grid; min-width: 0; gap: 5px; color: #77707b; font-size: 7px; font-weight: 800; }
+.admin-entitlement-reason input { width: 100%; }
+.admin-plan-features .admin-entitlement-row > button { align-self: end; width: 104px; }
+.admin-plan-features .admin-plan-quota { justify-content: flex-end; }
+.admin-plan-features .admin-plan-quota > label:first-child { display: grid; gap: 4px; color: #8d8691; font-size: 7px; font-weight: 800; }
+.admin-plan-features .admin-plan-quota input[type="number"] { width: 74px; }
+
 @media (max-width: 760px) {
+    .admin-plan-prices { grid-template-columns: 1fr; }
     .admin-price-editor {
         grid-template-columns: 1fr;
     }
@@ -171,4 +266,18 @@
         grid-column: 1;
         grid-row: auto;
     }
+
+    .admin-plan-features { max-height: none; }
+    .admin-entitlement-columns { display: none; }
+    .admin-plan-features .admin-entitlement-row { grid-template-columns: 1fr; }
+    .admin-entitlement-control .admin-check,
+    .admin-plan-features .admin-plan-quota { justify-content: flex-start; }
+    .admin-plan-features .admin-entitlement-row > button { width: 100%; }
+}
+
+@media (min-width: 761px) and (max-width: 1050px) {
+    .admin-entitlement-columns { display: none; }
+    .admin-plan-features .admin-entitlement-row { grid-template-columns: minmax(0, 1fr) minmax(150px, auto); }
+    .admin-entitlement-reason { grid-column: 1 / 2; }
+    .admin-plan-features .admin-entitlement-row > button { grid-column: 2 / 3; }
 }

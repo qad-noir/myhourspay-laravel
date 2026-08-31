@@ -13,6 +13,10 @@
     <section class="admin-card admin-plan-card">
         <header><div><h2>{{ $plan->name }}</h2><p>{{ $plan->description }}</p></div><span class="admin-status {{ $plan->purchasable ? 'admin-status--active':'admin-status--open' }}"><i></i>{{ $plan->purchasable?'Purchasable':'Base plan' }}</span></header>
         <div class="admin-plan-prices">
+            <div class="admin-plan-section-heading">
+                <div><span>Pricing</span><strong>Billing catalogue</strong></div>
+                <small>{{ $plan->prices->where('active', true)->count() }} active {{ str('price')->plural($plan->prices->where('active', true)->count()) }}</small>
+            </div>
             @forelse($plan->prices->where('active', true) as $price)
                 @php $failedPrice = (int) old('price_id') === $price->id; @endphp
                 <form method="POST"
@@ -27,8 +31,7 @@
                     <input type="hidden" name="confirmed" value="1">
                     <input type="hidden" name="price_id" value="{{ $price->id }}">
                     <div class="admin-price-editor__heading">
-                        <span>{{ str($price->interval)->headline() }}</span>
-                        <small>{{ $price->kind === 'seat' ? 'Additional seat' : 'Plan price' }}</small>
+                        <div><span>{{ str($price->interval)->headline() }}</span><small>{{ $price->kind === 'seat' ? 'Additional seat' : 'Plan price' }}</small></div>
                         <strong>£{{ number_format($price->amount / 100, 2) }}</strong>
                     </div>
                     <label>
@@ -57,14 +60,25 @@
             @endif
         </div>
         <div class="admin-plan-features">
+        <div class="admin-plan-section-heading admin-plan-section-heading--features">
+            <div><span>Access</span><strong>Feature entitlements</strong></div>
+            <small>{{ $features->count() }} {{ str('feature')->plural($features->count()) }}</small>
+        </div>
+        <div class="admin-entitlement-columns" aria-hidden="true"><span>Feature</span><span>Allocation</span><span>Audit reason</span><span>Action</span></div>
         @foreach($features as $feature)
             @php $mapping=$plan->features->firstWhere('id',$feature->id); $mappedValue=$mapping ? json_decode($mapping->pivot->value,true) : false; @endphp
-            <form method="POST" action="{{ route('admin.billing.plans.features.update',[$plan,$feature]) }}" data-confirm="Update this plan entitlement?">
+            <form class="admin-entitlement-row" method="POST" action="{{ route('admin.billing.plans.features.update',[$plan,$feature]) }}" data-confirm="Update this plan entitlement?">
                 @csrf @method('PUT')<input type="hidden" name="confirmed" value="1">
-                <div><strong>{{ $feature->name }}</strong><small>{{ str($feature->category)->replace('_',' ')->headline() }}</small></div>
-                @if($feature->value_type==='boolean')<label class="admin-check"><input type="checkbox" name="enabled" value="1" @checked((bool)$mappedValue)> Included</label>
-                @else<div class="admin-plan-quota"><label><input type="number" name="quota" min="0" value="{{ is_numeric($mappedValue)?$mappedValue:'' }}" placeholder="Quota"></label><label class="admin-check"><input type="checkbox" name="unlimited" value="1" @checked($mappedValue===null && $mapping)> Unlimited</label></div>@endif
-                <input name="reason" required minlength="3" maxlength="500" placeholder="Audit reason"><button>Save</button>
+                <div class="admin-entitlement-copy"><strong>{{ $feature->name }}</strong><small>{{ str($feature->category)->replace('_',' ')->headline() }}</small></div>
+                <div class="admin-entitlement-control">
+                    @if($feature->value_type==='boolean')
+                        <label class="admin-check"><input class="ui-checkbox" type="checkbox" name="enabled" value="1" @checked((bool)$mappedValue)> Included</label>
+                    @else
+                        <div class="admin-plan-quota"><label><span>Quota</span><input type="number" name="quota" min="0" value="{{ is_numeric($mappedValue)?$mappedValue:'' }}" placeholder="0"></label><label class="admin-check"><input class="ui-checkbox" type="checkbox" name="unlimited" value="1" @checked($mappedValue===null && $mapping)> Unlimited</label></div>
+                    @endif
+                </div>
+                <label class="admin-entitlement-reason"><span>Audit reason</span><input name="reason" required minlength="3" maxlength="500" placeholder="Why is this entitlement changing?"></label>
+                <button type="submit">Save change</button>
             </form>
         @endforeach
         </div>
