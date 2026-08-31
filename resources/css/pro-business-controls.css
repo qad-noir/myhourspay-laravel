@@ -1,4 +1,68 @@
-/* Accessible controls shared by Pro and Business tools. */
+/* Accessible controls shared across dashboard, authentication and admin tools. */
+.ui-checkbox[type="checkbox"] {
+    appearance: none;
+    display: inline-block;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px;
+    min-height: 18px !important;
+    flex: none;
+    margin: 0;
+    border: 1px solid #d5cfd8 !important;
+    border-radius: 5px !important;
+    padding: 0 !important;
+    background-color: #fff !important;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 12px 12px;
+    box-shadow: 0 1px 2px rgba(35, 27, 40, .04);
+    cursor: pointer;
+    vertical-align: middle;
+    transition: border-color .16s, background-color .16s, box-shadow .16s;
+}
+
+.ui-checkbox[type="checkbox"]:hover { border-color: #ff9d79 !important; }
+.ui-checkbox[type="checkbox"]:checked {
+    border-color: #ff6b35 !important;
+    background-color: #ff6b35 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.5 8 3 3 6-6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.ui-checkbox[type="checkbox"]:checked:hover { border-color: #ec4f1a !important; background-color: #ec4f1a !important; }
+.ui-checkbox[type="checkbox"]:focus { outline: none !important; }
+.ui-checkbox[type="checkbox"]:focus-visible { box-shadow: 0 0 0 4px rgba(130, 104, 255, .18) !important; }
+.ui-checkbox[type="checkbox"]:disabled { cursor: not-allowed; opacity: .52; }
+
+.dashboard-form-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    color: #171421;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.dashboard-form-label > span { color: #aaa5ae; font-size: 8px; font-weight: 500; }
+.dashboard-checkbox-control {
+    display: flex !important;
+    height: 42px;
+    align-items: center;
+    justify-content: flex-start !important;
+    gap: 9px;
+    margin: 0 !important;
+    border: 1px solid #dcd8df;
+    border-radius: 10px;
+    padding: 0 12px;
+    color: #171421;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color .16s, background .16s, box-shadow .16s;
+}
+
+.dashboard-checkbox-control:hover { border-color: #ffb49a; background: #fffaf7; }
+.dashboard-checkbox-control:focus-within { border-color: #ff6b35; box-shadow: 0 0 0 3px rgba(255, 107, 53, .1); }
+.dashboard-checkbox-control > span { color: #171421 !important; font-size: 10px !important; font-weight: 700 !important; }
+.dashboard-checkbox-control .ui-checkbox { width: 18px !important; height: 18px !important; }
+
 .ui-switch {
     position: relative !important;
     display: flex !important;

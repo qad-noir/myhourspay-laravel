@@ -12,7 +12,7 @@
             <x-public-input label="Password" name="password" type="password" required autocomplete="current-password">
                 <x-slot:suffix><button type="button" class="auth-password-toggle" data-password-toggle="password" aria-label="Show password"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg></button></x-slot:suffix>
             </x-public-input>
-            <div class="auth-options"><label><input type="checkbox" name="remember" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500"> Remember me</label>@if (Route::has('password.request'))<a href="{{ route('password.request') }}">Forgot password?</a>@endif</div>
+            <div class="auth-options"><label><input type="checkbox" name="remember" class="ui-checkbox"> Remember me</label>@if (Route::has('password.request'))<a href="{{ route('password.request') }}">Forgot password?</a>@endif</div>
             <button type="submit" class="public-button public-button--primary auth-submit">Log in to myhourspay <span aria-hidden="true">→</span></button>
         </form>
         @if (Route::has('register'))<p class="auth-switch">New to myhourspay? <a href="{{ route('register') }}">Create an account</a></p>@endif
