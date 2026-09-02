@@ -1,4 +1,4 @@
-@props(['id', 'url', 'columns', 'title' => 'Records', 'description' => 'Search, sort and manage records'])
+@props(['id', 'url', 'columns', 'title' => 'Records', 'description' => 'Search, sort and manage records', 'order' => [[0, 'asc']]])
 <div class="admin-datatable">
     <header class="admin-datatable__header">
         <div>
@@ -11,7 +11,7 @@
         <span class="admin-datatable__server-badge"><i></i>Live data</span>
     </header>
     <div class="admin-datatable__body">
-        <table id="{{ $id }}" class="display responsive" data-admin-table data-url="{{ $url }}" data-columns='@json($columns)'>
+        <table id="{{ $id }}" class="display responsive" data-admin-table data-url="{{ $url }}" data-columns='@json($columns)' data-order='@json($order)'>
             <thead><tr>@foreach($columns as $column)<th>{{ $column['title'] }}</th>@endforeach</tr></thead>
         </table>
     </div>

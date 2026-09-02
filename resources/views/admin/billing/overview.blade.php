@@ -1,9 +1,26 @@
 @extends('layouts.admin')
 @section('title', 'Monetisation')
 @section('content')
-<section class="admin-metrics billing-admin-metrics">
-    @foreach([['Active subscribers',$metrics['active_subscribers']],['Trials',$metrics['trials']],['Past due',$metrics['past_due']],['Trial conversions · 30d',$metrics['trial_conversions']],['Churn · 30d',$metrics['churn_30d']],['Active seats',$metrics['active_seats']],['Active grants',$metrics['active_grants']],['Expiring soon',$metrics['expiring_grants']],['Feature uses · 30d',$metrics['feature_uses']]] as [$label,$value])
-        <article><span>{{ $label }}</span><strong>{{ number_format($value) }}</strong></article>
+@php
+    $billingCards = [
+        ['Active subscribers', $metrics['active_subscribers'], 'Paying and trial accounts', 'users', 'positive'],
+        ['Trials', $metrics['trials'], 'Currently evaluating', 'trials', 'violet'],
+        ['Past due', $metrics['past_due'], 'Payment needs attention', 'past-due', 'warning'],
+        ['Trial conversions · 30d', $metrics['trial_conversions'], 'Moved from trial to active', 'conversion', 'positive'],
+        ['Churn · 30d', $metrics['churn_30d'], 'Subscriptions ended', 'churn', 'warning'],
+        ['Active seats', $metrics['active_seats'], 'Distinct workspace members', 'seats', 'blue'],
+        ['Active grants', $metrics['active_grants'], 'Plan and feature overrides', 'grants', 'orange'],
+        ['Expiring soon', $metrics['expiring_grants'], 'Within the next 14 days', 'expiring', 'warning'],
+        ['Feature uses · 30d', $metrics['feature_uses'], 'Premium capability checks', 'usage', 'neutral'],
+    ];
+@endphp
+<section class="admin-metrics billing-admin-metrics" aria-label="Monetisation summary">
+    @foreach($billingCards as [$label, $value, $support, $icon, $tone])
+        <article class="admin-metric admin-metric--{{ $tone }}">
+            <div class="admin-metric__top"><span>{{ $label }}</span><i><x-admin.icon :name="$icon" /></i></div>
+            <strong>{{ number_format($value) }}</strong>
+            <small>{{ $support }}</small>
+        </article>
     @endforeach
 </section>
 

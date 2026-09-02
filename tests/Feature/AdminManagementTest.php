@@ -148,6 +148,35 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseHas('admin_audit_logs', ['action' => 'incident.reopened', 'target_id' => $incident->id]);
     }
 
+    public function test_incident_feed_puts_open_incidents_first_and_newest_within_each_state(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $openOlder = OperationalIncident::query()->create([
+            'reference' => fake()->uuid(), 'event_type' => 'mail.delivery_failed', 'severity' => 'error',
+            'exception_class' => 'RuntimeException', 'exception_message' => 'Older open failure', 'occurred_at' => now()->subHours(3),
+        ]);
+        $resolvedNewest = OperationalIncident::query()->create([
+            'reference' => fake()->uuid(), 'event_type' => 'billing.checkout_failed', 'severity' => 'error',
+            'exception_class' => 'RuntimeException', 'exception_message' => 'Resolved failure', 'occurred_at' => now(),
+            'resolved_at' => now(), 'resolved_by' => $admin->id, 'resolution_notes' => 'Corrected.',
+        ]);
+        $openNewest = OperationalIncident::query()->create([
+            'reference' => fake()->uuid(), 'event_type' => 'webhook.delivery_failed', 'severity' => 'critical',
+            'exception_class' => 'RuntimeException', 'exception_message' => 'Newest open failure', 'occurred_at' => now()->subHour(),
+        ]);
+
+        $response = $this->actingAs($admin)->getJson(route('admin.data.incidents', [
+            'draw' => 1, 'start' => 0, 'length' => 10,
+        ]));
+
+        $response->assertOk();
+        $this->assertSame([
+            $openNewest->reference,
+            $openOlder->reference,
+            $resolvedNewest->reference,
+        ], collect($response->json('data'))->pluck('reference')->all());
+    }
+
     public function test_trashing_current_workspace_selects_an_available_fallback(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

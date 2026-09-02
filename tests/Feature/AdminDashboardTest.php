@@ -18,6 +18,28 @@ class AdminDashboardTest extends TestCase
         $this->actingAs(User::factory()->create(['is_admin' => true]))->get(route('admin.dashboard'))->assertOk()->assertSee('Platform overview');
     }
 
+    public function test_admin_overview_limits_new_users_and_audit_activity_to_five_records(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        User::factory()->count(6)->sequence(fn ($sequence) => ['name' => 'Recent User '.$sequence->index])->create();
+        foreach (range(0, 5) as $index) {
+            AdminAuditLog::query()->create([
+                'admin_user_id' => $admin->id,
+                'action' => 'test.activity_'.$index,
+                'before' => [],
+                'after' => [],
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+        $response->assertOk()
+            ->assertSee('Recent User 5')
+            ->assertDontSee('Recent User 0')
+            ->assertSee('Test Activity 5')
+            ->assertDontSee('Test Activity 0');
+    }
+
     public function test_admin_can_edit_user_and_email_change_requires_reverification(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

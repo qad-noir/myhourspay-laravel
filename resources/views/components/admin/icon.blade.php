@@ -12,5 +12,20 @@
         @case('trash') <path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v5M14 11v5"/> @break
         @case('back') <path d="m15 18-6-6 6-6"/> @break
         @case('more') <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/> @break
+        @case('filter') <path d="M4 6h16M7 12h10M10 18h4"/> @break
+        @case('plus') <path d="M12 5v14M5 12h14"/> @break
+        @case('verified') <path d="m8.5 12 2.2 2.2 4.8-5.1"/><path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"/> @break
+        @case('suspended') <circle cx="12" cy="12" r="9"/><path d="m7 7 10 10"/> @break
+        @case('overtime') <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M18.5 5.5 20 4"/> @break
+        @case('paid-break') <path d="M6 8h10v5a5 5 0 0 1-5 5 5 5 0 0 1-5-5V8Z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 4v2M12 4v2"/> @break
+        @case('unpaid-break') <path d="M6 8h10v5a5 5 0 0 1-5 5 5 5 0 0 1-5-5V8Z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M5 5l14 14"/> @break
+        @case('trials') <path d="M9 3h6M10 3v5l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M8 15h8"/> @break
+        @case('past-due') <rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M16 14v2M16 18h.01"/> @break
+        @case('conversion') <path d="M4 17 10 11l4 4 6-8"/><path d="M15 7h5v5"/> @break
+        @case('churn') <path d="M4 7h11a5 5 0 0 1 0 10H9"/><path d="m8 3-4 4 4 4"/> @break
+        @case('seats') <circle cx="9" cy="8" r="3"/><path d="M3 19v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1M16 8h5M18.5 5.5v5"/> @break
+        @case('grants') <path d="M20 12v8H4v-8M2 8h20v4H2zM12 8v12"/><path d="M12 8H7.5A2.5 2.5 0 1 1 10 5.5L12 8Zm0 0h4.5A2.5 2.5 0 1 0 14 5.5L12 8Z"/> @break
+        @case('expiring') <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M8 2h8"/> @break
+        @case('usage') <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/> @break
     @endswitch
 </svg>

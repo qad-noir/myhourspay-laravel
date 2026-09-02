@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import '../css/pro-business-controls.css';
 import '../css/admin-price-controls.css';
+import '../css/admin-refinement.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
@@ -22,6 +23,7 @@ const initializeAdminTables = () => {
         delete table.dataset.bound;
         table.dataset.bound = 'true';
         const columns = JSON.parse(table.dataset.columns || '[]');
+        const order = JSON.parse(table.dataset.order || '[[0,"asc"]]');
         const filters = document.querySelector(`[data-table-filters="${table.id}"]`);
         const dataTable = new DataTable(table, {
             processing: true,
@@ -35,7 +37,7 @@ const initializeAdminTables = () => {
             pageLength: 10,
             lengthMenu: [10, 20, 50, 100],
             searchDelay: 350,
-            order: [[0, 'asc']],
+            order,
             autoWidth: false,
             layout: {
                 topStart: 'pageLength',
@@ -58,7 +60,13 @@ const initializeAdminTables = () => {
             const count = table.closest('.admin-datatable')?.querySelector('[data-table-count]');
             if (count && json) count.textContent = `${json.recordsTotal ?? 0} records`;
         });
+        let filterTimer = null;
         filters?.addEventListener('change', () => dataTable.ajax.reload());
+        filters?.addEventListener('input', (event) => {
+            if (!(event.target instanceof HTMLInputElement) || ['date', 'checkbox', 'radio'].includes(event.target.type)) return;
+            window.clearTimeout(filterTimer);
+            filterTimer = window.setTimeout(() => dataTable.ajax.reload(), 300);
+        });
     });
 };
 
@@ -195,6 +203,17 @@ document.addEventListener('visibilitychange', () => {
     });
 });
 document.addEventListener('click', (event) => {
+    const resetFilters = event.target.closest?.('[data-reset-table-filters]');
+    if (resetFilters) {
+        const filters = resetFilters.closest('[data-table-filters]');
+        filters?.querySelectorAll('input, select').forEach((field) => {
+            if (field instanceof HTMLInputElement && ['checkbox', 'radio'].includes(field.type)) field.checked = false;
+            else field.value = '';
+        });
+        filters?.dispatchEvent(new Event('change', { bubbles: true }));
+        resetFilters.blur();
+    }
+
     document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
         if (!menu.contains(event.target)) menu.removeAttribute('open');
     });

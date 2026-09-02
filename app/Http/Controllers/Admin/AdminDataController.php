@@ -23,6 +23,7 @@ class AdminDataController extends Controller
             ->editColumn('name', fn (User $user) => '<div class="admin-person"><span class="admin-person__avatar">'.e(str($user->name)->substr(0, 1)->upper()).'</span><span><strong>'.e($user->name).'</strong><small>'.e($user->email).'</small></span></div>')
             ->addColumn('status', function (User $user): string {
                 $status = $user->deleted_at ? 'Trashed' : ($user->suspended_at ? 'Suspended' : ($user->email_verified_at ? 'Verified' : 'Unverified'));
+
                 return '<span class="admin-status admin-status--'.strtolower($status).'"><i></i>'.e($status).'</span>';
             })
             ->addColumn('workspaces', fn (User $user) => $user->workspaces_count)
@@ -33,10 +34,15 @@ class AdminDataController extends Controller
             ->filterColumn('status', function ($query, string $keyword): void {
                 $keyword = strtolower($keyword);
                 $query->where(function ($query) use ($keyword): void {
-                    if (str_contains($keyword, 'suspend')) $query->whereNotNull('suspended_at');
-                    elseif (str_contains($keyword, 'unverified')) $query->whereNull('email_verified_at');
-                    elseif (str_contains($keyword, 'verified')) $query->whereNotNull('email_verified_at');
-                    elseif (str_contains($keyword, 'trash')) $query->whereNotNull('deleted_at');
+                    if (str_contains($keyword, 'suspend')) {
+                        $query->whereNotNull('suspended_at');
+                    } elseif (str_contains($keyword, 'unverified')) {
+                        $query->whereNull('email_verified_at');
+                    } elseif (str_contains($keyword, 'verified')) {
+                        $query->whereNotNull('email_verified_at');
+                    } elseif (str_contains($keyword, 'trash')) {
+                        $query->whereNotNull('deleted_at');
+                    }
                 });
             })
             ->orderColumn('status', 'email_verified_at $1')
@@ -118,6 +124,10 @@ class AdminDataController extends Controller
             ->when($request->input('status') === 'open', fn ($query) => $query->whereNull('resolved_at'))
             ->when($request->input('status') === 'resolved', fn ($query) => $query->whereNotNull('resolved_at'))
             ->when($request->filled('severity'), fn ($query) => $query->where('severity', $request->input('severity')));
+
+        if (! $request->has('order')) {
+            $query->orderByRaw('resolved_at IS NOT NULL')->orderByDesc('occurred_at');
+        }
 
         return DataTables::eloquent($query)
             ->addColumn('event', fn (OperationalIncident $incident) => e(str($incident->event_type)->replace('.', ' ')->headline()))

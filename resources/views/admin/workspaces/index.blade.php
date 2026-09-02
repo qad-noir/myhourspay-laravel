@@ -1,4 +1,4 @@
 @extends('layouts.admin') @section('title','Workspaces') @section('content')
-<div class="admin-page-actions"><a wire:navigate class="admin-primary-action" href="{{ route('admin.workspaces.create') }}">＋ Create workspace</a></div>
+<div class="admin-page-actions"><a wire:navigate class="admin-primary-action" href="{{ route('admin.workspaces.create') }}"><x-admin.icon name="plus"/>Create workspace</a></div>
 <section class="admin-card admin-table-card"><x-admin.data-table id="workspaces-table" :url="route('admin.data.workspaces')" title="Workspaces" description="Owners, membership and hours defaults" :columns="[['data'=>'name','name'=>'name','title'=>'Workspace','responsivePriority'=>1],['data'=>'owner','name'=>'owner','title'=>'Owner','responsivePriority'=>2],['data'=>'members','name'=>'members','title'=>'Members'],['data'=>'entries','name'=>'entries','title'=>'Entries'],['data'=>'target','name'=>'target','title'=>'Target'],['data'=>'actions','title'=>'','orderable'=>false,'searchable'=>false,'responsivePriority'=>1]]" /></section>
 @endsection

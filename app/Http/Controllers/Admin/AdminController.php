@@ -23,8 +23,8 @@ class AdminController extends Controller
     {
         $now = CarbonImmutable::now(config('hours.timezone'));
         $metrics = $adminMetrics->current($now);
-        $recentUsers = User::query()->latest()->limit(6)->get();
-        $recentAudits = AdminAuditLog::query()->with(['admin', 'target'])->latest()->limit(8)->get();
+        $recentUsers = User::query()->latest()->latest('id')->limit(5)->get();
+        $recentAudits = AdminAuditLog::query()->with(['admin', 'target'])->latest()->latest('id')->limit(5)->get();
 
         return view('admin.dashboard', compact('metrics', 'recentUsers', 'recentAudits', 'calculator', 'now'));
     }
