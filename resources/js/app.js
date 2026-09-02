@@ -13,6 +13,7 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 import '../css/pro-business-controls.css';
 import '../css/admin-price-controls.css';
 import '../css/admin-refinement.css';
+import '../css/dashboard-type-rendering.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {

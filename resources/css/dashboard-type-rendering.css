@@ -1,0 +1,102 @@
+/*
+ * Optical type correction for the authenticated workspace.
+ *
+ * The hours ledger uses compact labels and dense supporting copy. At 7–9px,
+ * DM Sans loses definition on common Windows display scales, particularly on
+ * muted dark surfaces. Keep the compact rhythm, but give utility copy enough
+ * pixels and contrast to rasterise cleanly.
+ */
+.dashboard-workspace,
+.dashboard-sidebar__privacy,
+.dashboard-sidebar__account {
+    font-kerning: normal;
+    font-optical-sizing: auto;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.dashboard-workspace :where(button, input, select, textarea),
+.dashboard-sidebar__account button {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+}
+
+/* Workspace utility type: compact, but never below a crisp optical size. */
+.dashboard-workspace small {
+    font-size: max(10px, .75em);
+    line-height: 1.45;
+}
+
+.dashboard-header__context small,
+.dashboard-page-header p,
+.dashboard-eyebrow {
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.dashboard-footer,
+.dashboard-stat p,
+.dashboard-panel header p,
+.dashboard-panel-heading > span,
+.dashboard-text-link,
+.dashboard-form-errors {
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.dashboard-form-field label,
+.dashboard-field label {
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.dashboard-form-field label span,
+.dashboard-form-field > small,
+.dashboard-field > p,
+.dashboard-field small,
+.workspace-preferences-grid .dashboard-field p {
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+/* Fixed sidebar cards share the same small-type issue, not the nav itself. */
+.dashboard-sidebar__privacy strong,
+.dashboard-sidebar__account strong {
+    color: #dedde4;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.dashboard-sidebar__privacy small {
+    margin-top: 4px;
+    color: #92909d;
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.dashboard-sidebar__account small {
+    margin-top: 3px;
+    color: #8f8d9a;
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+.dashboard-sidebar__account a {
+    display: inline-block;
+    margin-top: 2px;
+    color: #aaa8b3;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+@media (prefers-contrast: more) {
+    .dashboard-sidebar__privacy small,
+    .dashboard-sidebar__account small,
+    .dashboard-sidebar__account a {
+        color: #c3c1ca;
+    }
+}
