@@ -28,10 +28,10 @@ class ScheduledDeliveryTest extends TestCase
         $schedule = ScheduledReport::query()->create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'report_template_id' => $template->id, 'frequency' => 'weekly', 'recipients' => ['finance@example.com'], 'next_run_at' => now()->subMinute(), 'active' => true]);
         $this->artisan('reports:deliver-scheduled')->assertSuccessful();
 
-        CarbonImmutable::setTestNow();
         Notification::assertSentOnDemandTimes(ScheduledReportReadyNotification::class, 1);
         $this->assertNotNull($schedule->refresh()->last_run_at);
         $this->assertTrue($schedule->next_run_at->isFuture());
+        CarbonImmutable::setTestNow();
     }
 
     public function test_missing_entry_reminder_is_deduplicated(): void
