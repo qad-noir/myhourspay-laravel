@@ -331,3 +331,21 @@
         grid-template-columns: 1fr;
     }
 }
+
+.admin-preserved-copy {
+    white-space: pre-wrap;
+}
+
+.admin-action-menu__panel a,
+.admin-action-menu__panel button {
+    gap: 9px;
+}
+
+.admin-action-menu__panel .admin-icon {
+    flex: 0 0 auto;
+    color: #8d8491;
+}
+
+.admin-action-menu__panel .is-danger .admin-icon {
+    color: currentColor;
+}

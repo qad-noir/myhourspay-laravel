@@ -1,14 +1,14 @@
 @props(['currentWorkspace', 'workspaces'])
 
 <aside id="dashboard-sidebar" class="dashboard-sidebar" aria-label="Dashboard navigation" data-dashboard-sidebar>
-    <div class="dashboard-sidebar__top"><a wire:navigate href="{{ route('dashboard') }}" aria-label="myhourspay overview"><x-brand-logo dark /></a><button type="button" class="dashboard-sidebar__close" data-sidebar-close aria-label="Close navigation">×</button></div>
+    <div class="dashboard-sidebar__top"><a wire:navigate href="{{ route('dashboard') }}" aria-label="myhourspay overview"><x-brand-logo dark /></a><button type="button" class="dashboard-sidebar__close" data-sidebar-close aria-label="Close navigation"><x-dashboard.icon name="close" :size="18" /></button></div>
     <details class="workspace-switcher">
         <summary><span class="workspace-switcher__avatar">{{ str($currentWorkspace->name)->substr(0, 1)->upper() }}</span><span><small>Workspace</small><strong>{{ $currentWorkspace->name }}</strong></span><svg class="workspace-switcher__chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6.5 8 3.5 3.5L13.5 8" /></svg></summary>
         <div class="workspace-switcher__menu">
             @foreach($workspaces as $workspace)
-                <form method="POST" action="{{ route('workspaces.switch', $workspace) }}">@csrf<button type="submit" @if($workspace->is($currentWorkspace)) aria-current="true" @endif><span>{{ str($workspace->name)->substr(0, 1)->upper() }}</span><strong>{{ $workspace->name }}</strong>@if($workspace->is($currentWorkspace))<i>✓</i>@endif</button></form>
+                <form method="POST" action="{{ route('workspaces.switch', $workspace) }}">@csrf<button type="submit" @if($workspace->is($currentWorkspace)) aria-current="true" @endif><span>{{ str($workspace->name)->substr(0, 1)->upper() }}</span><strong>{{ $workspace->name }}</strong>@if($workspace->is($currentWorkspace))<i><x-dashboard.icon name="check" :size="14" /></i>@endif</button></form>
             @endforeach
-            <a wire:navigate href="{{ route('workspaces.create') }}"><span aria-hidden="true">＋</span> Create workspace</a>
+            <a wire:navigate href="{{ route('workspaces.create') }}"><span><x-dashboard.icon name="plus" :size="15" /></span>Create workspace</a>
         </div>
     </details>
     <nav>
@@ -21,7 +21,7 @@
         <a wire:navigate href="{{ route('business.index') }}" @if(request()->routeIs('business.*')) aria-current="page" @endif><span><x-dashboard.icon name="team" /></span> Business tools</a>
         <p>Account</p>
         <a wire:navigate href="{{ route('profile.show') }}" @if(request()->routeIs('profile.show')) aria-current="page" @endif><span><x-dashboard.icon name="settings" /></span> Settings</a>
-        <a wire:navigate href="{{ route('billing.index') }}" @if(request()->routeIs('billing.*')) aria-current="page" @endif><span><x-dashboard.icon name="reports" /></span> Plans & billing</a>
+        <a wire:navigate href="{{ route('billing.index') }}" @if(request()->routeIs('billing.*')) aria-current="page" @endif><span><x-dashboard.icon name="billing" /></span> Plans & billing</a>
         @if(auth()->user()->is_admin)<p>Administration</p><a wire:navigate href="{{ route('admin.dashboard') }}"><span><x-dashboard.icon name="overview" /></span> Admin dashboard</a>@endif
     </nav>
     <div class="dashboard-sidebar__privacy"><span><x-dashboard.icon name="shield" /></span><div><strong>Private workspace</strong><small>{{ $currentWorkspace->name }} records are isolated.</small></div></div>

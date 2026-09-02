@@ -1,1 +1,1 @@
-@if(session('status'))<div class="dashboard-flash" role="status" data-flash-message><span aria-hidden="true">✓</span><p>{{ session('status') }}</p><button type="button" data-dismiss-flash aria-label="Dismiss message">×</button></div>@endif
+@if(session('status'))<div class="dashboard-flash" role="status" data-flash-message><span><x-dashboard.icon name="check" :size="16" /></span><p>{{ session('status') }}</p><button type="button" data-dismiss-flash aria-label="Dismiss message"><x-dashboard.icon name="close" :size="16" /></button></div>@endif

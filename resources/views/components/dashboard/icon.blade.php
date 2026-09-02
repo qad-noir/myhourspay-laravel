@@ -37,5 +37,17 @@
         @case('team')
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
             @break
+        @case('plus')
+            <path d="M12 5v14M5 12h14"/>
+            @break
+        @case('check')
+            <path d="m5 12 4 4L19 6"/>
+            @break
+        @case('close')
+            <path d="m6 6 12 12M18 6 6 18"/>
+            @break
+        @case('billing')
+            <rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/>
+            @break
     @endswitch
 </svg>

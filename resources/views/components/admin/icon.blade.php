@@ -27,5 +27,18 @@
         @case('grants') <path d="M20 12v8H4v-8M2 8h20v4H2zM12 8v12"/><path d="M12 8H7.5A2.5 2.5 0 1 1 10 5.5L12 8Zm0 0h4.5A2.5 2.5 0 1 0 14 5.5L12 8Z"/> @break
         @case('expiring') <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M8 2h8"/> @break
         @case('usage') <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/> @break
+        @case('view') <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/> @break
+        @case('edit') <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/> @break
+        @case('restore') <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/> @break
+        @case('delete') <path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v5M14 11v5"/> @break
+        @case('suspend') <circle cx="12" cy="12" r="9"/><path d="M7 12h10"/> @break
+        @case('activate') <circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/> @break
+        @case('verify') <path d="m8.5 12 2.2 2.2 4.8-5.1"/><path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"/> @break
+        @case('unverify') <path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"/><path d="m8.5 9 7 7M15.5 9l-7 7"/> @break
+        @case('mail') <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/> @break
+        @case('reset') <path d="M12 3a9 9 0 1 1-8.5 6"/><path d="M3 3v6h6"/><path d="M12 7v5l3 2"/> @break
+        @case('sync') <path d="M20 7h-5V2"/><path d="M20 7a8 8 0 0 0-14-2M4 17h5v5"/><path d="M4 17a8 8 0 0 0 14 2"/> @break
+        @case('cancel') <circle cx="12" cy="12" r="9"/><path d="m8 8 8 8M16 8l-8 8"/> @break
+        @case('revoke') <path d="M12 3 5 6v5c0 4.6 2.9 8.4 7 10 4.1-1.6 7-5.4 7-10V6l-7-3Z"/><path d="M8 12h8"/> @break
     @endswitch
 </svg>
