@@ -9,6 +9,7 @@ use App\Models\Timesheet;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Notifications\WorkspaceInvitationNotification;
+use App\Notifications\VerifyEmailCodeNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -57,6 +58,85 @@ class BusinessPlatformTest extends TestCase
         $this->assertSame('manager', $workspace->users()->whereKey($member->id)->firstOrFail()->pivot->role);
         $this->assertSame($workspace->id, $member->refresh()->current_workspace_id);
         $this->assertDatabaseHas('workspace_activity_logs', ['workspace_id' => $workspace->id, 'action' => 'workspace.invitation_accepted']);
+    }
+
+    public function test_new_invitee_registers_verifies_and_joins_without_workspace_onboarding(): void
+    {
+        Notification::fake();
+        [$owner, $workspace] = $this->workspaceUser();
+        $invitedEmail = 'new.member@example.com';
+        $token = null;
+        $verificationCode = null;
+
+        $this->actingAs($owner)->post(route('business.invitations.store'), [
+            'email' => $invitedEmail,
+            'role' => 'member',
+            'position' => 'Consultant',
+        ])->assertSessionHasNoErrors();
+
+        Notification::assertSentOnDemand(WorkspaceInvitationNotification::class, function (WorkspaceInvitationNotification $notification) use (&$token): bool {
+            $token = $notification->token;
+
+            return true;
+        });
+        $invitation = $workspace->invitations()->sole();
+
+        $this->app['session']->flush();
+        $this->app['auth']->forgetGuards();
+        $this->get(route('business.invitations.accept', ['invitation' => $invitation, 'token' => $token]))
+            ->assertRedirect(route('register'));
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSee('Invitation to '.$workspace->name)
+            ->assertSee($invitedEmail);
+
+        $this->post(route('register'), [
+            'name' => 'New Member',
+            'email' => 'attempted-change@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+        ])->assertRedirect(route('email-code.show'));
+        $this->assertAuthenticated('web');
+
+        $member = User::query()->where('email', $invitedEmail)->firstOrFail();
+        Notification::assertSentTo($member, VerifyEmailCodeNotification::class, function (VerifyEmailCodeNotification $notification) use (&$verificationCode): bool {
+            $verificationCode = $notification->code;
+
+            return true;
+        });
+
+        $verificationResponse = $this->post(route('email-code.verify'), ['digits' => str_split($verificationCode)]);
+        $verificationResponse->assertRedirect(route('business.invitations.accept', ['invitation' => $invitation, 'token' => $token]));
+        $this->get($verificationResponse->headers->get('Location'))->assertRedirect(route('dashboard'));
+
+        $this->assertSame('accepted', $invitation->refresh()->status);
+        $this->assertSame($workspace->id, $member->refresh()->current_workspace_id);
+        $this->assertFalse($member->ownedWorkspaces()->exists());
+        $this->actingAs($member)->get(route('dashboard'))->assertOk();
+    }
+
+    public function test_existing_invitee_is_sent_to_login_before_acceptance(): void
+    {
+        Notification::fake();
+        [$owner, $workspace] = $this->workspaceUser();
+        $member = User::factory()->create(['email' => 'existing.member@example.com']);
+        $token = null;
+
+        $this->actingAs($owner)->post(route('business.invitations.store'), [
+            'email' => $member->email,
+            'role' => 'manager',
+            'position' => 'Lead',
+        ]);
+        Notification::assertSentOnDemand(WorkspaceInvitationNotification::class, function (WorkspaceInvitationNotification $notification) use (&$token): bool {
+            $token = $notification->token;
+
+            return true;
+        });
+
+        $this->app['session']->flush();
+        $this->app['auth']->forgetGuards();
+        $this->get(route('business.invitations.accept', ['invitation' => $workspace->invitations()->sole(), 'token' => $token]))
+            ->assertRedirect(route('login'));
     }
 
     public function test_approved_timesheet_locks_entries_until_reopened(): void

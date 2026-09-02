@@ -84,6 +84,7 @@ class BillingController extends Controller
                     'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('billing.cancelled'),
                     'billing_address_collection' => 'required',
+                    'customer_update' => ['address' => 'auto', 'name' => 'auto'],
                 ]);
 
             return $checkout->redirect();

@@ -3,26 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Services\EmailVerificationCodeService;
+use App\Services\WorkspaceInvitationContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EmailVerificationCodeController extends Controller
 {
-    public function show(Request $request, EmailVerificationCodeService $codes): View|RedirectResponse
+    public function show(Request $request, EmailVerificationCodeService $codes, WorkspaceInvitationContext $invitations): View|RedirectResponse
     {
         if ($request->user()->email_verified_at) {
-            return to_route('dashboard');
+            $acceptanceUrl = $invitations->intendedAcceptanceUrl($request);
+
+            return $acceptanceUrl ? redirect()->to($acceptanceUrl) : to_route('dashboard');
         }
 
         if (! $request->user()->emailVerificationCode()->exists()) {
             $codes->issue($request->user());
         }
 
-        return view('auth.verify-code');
+        return view('auth.verify-code', ['invitation' => $invitations->pending($request)]);
     }
 
-    public function verify(Request $request, EmailVerificationCodeService $codes): RedirectResponse
+    public function verify(Request $request, EmailVerificationCodeService $codes, WorkspaceInvitationContext $invitations): RedirectResponse
     {
         $validated = $request->validate([
             'digits' => ['required', 'array', 'size:6'],
@@ -34,7 +37,10 @@ class EmailVerificationCodeController extends Controller
             return back()->withErrors(['code' => 'That code is incorrect or has expired. Request a new code and try again.']);
         }
 
-        return to_route('dashboard')->with('status', 'Email verified successfully.');
+        $acceptanceUrl = $invitations->intendedAcceptanceUrl($request);
+
+        return ($acceptanceUrl ? redirect()->to($acceptanceUrl) : to_route('dashboard'))
+            ->with('status', 'Email verified successfully.');
     }
 
     public function resend(Request $request, EmailVerificationCodeService $codes): RedirectResponse

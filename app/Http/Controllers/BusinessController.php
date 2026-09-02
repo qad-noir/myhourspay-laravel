@@ -17,6 +17,7 @@ use App\Services\OperationalIncidentRecorder;
 use App\Services\OutboundWebhookDispatcher;
 use App\Services\PublicWebhookUrl;
 use App\Services\WorkspaceActivity;
+use App\Services\WorkspaceInvitationContext;
 use App\Services\WorkspaceRoles;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -89,10 +90,34 @@ class BusinessController extends Controller
         return back()->with('status', 'Workspace invitation sent.');
     }
 
-    public function acceptInvitation(Request $request, WorkspaceInvitation $invitation, BusinessSeatBilling $seats): RedirectResponse
+    public function acceptInvitation(Request $request, WorkspaceInvitation $invitation, BusinessSeatBilling $seats, WorkspaceInvitationContext $context): View|RedirectResponse
     {
-        abort_unless(hash_equals($invitation->token_hash, hash('sha256', (string) $request->query('token'))), 403);
+        $token = (string) $request->query('token');
+        abort_unless(hash_equals($invitation->token_hash, hash('sha256', $token)), 403);
         abort_if($invitation->status !== 'pending' || $invitation->expires_at->isPast(), 410, 'This invitation has expired.');
+
+        if (! $request->user()) {
+            $context->remember($request, $invitation, $token);
+            $existingUser = User::withTrashed()->whereRaw('LOWER(email) = ?', [Str::lower($invitation->email)])->first();
+
+            if ($existingUser?->trashed()) {
+                return view('auth.invitation-unavailable', [
+                    'invitation' => $invitation->load(['workspace', 'inviter']),
+                    'message' => 'An archived account already uses the invited email address. Ask a platform administrator to restore it before accepting this invitation.',
+                ]);
+            }
+
+            return redirect()->route($existingUser ? 'login' : 'register')
+                ->with('status', $existingUser
+                    ? 'Log in with the invited email address to join '.$invitation->workspace->name.'.'
+                    : 'Create your account with the invited email address to join '.$invitation->workspace->name.'.');
+        }
+
+        $context->remember($request, $invitation, $token);
+        if (! $request->user()->email_verified_at) {
+            return to_route('email-code.show');
+        }
+
         abort_unless(Str::lower($request->user()->email) === Str::lower($invitation->email), 403, 'Sign in with the invited email address.');
         $workspace = $invitation->workspace()->with('owner')->firstOrFail();
         try {
@@ -102,10 +127,14 @@ class BusinessController extends Controller
                 $invitation->update(['status' => 'accepted', 'accepted_at' => now()]);
             });
         } catch (Throwable) {
-            return redirect()->route('billing.index')->withErrors(['seats' => 'The workspace could not add a billed seat. The invitation remains pending and no access was granted.']);
+            return view('auth.invitation-unavailable', [
+                'invitation' => $invitation->load(['workspace', 'inviter']),
+                'message' => 'This workspace could not add another member at the moment. No access was granted and the invitation remains available. Ask the workspace owner to review its subscription before trying again.',
+            ]);
         }
         $this->activity->record($workspace, $request->user(), 'workspace.invitation_accepted', $invitation, ['role' => $invitation->role]);
         $request->user()->update(['current_workspace_id' => $workspace->id]);
+        $context->forget($request);
 
         return redirect()->route('dashboard')->with('status', 'You joined '.$workspace->name.'.');
     }

@@ -32,6 +32,10 @@ Route::get('/logout', function (Request $request) {
     return redirect()->back()->with('status', 'Use the Log out button to sign out securely.');
 })->name('logout.help');
 
+Route::get('/business/invitations/{invitation}/accept', [BusinessController::class, 'acceptInvitation'])
+    ->middleware('active')
+    ->name('business.invitations.accept');
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -127,8 +131,6 @@ Route::middleware([
         Route::get('/workspaces/onboarding', [WorkspaceController::class, 'onboarding'])->name('workspaces.onboarding');
         Route::get('/workspaces/name-availability', [WorkspaceController::class, 'availability'])->name('workspaces.name-availability');
         Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
-        Route::get('/business/invitations/{invitation}/accept', [BusinessController::class, 'acceptInvitation'])->name('business.invitations.accept');
-
         Route::middleware('workspace')->group(function (): void {
             Route::prefix('billing')->name('billing.')->controller(BillingController::class)->group(function (): void {
                 Route::get('/', 'index')->name('index');
