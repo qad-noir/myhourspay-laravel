@@ -10,12 +10,14 @@ use App\Http\Controllers\Admin\AdminOptionController;
 use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\BusinessToolsController;
 use App\Http\Controllers\CalendarIntegrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
 use App\Http\Controllers\ProController;
+use App\Http\Controllers\ProToolsController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -144,7 +146,7 @@ Route::middleware([
             });
 
             Route::get('/dashboard', DashboardController::class)->name('dashboard');
-            Route::get('/business', [BusinessController::class, 'index'])->name('business.index');
+            Route::get('/business', [BusinessToolsController::class, 'overview'])->name('business.index');
             Route::prefix('business')->name('business.')->controller(BusinessController::class)->group(function (): void {
                 Route::post('/invitations', 'invite')->middleware('feature:team_members')->name('invitations.store');
                 Route::put('/members/{member}', 'updateMember')->middleware('feature:roles_permissions')->name('members.update');
@@ -161,7 +163,17 @@ Route::middleware([
                 Route::post('/webhooks', 'storeWebhook')->middleware('feature:outbound_webhooks')->name('webhooks.store');
                 Route::delete('/webhooks/{endpoint}', 'deleteWebhook')->middleware('feature:outbound_webhooks')->name('webhooks.destroy');
             });
-            Route::get('/pro', [ProController::class, 'index'])->name('pro.index');
+            Route::prefix('business')->name('business.')->controller(BusinessToolsController::class)->group(function (): void {
+                Route::get('/team', 'team')->name('team.index');
+                Route::get('/timesheets', 'timesheets')->name('timesheets.index');
+                Route::get('/leave', 'leave')->name('leave.index');
+                Route::get('/payroll', 'payroll')->name('payroll.index');
+                Route::get('/branding', 'branding')->name('branding.index');
+                Route::get('/activity', 'activity')->name('activity.index');
+                Route::get('/webhooks', 'webhooks')->name('webhooks.index');
+                Route::get('/support', 'support')->name('support.index');
+            });
+            Route::get('/pro', [ProToolsController::class, 'overview'])->name('pro.index');
             Route::prefix('pro')->name('pro.')->controller(ProController::class)->group(function (): void {
                 Route::post('/clients', 'storeClient')->middleware(['feature:clients_projects', 'workspace.writable'])->name('clients.store');
                 Route::put('/clients/{client}', 'updateClient')->middleware(['feature:clients_projects', 'workspace.writable'])->name('clients.update');
@@ -178,6 +190,15 @@ Route::middleware([
                 Route::get('/invoices/{invoice}', 'showInvoice')->middleware('feature:invoicing')->name('invoices.show');
                 Route::get('/invoices/{invoice}/pdf', 'invoicePdf')->middleware('feature:invoicing')->name('invoices.pdf');
                 Route::post('/invoices/{invoice}/status', 'updateInvoiceStatus')->middleware(['feature:invoicing', 'workspace.writable'])->name('invoices.status');
+            });
+            Route::prefix('pro')->name('pro.')->controller(ProToolsController::class)->group(function (): void {
+                Route::get('/clients', 'clients')->name('clients.index');
+                Route::get('/earnings', 'earnings')->name('earnings.index');
+                Route::get('/schedules', 'schedules')->name('schedules.index');
+                Route::get('/reminders', 'reminders')->name('reminders.index');
+                Route::get('/reports', 'reports')->name('reports.index');
+                Route::get('/calendars', 'calendars')->name('calendars.index');
+                Route::get('/invoices', 'invoices')->name('invoices.index');
             });
             Route::prefix('pro/calendars')->name('pro.calendars.')->controller(CalendarIntegrationController::class)->middleware('feature:calendar_integrations')->group(function (): void {
                 Route::get('/{provider}/connect', 'redirect')->name('redirect');

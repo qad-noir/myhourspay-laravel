@@ -43,31 +43,6 @@ class BusinessController extends Controller
         private readonly FeatureAccess $features,
     ) {}
 
-    public function index(Request $request): View
-    {
-        $workspace = $this->current->for($request->user());
-        $access = collect(['team_members', 'roles_permissions', 'timesheet_approvals', 'leave_tracking', 'payroll_exports', 'workspace_audit', 'custom_branding', 'outbound_webhooks', 'priority_support'])->mapWithKeys(fn (string $feature) => [$feature => $this->features->allows($request->user(), $feature, $workspace)]);
-
-        return view('business.index', [
-            'workspace' => $workspace,
-            'role' => $this->roles->role($request->user(), $workspace),
-            'access' => $access,
-            'members' => $access['team_members'] ? $workspace->users()->orderBy('name')->get() : collect(),
-            'invitations' => $access['team_members'] ? $workspace->invitations()->where('status', 'pending')->latest()->get() : collect(),
-            'timesheets' => $access['timesheet_approvals'] ? $workspace->timesheets()->with(['user', 'reviewer'])->latest('week_start')->limit(30)->get() : collect(),
-            'leaveTypes' => $access['leave_tracking'] ? $workspace->leaveTypes()->where('active', true)->orderBy('name')->get() : collect(),
-            'leaveRequests' => $access['leave_tracking'] ? $workspace->leaveRequests()->with(['user', 'type'])->latest()->limit(30)->get() : collect(),
-            'payrollProfiles' => $access['payroll_exports'] ? $workspace->payrollProfiles()->get() : collect(),
-            'branding' => $access['custom_branding'] ? $workspace->branding()->firstOrNew() : null,
-            'activityLogs' => $access['workspace_audit'] ? $workspace->activityLogs()->with('actor')->latest('occurred_at')->limit(50)->get() : collect(),
-            'webhooks' => $access['outbound_webhooks'] ? $workspace->webhookEndpoints()->withCount('deliveries')->get() : collect(),
-            'supportRequests' => $access['priority_support'] ? $request->user()->supportRequests()->latest()->limit(10)->get() : collect(),
-            'canManage' => $this->roles->canManage($request->user(), $workspace),
-            'canReview' => $this->roles->canReview($request->user(), $workspace),
-            'canPayroll' => $this->roles->canRunPayroll($request->user(), $workspace),
-        ]);
-    }
-
     public function invite(Request $request, BusinessSeatBilling $seats, OperationalIncidentRecorder $incidents): RedirectResponse
     {
         $workspace = $this->workspaceAndAuthorize($request, 'manage');
@@ -174,6 +149,10 @@ class BusinessController extends Controller
         $workspace = $this->workspaceAndAuthorize($request);
         $data = $request->validate(['week_start' => ['required', 'date'], 'submission_note' => ['nullable', 'string', 'max:2000']]);
         $week = CarbonImmutable::parse($data['week_start'])->startOfWeek();
+        $weekEntries = $request->user()->hoursEntries()->forWorkspace($workspace)->whereBetween('work_date', [$week->toDateString(), $week->endOfWeek()->toDateString()]);
+        if (! $weekEntries->exists()) {
+            return back()->withInput()->withErrors(['week_start' => 'Log at least one hours entry in this week before submitting a timesheet.']);
+        }
         $timesheet = Timesheet::query()->firstOrCreate(['workspace_id' => $workspace->id, 'user_id' => $request->user()->id, 'week_start' => $week], ['status' => 'draft']);
         abort_if($timesheet->isLocked(), 422, 'Approved timesheets must be reopened before changes.');
         DB::transaction(function () use ($timesheet, $request, $workspace, $week, $data): void {
@@ -240,12 +219,15 @@ class BusinessController extends Controller
         return back()->with('status', 'Payroll export profile saved.');
     }
 
-    public function payroll(Request $request, PayrollExportProfile $profile): BinaryFileResponse|StreamedResponse
+    public function payroll(Request $request, PayrollExportProfile $profile): BinaryFileResponse|RedirectResponse|StreamedResponse
     {
         $workspace = $this->workspaceAndAuthorize($request, 'payroll');
         abort_unless($profile->workspace_id === $workspace->id, 404);
         $data = $request->validate(['start' => ['required', 'date'], 'end' => ['required', 'date', 'after_or_equal:start']]);
         $rows = $this->payrollRows($workspace->id, $data['start'], $data['end'], $workspace->weekly_target_minutes);
+        if ($rows === []) {
+            return back()->withInput()->withErrors(['payroll' => 'No approved or locked timesheets match that date range. Choose another period after time has been approved.']);
+        }
         $this->activity->record($workspace, $request->user(), 'payroll.exported', $profile, ['start' => $data['start'], 'end' => $data['end'], 'format' => $profile->format]);
         if ($profile->format === 'csv') {
             return response()->streamDownload(function () use ($profile, $rows): void {
