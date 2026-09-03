@@ -160,6 +160,10 @@
 .tool-notice--violet > span { color: #7657c8; background: #eee9fb; }
 .tool-readiness-summary.is-ready > span { color: #248255; background: #e6f8ef; }
 .tool-readiness-summary > a { display: inline-flex; align-items: center; gap: 5px; color: #c44821; font: 800 8px "DM Sans", sans-serif; text-decoration: none; }
+.tool-week-selector { display: flex; align-items: end; justify-content: flex-end; gap: 8px; margin: 0 0 10px; }
+.tool-week-selector label { display: grid; gap: 5px; color: #706978; font: 800 7px "DM Sans", sans-serif; }
+.tool-week-selector input { height: 36px; border: 1px solid #ddd8e0; border-radius: 9px; padding: 0 9px; color: #39323f; background: #fff; font: 650 8px "DM Sans", sans-serif; }
+.tool-week-selector .dashboard-button { min-height: 36px; }
 
 .tool-prerequisites { margin: 0 0 18px; border: 1px solid #e1dde4; border-radius: 16px; background: #fff; overflow: hidden; }
 .tool-prerequisites > header { padding: 15px 18px; border-bottom: 1px solid #ece8ee; }
@@ -251,6 +255,9 @@
     .tool-prerequisites article:last-child { border-bottom: 0; }
     .tool-readiness-summary { align-items: flex-start; flex-wrap: wrap; }
     .tool-readiness-summary > a { width: 100%; padding-left: 45px; }
+    .tool-week-selector { align-items: stretch; flex-direction: column; }
+    .tool-week-selector input,
+    .tool-week-selector .dashboard-button { width: 100%; }
     .tool-record-action { width: 100%; flex-wrap: wrap; }
     .tool-record-action input,
     .tool-record-action select { min-width: 0; flex: 1; }

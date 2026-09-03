@@ -6,6 +6,7 @@ use App\Models\SupportRequest;
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
 use App\Services\WorkspaceRoles;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -68,11 +69,13 @@ class BusinessToolsController extends Controller
     public function timesheets(Request $request): View
     {
         $context = $this->context($request);
-        $week = now()->startOfWeek();
+        $data = $request->validate(['week' => ['nullable', 'date']]);
+        $week = CarbonImmutable::parse($data['week'] ?? now())->startOfWeek();
         $entryQuery = $request->user()->hoursEntries()->forWorkspace($context['workspace'])->whereBetween('work_date', [$week->toDateString(), $week->copy()->endOfWeek()->toDateString()]);
 
         return view('business.timesheets', $context + [
             'timesheets' => $context['access']['timesheet_approvals'] ? $context['workspace']->timesheets()->with(['user', 'reviewer'])->latest('week_start')->limit(30)->get() : collect(),
+            'selectedWeek' => $week,
             'currentWeekEntryCount' => $entryQuery->count(),
             'currentWeekMinutes' => (int) $entryQuery->sum('net_minutes'),
         ]);
