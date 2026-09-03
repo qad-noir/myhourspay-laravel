@@ -27,7 +27,8 @@ class ProToolsTest extends TestCase
             ->assertSee('Turn tracked time into useful work')
             ->assertSee('From agreement to invoice')
             ->assertSee('wire:navigate', false)
-            ->assertSee('id="integrations"', false);
+            ->assertSee('id="integrations"', false)
+            ->assertDontSee('Current tool');
     }
 
     public function test_each_pro_module_has_a_focused_page_and_active_navigation(): void

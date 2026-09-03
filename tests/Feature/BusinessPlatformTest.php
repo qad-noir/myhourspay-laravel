@@ -30,8 +30,23 @@ class BusinessPlatformTest extends TestCase
             ->assertSee('Move a working week from plan to payroll')
             ->assertSee('From invitation to payroll')
             ->assertSee('wire:navigate', false)
+            ->assertSee('data-tool-area="business"', false)
             ->assertSee('id="leave"', false)
-            ->assertSee('id="audit"', false);
+            ->assertSee('id="audit"', false)
+            ->assertDontSee('Current tool');
+    }
+
+    public function test_team_member_actions_render_in_an_unclipped_panel(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $member = User::factory()->create();
+        $workspace->users()->attach($member->id, ['role' => 'member', 'position' => 'Designer']);
+
+        $this->actingAs($owner)->get(route('business.team.index'))
+            ->assertOk()
+            ->assertSee('tool-team-panel', false)
+            ->assertSee('class="business-actions"', false)
+            ->assertSee('Actions for '.$member->name);
     }
 
     public function test_each_business_module_has_a_focused_page(): void

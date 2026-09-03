@@ -3,7 +3,7 @@
 <x-dashboard.page-header eyebrow="Team and roles" title="Give each person the right workspace access" description="Invitations establish membership. Roles decide who can manage, review or export without changing historical hours." />
 <x-tools.navigation area="business" :$access :$canPayroll />
 
-<section class="dashboard-panel tool-module-panel">
+<section class="dashboard-panel tool-module-panel tool-team-panel">
     <div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Workspace directory</p><h2>Members and invitations</h2></div><span>{{ $members->count() }} active · your role: {{ str($role)->headline() }}</span></div>
     @if(!$access['team_members'])
         <x-pro.locked feature="team members" />

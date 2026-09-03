@@ -25,7 +25,7 @@
         ];
 @endphp
 
-<nav class="tool-module-nav" aria-label="{{ str($area)->headline() }} tools">
+<nav class="tool-module-nav" data-tool-area="{{ $area }}" aria-label="{{ str($area)->headline() }} tools">
     <div class="tool-module-nav__track">
         @foreach($items as [$key, $label, $icon, $route, $pattern, $feature])
             @php
@@ -35,7 +35,7 @@
             @endphp
             <a wire:navigate href="{{ route($route) }}" @if($active) aria-current="page" @endif class="{{ $locked ? 'is-locked' : '' }} {{ $restricted ? 'is-restricted' : '' }}">
                 <span class="tool-module-nav__icon"><x-dashboard.icon :name="$icon" :size="18" /></span>
-                <span><strong>{{ $label }}</strong><small>{{ $restricted ? 'Role restricted' : ($locked ? 'Locked' : ($active ? 'Current tool' : 'Available')) }}</small></span>
+                <span><strong>{{ $label }}</strong>@if($restricted || $locked)<small>{{ $restricted ? 'Role restricted' : 'Locked' }}</small>@endif</span>
             </a>
         @endforeach
     </div>

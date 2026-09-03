@@ -363,6 +363,7 @@ const initializeDashboardBehaviors = () => {
 const dashboardSidebar = document.querySelector('[data-dashboard-sidebar]:not([data-bound])');
 if (dashboardSidebar) {
     dashboardSidebar.dataset.bound = 'true';
+    const sidebarNavigation = dashboardSidebar.querySelector('nav');
     const backdrop = document.querySelector('[data-sidebar-backdrop]');
     const openButton = document.querySelector('[data-sidebar-open]');
     const closeButton = document.querySelector('[data-sidebar-close]');
@@ -370,6 +371,8 @@ if (dashboardSidebar) {
     openButton?.addEventListener('click', () => setSidebar(true)); closeButton?.addEventListener('click', () => setSidebar(false)); backdrop?.addEventListener('click', () => setSidebar(false));
     dashboardSidebar.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => { if (window.innerWidth < 1024) setSidebar(false); }));
     window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && dashboardSidebar.classList.contains('is-open')) setSidebar(false); });
+    window.requestAnimationFrame(() => { if (sidebarNavigation) sidebarNavigation.scrollTop = window.dashboardSidebarScrollTop || 0; });
+    sidebarNavigation?.addEventListener('scroll', () => { window.dashboardSidebarScrollTop = sidebarNavigation.scrollTop; }, { passive: true });
 }
 document.querySelector('[data-dismiss-flash]:not([data-bound])')?.addEventListener('click', (event) => { event.currentTarget.dataset.bound = 'true'; event.currentTarget.closest('[data-flash-message]')?.remove(); });
 
@@ -559,4 +562,10 @@ const initializeNavigatedPage = () => {
 
 initializeNavigatedPage();
 document.addEventListener('livewire:navigated', initializeNavigatedPage);
-document.addEventListener('livewire:navigating', () => { window.hoursFullCalendar?.destroy(); window.hoursFullCalendar = null; document.querySelector('[data-hours-tooltip]')?.remove(); Swal.close(); });
+document.addEventListener('livewire:navigating', () => {
+    window.dashboardSidebarScrollTop = document.querySelector('[data-dashboard-sidebar] nav')?.scrollTop || window.dashboardSidebarScrollTop || 0;
+    window.hoursFullCalendar?.destroy();
+    window.hoursFullCalendar = null;
+    document.querySelector('[data-hours-tooltip]')?.remove();
+    Swal.close();
+});
