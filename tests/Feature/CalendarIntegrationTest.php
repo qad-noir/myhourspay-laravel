@@ -36,7 +36,7 @@ class CalendarIntegrationTest extends TestCase
         parse_str((string) parse_url($start->headers->get('Location'), PHP_URL_QUERY), $query);
 
         $this->actingAs($user)->get(route('pro.calendars.callback', ['provider' => 'google', 'state' => $query['state'], 'code' => 'oauth-code']))
-            ->assertRedirect(route('pro.index').'#integrations');
+            ->assertRedirect(route('pro.calendars.index'));
 
         $connection = CalendarConnection::query()->sole();
         $this->assertSame($workspace->id, $connection->workspace_id);
@@ -72,12 +72,12 @@ class CalendarIntegrationTest extends TestCase
         config(['services.calendar.google.client_id' => null, 'services.calendar.google.client_secret' => null]);
         Log::shouldReceive('notice')->once()->withArgs(fn (string $message, array $context) => $message === 'Calendar integration provider is unavailable because it is not configured.' && $context['provider'] === 'google');
 
-        $this->actingAs($user)->get(route('pro.index'))
+        $this->actingAs($user)->get(route('pro.calendars.index'))
             ->assertOk()
             ->assertSee('Not configured');
 
         $this->actingAs($user)->get(route('pro.calendars.redirect', 'google'))
-            ->assertRedirect(route('pro.index').'#integrations')
+            ->assertRedirect(route('pro.calendars.index'))
             ->assertSessionHasErrors('calendar');
 
         $this->assertDatabaseCount('operational_incidents', 0);

@@ -25,7 +25,29 @@ class ProToolsTest extends TestCase
         $this->actingAs($user)->get(route('pro.index'))
             ->assertOk()
             ->assertSee('Turn tracked time into useful work')
-            ->assertSee('Organise billable work');
+            ->assertSee('From agreement to invoice')
+            ->assertSee('wire:navigate', false)
+            ->assertSee('id="integrations"', false);
+    }
+
+    public function test_each_pro_module_has_a_focused_page_and_active_navigation(): void
+    {
+        [$user] = $this->workspaceUser();
+
+        foreach ([
+            'pro.clients.index' => 'Organise billable work',
+            'pro.earnings.index' => 'Keep earnings historically stable',
+            'pro.schedules.index' => 'Plan expected shifts without creating fake hours',
+            'pro.reminders.index' => 'Choose the nudges that protect your week',
+            'pro.reports.index' => 'Build once, deliver repeatedly',
+            'pro.calendars.index' => 'Review events before logging time',
+            'pro.invoices.index' => 'Invoice readiness',
+        ] as $route => $copy) {
+            $this->actingAs($user)->get(route($route))
+                ->assertOk()
+                ->assertSee($copy)
+                ->assertSee('aria-current="page"', false);
+        }
     }
 
     public function test_project_and_effective_rate_are_snapshotted_on_billable_hours(): void
@@ -112,10 +134,25 @@ class ProToolsTest extends TestCase
         $this->assertSame(['database'], $missing->channels);
         $this->assertFalse($weekly->enabled);
 
-        $this->actingAs($user)->get(route('pro.index'))
+        $this->actingAs($user)->get(route('pro.reminders.index'))
             ->assertOk()
             ->assertSee('pro-reminder-trigger-grid', false)
             ->assertSee('role="switch"', false);
+    }
+
+    public function test_reports_and_invoices_explain_missing_prerequisites(): void
+    {
+        [$user] = $this->workspaceUser();
+
+        $this->actingAs($user)->get(route('pro.reports.index'))
+            ->assertOk()
+            ->assertSee('Create a template before scheduling a report')
+            ->assertDontSee('Recipient email');
+
+        $this->actingAs($user)->get(route('pro.invoices.index'))
+            ->assertOk()
+            ->assertSee('The draft form will appear when the workflow is ready')
+            ->assertDontSee('Choose a ready client');
     }
 
     public function test_invoice_snapshots_billable_time_and_prevents_double_invoicing(): void

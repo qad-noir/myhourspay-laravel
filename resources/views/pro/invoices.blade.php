@@ -17,7 +17,7 @@
     @if(!$access['invoicing'])
         <x-pro.locked feature="client invoicing" />
     @else
-        @if(collect($invoiceReadiness)->every())
+        @if(collect($invoiceReadiness)->every(fn ($ready) => $ready))
             <form method="POST" action="{{ route('pro.invoices.store') }}" class="pro-inline-form tool-invoice-form">@csrf<label>Client<select name="client_id" required><option value="">Choose a ready client</option>@foreach($invoiceClients as $client)<option value="{{ $client->id }}" @selected((string)old('client_id')===(string)$client->id)>{{ $client->name }}</option>@endforeach</select></label><label>From<input type="date" name="start" value="{{ old('start') }}" required></label><label>To<input type="date" name="end" value="{{ old('end') }}" required></label><label>Due date<input type="date" name="due_on" value="{{ old('due_on') }}" required></label><label>Tax %<input type="number" name="tax_percent" min="0" max="100" step=".01" value="{{ old('tax_percent',0) }}" required></label><button class="dashboard-button dashboard-button--primary">Create draft</button></form>
         @else
             <x-tools.empty-state icon="invoice" title="The draft form will appear when the workflow is ready" description="Use the checklist above to complete the missing billing records without guessing what comes next." />

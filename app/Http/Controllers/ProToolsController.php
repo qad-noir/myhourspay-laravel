@@ -9,8 +9,8 @@ use App\Models\ReportTemplate;
 use App\Services\CalendarIntegrationService;
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProToolsController extends Controller

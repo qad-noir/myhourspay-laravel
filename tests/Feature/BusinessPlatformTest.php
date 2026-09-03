@@ -8,8 +8,8 @@ use App\Models\PayrollExportProfile;
 use App\Models\Timesheet;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Notifications\WorkspaceInvitationNotification;
 use App\Notifications\VerifyEmailCodeNotification;
+use App\Notifications\WorkspaceInvitationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -27,13 +27,32 @@ class BusinessPlatformTest extends TestCase
 
         $this->actingAs($owner)->get(route('business.index'))
             ->assertOk()
-            ->assertSee('Run Northstar with clarity')
-            ->assertSee('Workspace members')
-            ->assertSee('Signed outbound webhooks')
-            ->assertSee('role="switch"', false)
-            ->assertSee('business-check-option', false)
-            ->assertSee('business-file-input', false)
-            ->assertSee('Business requests are prioritised');
+            ->assertSee('Move a working week from plan to payroll')
+            ->assertSee('From invitation to payroll')
+            ->assertSee('wire:navigate', false)
+            ->assertSee('id="leave"', false)
+            ->assertSee('id="audit"', false);
+    }
+
+    public function test_each_business_module_has_a_focused_page(): void
+    {
+        [$owner] = $this->workspaceUser();
+
+        foreach ([
+            'business.team.index' => 'Members and invitations',
+            'business.timesheets.index' => 'Weekly timesheets',
+            'business.leave.index' => 'Types, requests and review',
+            'business.payroll.index' => 'Payroll readiness',
+            'business.branding.index' => 'Logo and colours',
+            'business.activity.index' => 'Recent workspace events',
+            'business.webhooks.index' => 'Webhook events follow the timesheet lifecycle',
+            'business.support.index' => 'Compose and track requests',
+        ] as $route => $copy) {
+            $this->actingAs($owner)->get(route($route))
+                ->assertOk()
+                ->assertSee($copy)
+                ->assertSee('aria-current="page"', false);
+        }
     }
 
     public function test_invitation_acceptance_adds_a_role_without_granting_access_early(): void
@@ -159,6 +178,35 @@ class BusinessPlatformTest extends TestCase
         $this->actingAs($member)->patch(route('hours.entries.update', $entry), ['work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '16:00', 'break_minutes' => 30, 'break_type' => 'unpaid'])->assertSessionHasNoErrors();
     }
 
+    public function test_an_empty_week_cannot_be_submitted_as_a_timesheet(): void
+    {
+        [$owner] = $this->workspaceUser();
+
+        $this->actingAs($owner)->post(route('business.timesheets.submit'), [
+            'week_start' => '2026-08-24',
+        ])->assertSessionHasErrors('week_start');
+
+        $this->assertDatabaseCount('timesheets', 0);
+    }
+
+    public function test_leave_page_guides_users_until_a_leave_type_exists(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $member = User::factory()->create();
+        $workspace->users()->attach($member->id, ['role' => 'member', 'position' => 'Designer']);
+        $member->forceFill(['current_workspace_id' => $workspace->id])->save();
+
+        $this->actingAs($owner)->get(route('business.leave.index'))
+            ->assertOk()
+            ->assertSee('Create a leave type first')
+            ->assertDontSee('Submit request');
+
+        $this->actingAs($member)->get(route('business.leave.index'))
+            ->assertOk()
+            ->assertSee('Ask a workspace owner or administrator')
+            ->assertDontSee('Create type');
+    }
+
     public function test_leave_is_reviewed_separately_and_never_creates_worked_hours(): void
     {
         [$owner, $workspace] = $this->workspaceUser();
@@ -182,6 +230,18 @@ class BusinessPlatformTest extends TestCase
 
         $this->actingAs($owner)->get(route('business.payroll.download', ['profile' => $profile, 'start' => '2026-08-01', 'end' => '2026-08-31']))
             ->assertOk()->assertDownload('payroll-2026-08-01-2026-08-31.csv');
+    }
+
+    public function test_payroll_export_rejects_a_period_without_approved_time(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $profile = PayrollExportProfile::query()->create(['workspace_id' => $workspace->id, 'name' => 'Payroll', 'format' => 'csv', 'columns' => ['employee', 'week']]);
+
+        $this->actingAs($owner)->get(route('business.payroll.download', [
+            'profile' => $profile,
+            'start' => '2026-08-01',
+            'end' => '2026-08-31',
+        ]))->assertRedirect()->assertSessionHasErrors('payroll');
     }
 
     public function test_webhooks_are_signed_and_suspended_failures_create_incidents(): void
