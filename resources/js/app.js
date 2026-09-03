@@ -14,6 +14,7 @@ import '../css/pro-business-controls.css';
 import '../css/admin-price-controls.css';
 import '../css/admin-refinement.css';
 import '../css/dashboard-type-rendering.css';
+import '../css/tool-workspaces.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {

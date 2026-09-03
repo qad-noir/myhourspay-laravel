@@ -1,0 +1,9 @@
+<x-app-layout>
+<x-slot name="header">Business tools · Branding</x-slot>
+<x-dashboard.page-header eyebrow="Workspace branding" title="Make reports, invoices and emails recognisably yours" description="Keep the workspace identity consistent without changing the underlying ledger records." />
+<x-tools.navigation area="business" :$access :$canPayroll />
+<section class="dashboard-panel tool-module-panel"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Output identity</p><h2>Logo and colours</h2></div><span>Workspace-specific</span></div>
+@if(!$access['custom_branding'])<x-pro.locked feature="custom branding" />@elseif(!$canManage)<x-tools.notice icon="branding" title="Branding is managed by workspace administrators" description="Your current role can view branded output but cannot change the shared identity." tone="violet" />@else
+<form method="POST" action="{{ route('business.branding.update') }}" enctype="multipart/form-data" class="pro-inline-form business-branding-form">@csrf @method('PUT')<label>Logo<span class="business-file-control"><input class="business-file-input" type="file" name="logo" accept="image/png,image/jpeg,image/webp"></span><small>PNG, JPEG or WebP · maximum 2 MB</small></label><label>Primary colour<input class="business-colour-input" type="color" name="primary_colour" value="{{ old('primary_colour',$branding->primary_colour ?: '#ff6b35') }}"></label><label>Accent colour<input class="business-colour-input" type="color" name="accent_colour" value="{{ old('accent_colour',$branding->accent_colour ?: '#8268ff') }}"></label><label>Email footer<input name="email_footer" value="{{ old('email_footer',$branding->email_footer) }}"></label><button class="dashboard-button dashboard-button--primary">Save branding</button></form>
+@endif</section>
+</x-app-layout>

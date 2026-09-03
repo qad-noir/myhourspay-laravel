@@ -1,0 +1,9 @@
+<x-app-layout>
+<x-slot name="header">Pro tools · Earnings</x-slot>
+<x-dashboard.page-header eyebrow="Effective pay rates" title="Keep earnings historically stable" description="Rates apply by date and are snapshotted when hours are recorded, so later changes never rewrite the past." />
+<x-tools.navigation area="pro" :$access />
+<section class="dashboard-panel tool-module-panel"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Rate timeline</p><h2>Earnings settings</h2></div><span>{{ $workspace->currency }}</span></div>
+@if(!$access['earnings'])<x-pro.locked feature="earnings and pay rates" />@else
+<form method="POST" action="{{ route('pro.rates.store') }}" class="pro-inline-form tool-rate-form">@csrf<label>Effective from<input type="date" name="effective_from" value="{{ old('effective_from') }}" required></label><label>Effective to<input type="date" name="effective_to" value="{{ old('effective_to') }}"></label><label>Hourly rate (£)<input type="number" name="hourly_rate" min="0" step=".01" value="{{ old('hourly_rate') }}" required></label><label>Overtime multiplier<input type="number" name="overtime_multiplier" min="1" max="5" step=".05" value="{{ old('overtime_multiplier',1.5) }}" required></label><button class="dashboard-button dashboard-button--primary">Save rate</button></form>
+<div class="pro-rate-timeline">@forelse($rates as $rate)<article><strong>£{{ number_format($rate->hourly_rate_minor/100,2) }}/hour</strong><span>{{ $rate->effective_from->format('d M Y') }} → {{ $rate->effective_to?->format('d M Y') ?? 'ongoing' }}</span><small>{{ number_format($rate->overtime_multiplier_bps/10000,2) }}× overtime snapshot</small></article>@empty<x-tools.empty-state icon="earnings" title="Add the first effective rate" description="New hours will snapshot the applicable rate. Existing entries are never silently recalculated." />@endforelse</div>@endif</section>
+</x-app-layout>

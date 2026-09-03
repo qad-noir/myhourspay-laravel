@@ -49,5 +49,50 @@
         @case('billing')
             <rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/>
             @break
+        @case('clients')
+            <circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 8h5M18.5 5.5v5"/>
+            @break
+        @case('earnings')
+            <circle cx="12" cy="12" r="9"/><path d="M15.5 8.5c-.7-.8-1.8-1.2-3-1.2-1.7 0-3 1-3 2.3 0 3.5 6 1.5 6 4.8 0 1.3-1.3 2.3-3 2.3-1.4 0-2.6-.5-3.3-1.4M12.5 5v14"/>
+            @break
+        @case('schedules')
+            <rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M16 3v4M8 3v4M3 10h18M8 15h4M8 18h7"/>
+            @break
+        @case('reminders')
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
+            @break
+        @case('invoice')
+            <path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z"/><path d="M9 7h6M9 11h6M9 15h3"/>
+            @break
+        @case('timesheet')
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>
+            @break
+        @case('leave')
+            <path d="M12 21a9 9 0 1 0-9-9c0 2.3.9 4.5 2.4 6.1"/><path d="M12 7v5l3 2M3 21l2.4-2.9L8 21"/>
+            @break
+        @case('payroll')
+            <rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h10M7 13h4M15 13h2M7 16h2M13 16h4"/>
+            @break
+        @case('branding')
+            <path d="M12 3a9 9 0 1 0 9 9c0-1.1-.9-2-2-2h-1.5a2.5 2.5 0 0 1-2.5-2.5V6c0-1.7-1.3-3-3-3Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="16" r="1"/>
+            @break
+        @case('activity')
+            <path d="M3 12h4l2.5-7 5 14 2.5-7h4"/>
+            @break
+        @case('webhook')
+            <path d="M16 8a4 4 0 1 0-7.5 2M8 16a4 4 0 1 0 7.5-2M9 9l6 6"/><path d="m13 8 3-1 1 3M11 16l-3 1-1-3"/>
+            @break
+        @case('support')
+            <path d="M21 15a4 4 0 0 1-4 4H8l-5 3v-7a4 4 0 0 1-1-2.7V7a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4Z"/><path d="M8 8h8M8 12h5"/>
+            @break
+        @case('arrow')
+            <path d="M5 12h14M14 7l5 5-5 5"/>
+            @break
+        @case('pending')
+            <circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>
+            @break
+        @case('more')
+            <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/>
+            @break
     @endswitch
 </svg>

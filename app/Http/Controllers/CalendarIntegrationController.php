@@ -34,7 +34,7 @@ class CalendarIntegrationController extends Controller
                 'workspace_id' => $workspace->id,
             ]);
 
-            return redirect(route('pro.index').'#integrations')->withErrors([
+            return redirect()->route('pro.calendars.index')->withErrors([
                 'calendar' => ucfirst($provider).' Calendar is not available yet. Please choose another provider or contact '.config('site.contact.email').'.',
             ]);
         }
@@ -59,7 +59,7 @@ class CalendarIntegrationController extends Controller
     {
         $oauth = (array) $request->session()->pull('calendar_oauth', []);
         if (! hash_equals((string) ($oauth['state'] ?? ''), (string) $request->query('state')) || ($oauth['provider'] ?? null) !== $provider) {
-            return redirect(route('pro.index').'#integrations')->withErrors(['calendar' => 'The calendar connection expired or could not be verified. Please try again.']);
+            return redirect()->route('pro.calendars.index')->withErrors(['calendar' => 'The calendar connection expired or could not be verified. Please try again.']);
         }
         $workspace = $this->current->for($request->user());
         abort_unless((int) ($oauth['workspace_id'] ?? 0) === $workspace->id, 403);
@@ -75,7 +75,7 @@ class CalendarIntegrationController extends Controller
                 ['external_account_id' => $account['id'] ?: $account['email'], 'access_token' => $token['access_token'], 'refresh_token' => $token['refresh_token'], 'token_expires_at' => $token['expires_at'], 'status' => 'active'],
             );
 
-            return redirect(route('pro.index').'#integrations')->with('status', ucfirst($provider).' Calendar connected. Review imported events before logging them.');
+            return redirect()->route('pro.calendars.index')->with('status', ucfirst($provider).' Calendar connected. Review imported events before logging them.');
         } catch (Throwable $exception) {
             return $this->failure($request, $exception, 'calendar.oauth_callback_failed');
         }
@@ -153,6 +153,6 @@ class CalendarIntegrationController extends Controller
         Log::error('Calendar integration operation failed.', ['event' => $event, 'user_id' => $request->user()?->id, 'workspace_id' => $request->user()?->current_workspace_id, 'exception' => $exception]);
         $incident = $this->incidents->record($event, $exception, ['name' => $request->user()?->name, 'email' => $request->user()?->email]);
 
-        return redirect(route('pro.index').'#integrations')->withErrors(['calendar' => 'Calendar could not be updated right now. Please try again or contact '.config('site.contact.email').' with reference '.$incident->reference.'.']);
+        return redirect()->route('pro.calendars.index')->withErrors(['calendar' => 'Calendar could not be updated right now. Please try again or contact '.config('site.contact.email').' with reference '.$incident->reference.'.']);
     }
 }
