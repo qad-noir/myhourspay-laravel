@@ -7,6 +7,7 @@ use App\Models\Feature;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class FeatureAccess
@@ -22,9 +23,10 @@ class FeatureAccess
 
     public function value(User $user, string $featureKey, ?Workspace $workspace = null): mixed
     {
-        $cacheKey = implode(':', ['feature-access', $this->settings->entitlementRevision(), $user->id, $user->entitlement_version ?? 1, $workspace?->id ?? 0, $featureKey]);
+        $billingOwner = $this->billingUser($user, $workspace);
+        $cacheKey = implode(':', ['feature-access-v3', $billingOwner->id, $billingOwner->entitlement_version ?? 1, $this->settings->entitlementRevision(), $user->id, $user->entitlement_version ?? 1, $workspace?->id ?? 0, $featureKey]);
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $featureKey, $workspace): mixed {
+        return Cache::remember($cacheKey, $this->cacheUntil($billingOwner), function () use ($user, $featureKey, $workspace): mixed {
             $feature = Feature::query()->where('key', $featureKey)->first();
             if (! $feature || $feature->mode === 'disabled') {
                 return false;
@@ -53,9 +55,9 @@ class FeatureAccess
     public function effectivePlan(User $user, ?Workspace $workspace = null): Plan
     {
         $billingUser = $this->billingUser($user, $workspace);
-        $cacheKey = implode(':', ['effective-plan-id-v2', $this->settings->entitlementRevision(), $billingUser->id, $billingUser->entitlement_version ?? 1]);
+        $cacheKey = implode(':', ['effective-plan-id-v3', $this->settings->entitlementRevision(), $billingUser->id, $billingUser->entitlement_version ?? 1]);
 
-        $planId = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($billingUser): int {
+        $planId = Cache::remember($cacheKey, $this->cacheUntil($billingUser), function () use ($billingUser): int {
             $grant = EntitlementGrant::query()->active()
                 ->where('user_id', $billingUser->id)
                 ->whereNotNull('plan_id')
@@ -63,25 +65,19 @@ class FeatureAccess
                 ->get()
                 ->sortByDesc(fn (EntitlementGrant $grant): int => $grant->plan?->tier ?? -1)
                 ->first();
-            if ($grant?->plan?->active) {
-                return $grant->plan->id;
-            }
+            $grantedPlan = $grant?->plan?->active ? $grant->plan : null;
 
             $subscription = $billingUser->subscription('default');
-            $hasBillingAccess = $subscription && (
-                in_array($subscription->stripe_status, ['active', 'trialing'], true)
-                || $subscription->onGracePeriod()
-                || ($billingUser->billing_grace_ends_at?->isFuture() ?? false)
-            );
+            $hasBillingAccess = app(SubscriptionState::class)->hasAccess($billingUser, $subscription);
             if ($hasBillingAccess) {
-                $priceIds = $subscription->items()->pluck('stripe_price')->filter()->all();
+                $priceIds = $subscription->items->pluck('stripe_price')->push($subscription->stripe_price)->filter()->all();
                 $plan = Plan::query()->whereHas('prices', fn ($query) => $query->where('kind', 'base')->whereIn('stripe_price_id', $priceIds))->orderByDesc('tier')->first();
                 if ($plan) {
-                    return $plan->id;
+                    return $grantedPlan && $grantedPlan->tier > $plan->tier ? $grantedPlan->id : $plan->id;
                 }
             }
 
-            return Plan::query()->where('key', 'free')->valueOrFail('id');
+            return $grantedPlan?->id ?? Plan::query()->where('key', 'free')->valueOrFail('id');
         });
 
         return Plan::query()->findOrFail($planId);
@@ -90,6 +86,7 @@ class FeatureAccess
     public function invalidate(User $user): void
     {
         $user->forceFill(['entitlement_version' => ((int) $user->entitlement_version) + 1])->saveQuietly();
+        Cache::forget('admin:monetization:overview');
     }
 
     public function checkoutEnabled(): bool
@@ -104,6 +101,24 @@ class FeatureAccess
             ->whereHas('features', fn ($query) => $query->where('features.key', $featureKey))
             ->orderBy('tier')
             ->first();
+    }
+
+    private function cacheUntil(User $user): Carbon
+    {
+        $expiry = now()->addMinutes(5);
+        $subscription = $user->subscription('default');
+        $dates = [$subscription?->trial_ends_at, $subscription?->ends_at, $user->billing_grace_ends_at];
+        foreach ($user->entitlementGrants as $grant) {
+            $dates[] = $grant->starts_at;
+            $dates[] = $grant->expires_at;
+        }
+        foreach ($dates as $date) {
+            if ($date && $date->isFuture() && $date->lt($expiry)) {
+                $expiry = $date;
+            }
+        }
+
+        return $expiry;
     }
 
     private function billingUser(User $user, ?Workspace $workspace): User

@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureCurrentWorkspace;
 use App\Http\Middleware\EnsureEmailCodeVerified;
 use App\Http\Middleware\EnsureFeatureAccess;
+use App\Http\Middleware\EnsureTrialChoice;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureWorkspaceIsWritable;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [EnsureTrialChoice::class]);
         $middleware->alias([
             'email-code.verified' => EnsureEmailCodeVerified::class,
             'workspace' => EnsureCurrentWorkspace::class,

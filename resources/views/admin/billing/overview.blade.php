@@ -3,7 +3,7 @@
 @section('content')
 @php
     $billingCards = [
-        ['Active subscribers', $metrics['active_subscribers'], 'Paying and trial accounts', 'users', 'positive'],
+        ['Paid subscribers', $metrics['active_subscribers'], 'Active paid subscriptions', 'users', 'positive'],
         ['Trials', $metrics['trials'], 'Currently evaluating', 'trials', 'violet'],
         ['Past due', $metrics['past_due'], 'Payment needs attention', 'past-due', 'warning'],
         ['Trial conversions · 30d', $metrics['trial_conversions'], 'Moved from trial to active', 'conversion', 'positive'],

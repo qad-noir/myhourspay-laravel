@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BillingWebhookEvent;
 use App\Models\EntitlementGrant;
-use App\Models\PlanPrice;
 use App\Models\User;
+use App\Services\SubscriptionState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -15,22 +15,13 @@ class AdminBillingDataController extends Controller
 {
     public function subscribers(): JsonResponse
     {
-        $pricePlans = PlanPrice::query()->with('plan')->whereNotNull('stripe_price_id')->get()->keyBy('stripe_price_id');
         $query = User::query()->with(['subscriptions.items'])->whereHas('subscriptions');
 
         return DataTables::eloquent($query)
             ->addColumn('subscriber', fn (User $user) => '<div class="admin-person"><span class="admin-person__avatar">'.e(str($user->name)->substr(0, 1)->upper()).'</span><span><strong>'.e($user->name).'</strong><small>'.e($user->email).'</small></span></div>')
-            ->addColumn('plan', function (User $user) use ($pricePlans): string {
-                $priceId = $user->subscriptions->first()?->items->first()?->stripe_price;
-
-                return e($pricePlans->get($priceId)?->plan?->name ?? 'Unknown');
-            })
-            ->addColumn('status', function (User $user): string {
-                $status = $user->subscriptions->first()?->stripe_status ?? 'none';
-
-                return '<span class="admin-status admin-status--'.e(strtolower($status)).'"><i></i>'.e(str($status)->replace('_', ' ')->headline()).'</span>';
-            })
-            ->addColumn('renewal', fn (User $user) => $user->subscriptions->first()?->ends_at?->format('d M Y') ?? 'Recurring')
+            ->addColumn('plan', fn (User $user) => e(app(SubscriptionState::class)->price($user->subscription('default'))?->plan->name ?? 'Unknown'))
+            ->addColumn('status', fn (User $user) => e(app(SubscriptionState::class)->summary($user)['status']))
+            ->addColumn('renewal', fn (User $user) => ($user->subscription('default')?->ends_at ?? $user->subscription('default')?->current_period_ends_at)?->format('d M Y') ?? 'Not yet synced')
             ->addColumn('actions', fn (User $user) => view('admin.billing.partials.subscriber-actions', compact('user'))->render())
             ->filterColumn('subscriber', fn ($query, string $keyword) => $query->where(fn ($query) => $query->where('name', 'like', "%{$keyword}%")->orWhere('email', 'like', "%{$keyword}%")))
             ->rawColumns(['subscriber', 'status', 'actions'])

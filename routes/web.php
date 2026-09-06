@@ -133,17 +133,19 @@ Route::middleware([
         Route::get('/workspaces/onboarding', [WorkspaceController::class, 'onboarding'])->name('workspaces.onboarding');
         Route::get('/workspaces/name-availability', [WorkspaceController::class, 'availability'])->name('workspaces.name-availability');
         Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+        Route::prefix('billing')->name('billing.')->controller(BillingController::class)->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::post('/checkout', 'checkout')->middleware('throttle:6,1')->name('checkout');
+            Route::post('/sync', 'sync')->middleware('throttle:6,1')->name('sync');
+            Route::post('/portal', 'portal')->name('portal');
+            Route::post('/change', 'change')->name('change');
+            Route::post('/cancel', 'cancel')->name('cancel');
+            Route::post('/resume', 'resume')->name('resume');
+            Route::get('/success', 'success')->name('success');
+            Route::get('/cancelled', 'cancelled')->name('cancelled');
+        });
+
         Route::middleware('workspace')->group(function (): void {
-            Route::prefix('billing')->name('billing.')->controller(BillingController::class)->group(function (): void {
-                Route::get('/', 'index')->name('index');
-                Route::post('/checkout', 'checkout')->name('checkout');
-                Route::post('/portal', 'portal')->name('portal');
-                Route::post('/change', 'change')->name('change');
-                Route::post('/cancel', 'cancel')->name('cancel');
-                Route::post('/resume', 'resume')->name('resume');
-                Route::get('/success', 'success')->name('success');
-                Route::get('/cancelled', 'cancelled')->name('cancelled');
-            });
 
             Route::get('/dashboard', DashboardController::class)->name('dashboard');
             Route::get('/business', [BusinessToolsController::class, 'overview'])->name('business.index');

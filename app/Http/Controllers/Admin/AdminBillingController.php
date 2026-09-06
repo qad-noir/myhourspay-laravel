@@ -17,6 +17,7 @@ use App\Services\FeatureAccess;
 use App\Services\MonetizationManager;
 use App\Services\OperationalIncidentRecorder;
 use App\Services\PlanPriceVersioner;
+use App\Services\StripeSubscriptionSync;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -32,9 +33,9 @@ class AdminBillingController extends Controller
     public function overview(BillingSettings $settings): View
     {
         $metrics = Cache::remember('admin:monetization:overview', now()->addMinutes(5), fn (): array => [
-            'active_subscribers' => Subscription::query()->whereIn('stripe_status', ['active', 'trialing', 'past_due'])->count(),
-            'trials' => Subscription::query()->where('stripe_status', 'trialing')->count(),
-            'past_due' => Subscription::query()->where('stripe_status', 'past_due')->count(),
+            'active_subscribers' => $this->subscriberQuery('active')->distinct()->count('user_id'),
+            'trials' => $this->subscriberQuery('trialing')->where('trial_ends_at', '>', now())->distinct()->count('user_id'),
+            'past_due' => $this->subscriberQuery('past_due')->distinct()->count('user_id'),
             'active_grants' => EntitlementGrant::query()->active()->count(),
             'expiring_grants' => EntitlementGrant::query()->active()->whereNotNull('expires_at')->where('expires_at', '<=', now()->addDays(14))->count(),
             'webhook_failures' => BillingWebhookEvent::query()->where('status', 'failed')->count(),
@@ -46,7 +47,7 @@ class AdminBillingController extends Controller
 
         $recentWebhooks = BillingWebhookEvent::query()->latest()->limit(8)->get();
         $expiringGrants = EntitlementGrant::query()->active()->whereNotNull('expires_at')->with(['user', 'plan', 'feature'])->orderBy('expires_at')->limit(8)->get();
-        $planDistribution = DB::table('subscription_items')->join('plan_prices', 'plan_prices.stripe_price_id', '=', 'subscription_items.stripe_price')->join('plans', 'plans.id', '=', 'plan_prices.plan_id')->where('plan_prices.kind', 'base')->select('plans.name', DB::raw('COUNT(DISTINCT subscription_items.subscription_id) as subscribers'))->groupBy('plans.id', 'plans.name')->orderByDesc('subscribers')->get();
+        $planDistribution = DB::table('subscription_items')->join('subscriptions', 'subscriptions.id', '=', 'subscription_items.subscription_id')->join('users', 'users.id', '=', 'subscriptions.user_id')->whereNull('users.deleted_at')->where('subscriptions.type', 'default')->where('subscriptions.stripe_status', 'active')->where(fn ($q) => $q->whereNull('subscriptions.ends_at')->orWhere('subscriptions.ends_at', '>', now()))->join('plan_prices', 'plan_prices.stripe_price_id', '=', 'subscription_items.stripe_price')->join('plans', 'plans.id', '=', 'plan_prices.plan_id')->where('plan_prices.kind', 'base')->select('plans.name', DB::raw('COUNT(DISTINCT subscriptions.user_id) as subscribers'))->groupBy('plans.id', 'plans.name')->orderByDesc('subscribers')->get();
         $topFeatures = FeatureUsageDaily::query()
             ->join('features', 'features.id', '=', 'feature_usage_daily.feature_id')
             ->select('features.key as feature_key', DB::raw('SUM(feature_usage_daily.usage_count) as uses'))
@@ -303,15 +304,15 @@ class AdminBillingController extends Controller
     public function resync(Request $request, User $user, FeatureAccess $access, AdminAudit $audit, OperationalIncidentRecorder $incidents): RedirectResponse
     {
         $subscription = $user->subscription('default');
-        if (! $subscription) {
-            return back()->withErrors(['subscription' => 'This user has no local subscription to resync.']);
+        if (! $user->hasStripeId()) {
+            return back()->withErrors(['subscription' => 'This user has no Stripe customer to resync.']);
         }
 
         try {
-            $before = ['status' => $subscription->stripe_status];
-            $subscription->syncStripeStatus();
+            $before = ['status' => $subscription?->stripe_status];
+            app(StripeSubscriptionSync::class)->customer($user);
             $access->invalidate($user);
-            $audit->record($request, 'billing.subscription_resynced', $user, $before, ['status' => $subscription->fresh()->stripe_status], 'Manual Stripe reconciliation');
+            $audit->record($request, 'billing.subscription_resynced', $user, $before, ['status' => $user->subscription('default')?->stripe_status], 'Manual Stripe reconciliation');
 
             return back()->with('status', 'Stripe subscription state resynced.');
         } catch (Throwable $exception) {
@@ -356,5 +357,11 @@ class AdminBillingController extends Controller
 
             return back()->withErrors(['subscription' => 'Cancellation could not be scheduled. Reference: '.$reference]);
         }
+    }
+
+    private function subscriberQuery(string $status)
+    {
+        return Subscription::query()->where('type', 'default')->where('stripe_status', $status)->whereHas('user')
+            ->where(fn ($query) => $query->whereNull('ends_at')->orWhere('ends_at', '>', now()));
     }
 }

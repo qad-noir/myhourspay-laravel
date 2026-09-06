@@ -54,13 +54,6 @@ class BillingWebhookTracker
             return;
         }
 
-        $status = (string) data_get($payload, 'data.object.status');
-        if ($status === 'past_due') {
-            $user->forceFill(['billing_grace_ends_at' => now()->addDays(7)])->saveQuietly();
-        } elseif (in_array($status, ['active', 'trialing'], true) || ($payload['type'] ?? null) === 'invoice.paid') {
-            $user->forceFill(['billing_grace_ends_at' => null])->saveQuietly();
-        }
-
         $this->features->invalidate($user);
     }
 

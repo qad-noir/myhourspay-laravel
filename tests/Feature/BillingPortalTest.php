@@ -55,7 +55,8 @@ class BillingPortalTest extends TestCase
         $this->assertDatabaseCount('billing_webhook_events', 1);
         $this->assertDatabaseHas('billing_webhook_events', ['stripe_event_id' => 'evt_invoice_paid', 'status' => 'processed']);
         $this->assertSame(2, $user->refresh()->entitlement_version);
-        $this->assertNull($user->billing_grace_ends_at);
+        // Historical invoice events do not override grace; fresh subscription snapshots do.
+        $this->assertNotNull($user->billing_grace_ends_at);
     }
 
     private function workspaceUser(): User

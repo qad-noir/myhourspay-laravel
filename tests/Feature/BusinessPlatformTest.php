@@ -11,10 +11,12 @@ use App\Models\Workspace;
 use App\Notifications\VerifyEmailCodeNotification;
 use App\Notifications\WorkspaceInvitationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class BusinessPlatformTest extends TestCase
@@ -257,6 +259,48 @@ class BusinessPlatformTest extends TestCase
             'start' => '2026-08-01',
             'end' => '2026-08-31',
         ]))->assertRedirect()->assertSessionHasErrors('payroll');
+    }
+
+    public function test_payroll_defaults_to_latest_approved_week_in_current_workspace_and_retains_dates(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        [$other, $foreign] = $this->workspaceUser('Foreign payroll');
+        $workspace->payrollProfiles()->create(['name' => 'Weekly payroll', 'format' => 'csv', 'columns' => ['week']]);
+        foreach ([['2026-08-24', 'approved'], ['2026-08-31', 'locked'], ['2026-09-07', 'submitted']] as [$week, $status]) {
+            $workspace->timesheets()->create(['user_id' => $owner->id, 'week_start' => $week, 'status' => $status]);
+        }
+        $foreign->timesheets()->create(['user_id' => $other->id, 'week_start' => '2026-09-14', 'status' => 'approved']);
+        $this->actingAs($owner)->get(route('business.payroll.index'))->assertOk()->assertSee('value="2026-08-31"', false)->assertSee('value="2026-09-06"', false);
+        $this->withSession(['_old_input' => ['start' => '2026-08-24', 'end' => '2026-08-30']])->get(route('business.payroll.index'))->assertSee('value="2026-08-24"', false)->assertSee('value="2026-08-30"', false);
+    }
+
+    public function test_payroll_empty_state_explains_approval_and_respects_payroll_only_role(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $workspace->payrollProfiles()->create(['name' => 'Waiting profile', 'format' => 'csv', 'columns' => ['week']]);
+        $payroll = User::factory()->create(['current_workspace_id' => $workspace->id]);
+        $workspace->users()->attach($payroll->id, ['role' => 'payroll', 'position' => 'Payroll']);
+        $this->actingAs($owner)->get(route('business.payroll.index'))->assertOk()->assertSee('Log hours → Submit the week → Approve &amp; lock → Export', false)->assertSee('Review timesheets')->assertDontSee('Ask a workspace owner');
+        $this->actingAs($payroll)->get(route('business.payroll.index'))->assertOk()->assertSee('Ask a workspace owner, administrator or manager')->assertSee('View timesheets')->assertDontSee('name="start"', false);
+    }
+
+    public function test_csv_and_excel_keep_the_verified_earnings_minor_value(): void
+    {
+        [$owner, $workspace] = $this->workspaceUser();
+        $sheet = $workspace->timesheets()->create(['user_id' => $owner->id, 'week_start' => '2026-08-31', 'status' => 'approved']);
+        $owner->hoursEntries()->create(['workspace_id' => $workspace->id, 'timesheet_id' => $sheet->id, 'work_date' => '2026-08-31', 'start_time' => '09:00', 'end_time' => '17:00', 'break_minutes' => 0, 'break_type' => 'unpaid', 'hourly_rate_minor' => 2570]);
+        // Rates are normally snapshotted on entry creation; set the verified historical snapshot.
+        DB::table('hours_entries')->where('timesheet_id', $sheet->id)->update(['hourly_rate_minor' => 2570, 'earnings_minor' => 20560]);
+        $profile = $workspace->payrollProfiles()->create(['name' => 'Earnings', 'format' => 'csv', 'columns' => ['week', 'earnings_minor', 'currency']]);
+        $url = route('business.payroll.download', ['profile' => $profile, 'start' => '2026-08-31', 'end' => '2026-09-06']);
+        $this->assertStringContainsString('2026-08-31,20560,GBP', $this->actingAs($owner)->get($url)->streamedContent());
+        $profile->update(['format' => 'xlsx']);
+        $response = $this->get($url)->assertOk()->assertDownload('payroll-2026-08-31-2026-09-06.xlsx');
+        $path = $response->baseResponse->getFile()->getPathname();
+        $book = IOFactory::load($path);
+        $this->assertEquals(20560, $book->getActiveSheet()->getCell('B2')->getValue());
+        $book->disconnectWorksheets();
+        unlink($path);
     }
 
     public function test_webhooks_are_signed_and_suspended_failures_create_incidents(): void

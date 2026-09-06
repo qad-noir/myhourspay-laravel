@@ -37,7 +37,7 @@ class PremiumEntitlementTest extends TestCase
         $service = app(FeatureAccess::class);
 
         $plan = $service->effectivePlan($user);
-        $cacheKey = implode(':', ['effective-plan-id-v2', app(BillingSettings::class)->entitlementRevision(), $user->id, $user->entitlement_version ?? 1]);
+        $cacheKey = implode(':', ['effective-plan-id-v3', app(BillingSettings::class)->entitlementRevision(), $user->id, $user->entitlement_version ?? 1]);
 
         $this->assertSame('free', $plan->key);
         $this->assertIsInt(Cache::get($cacheKey));

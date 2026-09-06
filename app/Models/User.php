@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
+use Laravel\Cashier\Cashier;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
@@ -89,6 +90,7 @@ class User extends Authenticatable
             'workspace_onboarding_reset_at' => 'datetime',
             'entitlement_version' => 'integer',
             'billing_grace_ends_at' => 'datetime',
+            'billing_trial_used_at' => 'datetime',
         ];
     }
 
@@ -115,6 +117,11 @@ class User extends Authenticatable
     public function emailVerificationCode(): HasOne
     {
         return $this->hasOne(EmailVerificationCode::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Cashier::$subscriptionModel, $this->getForeignKey())->orderByDesc('created_at')->orderByDesc('id');
     }
 
     public function entitlementGrants(): HasMany

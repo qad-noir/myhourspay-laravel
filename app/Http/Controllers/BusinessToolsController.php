@@ -95,7 +95,11 @@ class BusinessToolsController extends Controller
     {
         $context = $this->context($request);
 
+        $latestApprovedWeek = $context['access']['payroll_exports'] ? $context['workspace']->timesheets()->whereIn('status', ['approved', 'locked'])->max('week_start') : null;
+
         return view('business.payroll', $context + [
+            'exportStart' => $latestApprovedWeek ? CarbonImmutable::parse($latestApprovedWeek)->toDateString() : null,
+            'exportEnd' => $latestApprovedWeek ? CarbonImmutable::parse($latestApprovedWeek)->endOfWeek()->toDateString() : null,
             'payrollProfiles' => $context['access']['payroll_exports'] ? $context['workspace']->payrollProfiles()->orderBy('name')->get() : collect(),
             'approvedTimesheetCount' => $context['access']['payroll_exports'] ? $context['workspace']->timesheets()->whereIn('status', ['approved', 'locked'])->count() : 0,
         ]);

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\StripeWebhookController;
 use App\Models\HoursEntry;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Observers\HoursEntryObserver;
@@ -11,6 +13,7 @@ use App\Observers\WorkspaceObserver;
 use App\Policies\HoursEntryPolicy;
 use App\Services\BillingWebhookTracker;
 use App\Services\FeatureAccess;
+use App\Services\SubscriptionState;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -22,6 +25,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Events\WebhookHandled;
 use Laravel\Cashier\Events\WebhookReceived;
+use Laravel\Cashier\Http\Controllers\WebhookController;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,7 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(WebhookController::class, StripeWebhookController::class);
+        $this->app->scoped(SubscriptionState::class);
     }
 
     /**
@@ -41,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         HoursEntry::observe(HoursEntryObserver::class);
         Workspace::observe(WorkspaceObserver::class);
         User::observe(UserObserver::class);
+        Cashier::useSubscriptionModel(Subscription::class);
         Cashier::calculateTaxes();
         Cashier::keepPastDueSubscriptionsActive();
         Gate::policy(HoursEntry::class, HoursEntryPolicy::class);

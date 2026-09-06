@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AdminMetrics;
 use App\Services\HoursCalculator;
+use App\Services\SubscriptionState;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -44,10 +45,10 @@ class AdminController extends Controller
 
     public function user(User $user, HoursCalculator $calculator): View
     {
-        $user->load(['workspaces', 'hoursEntries' => fn ($query) => $query->with('workspace')->latest('work_date')->limit(25)]);
+        $user->load(['subscriptions.items', 'entitlementGrants.plan', 'workspaces', 'hoursEntries' => fn ($query) => $query->with('workspace')->latest('work_date')->limit(25)]);
         $entries = $user->hoursEntries->map(fn (HoursEntry $entry) => $calculator->forWorkspace($entry->workspace)->enrichEntry($entry));
 
-        return view('admin.users.show', compact('user', 'entries', 'calculator'));
+        return view('admin.users.show', compact('user', 'entries', 'calculator') + ['billing' => app(SubscriptionState::class)->summary($user)]);
     }
 
     public function updateUser(Request $request, User $user): RedirectResponse

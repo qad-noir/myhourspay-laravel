@@ -8,6 +8,7 @@ use App\Models\HoursEntry;
 use App\Models\OperationalIncident;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\SubscriptionState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -17,7 +18,7 @@ class AdminDataController extends Controller
     public function users(Request $request): JsonResponse
     {
         $query = ($request->boolean('trash') ? User::onlyTrashed() : User::query())
-            ->withCount(['workspaces', 'hoursEntries']);
+            ->withCount(['workspaces', 'hoursEntries'])->with(['subscriptions.items', 'entitlementGrants.plan']);
 
         return DataTables::eloquent($query)
             ->editColumn('name', fn (User $user) => '<div class="admin-person"><span class="admin-person__avatar">'.e(str($user->name)->substr(0, 1)->upper()).'</span><span><strong>'.e($user->name).'</strong><small>'.e($user->email).'</small></span></div>')
@@ -26,6 +27,7 @@ class AdminDataController extends Controller
 
                 return '<span class="admin-status admin-status--'.strtolower($status).'"><i></i>'.e($status).'</span>';
             })
+            ->addColumn('billing', fn (User $user) => view('admin.partials.user-billing', ['user' => $user, 'billing' => app(SubscriptionState::class)->summary($user)])->render())
             ->addColumn('workspaces', fn (User $user) => $user->workspaces_count)
             ->addColumn('entries', fn (User $user) => $user->hours_entries_count)
             ->addColumn('joined', fn (User $user) => $user->created_at->format('d M Y'))
@@ -49,7 +51,7 @@ class AdminDataController extends Controller
             ->orderColumn('workspaces', 'workspaces_count $1')
             ->orderColumn('entries', 'hours_entries_count $1')
             ->orderColumn('joined', 'created_at $1')
-            ->rawColumns(['name', 'status', 'actions'])
+            ->rawColumns(['name', 'status', 'billing', 'actions'])
             ->toJson();
     }
 

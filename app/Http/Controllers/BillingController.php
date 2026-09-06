@@ -4,15 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Plan;
 use App\Models\PlanPrice;
+use App\Services\BillingPlanChanges;
 use App\Services\BillingSettings;
+use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
 use App\Services\OperationalIncidentRecorder;
+use App\Services\StripeSubscriptionSync;
+use App\Services\SubscriptionState;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Laravel\Cashier\Cashier;
 use Throwable;
 
 class BillingController extends Controller
@@ -30,7 +34,7 @@ class BillingController extends Controller
 
         if ($user->hasStripeId() && config('cashier.secret')) {
             try {
-                $invoices = $user->invoices(false, ['limit' => 12]);
+                $invoices = $user->invoices(true, ['limit' => 12]);
             } catch (Throwable $exception) {
                 $invoiceWarning = 'Invoice history is temporarily unavailable.';
                 $this->recordFailure($request, $exception, 'billing.invoice_history_failed', $incidents);
@@ -38,7 +42,11 @@ class BillingController extends Controller
         }
 
         return view('billing.index', [
+            'hasWorkspace' => app(CurrentWorkspace::class)->existsFor($user),
             'plans' => $plans,
+            'billing' => app(SubscriptionState::class)->summary($user),
+            'needsTrialChoice' => app(SubscriptionState::class)->needsTrialChoice($user),
+            'trialEligible' => app(SubscriptionState::class)->trialEligible($user),
             'currentPlan' => $features->effectivePlan($user),
             'subscription' => $subscription,
             'invoices' => $invoices,
@@ -70,14 +78,19 @@ class BillingController extends Controller
             return back()->withErrors(['billing' => 'This billing option has not been configured yet.']);
         }
 
-        if ($request->user()->subscribed('default')) {
-            return back()->withErrors(['billing' => 'Manage your existing subscription before starting another one.']);
-        }
-
         try {
-            $checkout = $request->user()
-                ->newSubscription('default', $price->stripe_price_id)
-                ->trialDays((int) config('billing.trial_days', 14))
+            app(StripeSubscriptionSync::class)->customer($request->user());
+            $existing = $request->user()->subscription('default');
+            if ($existing && ! in_array($existing->stripe_status, ['canceled', 'incomplete_expired'], true)) {
+                return back()->withErrors(['billing' => 'You already have a subscription. Manage billing or change your current plan.']);
+            }
+            $builder = $request->user()->newSubscription('default', $price->stripe_price_id);
+            if (app(SubscriptionState::class)->trialEligible($request->user())) {
+                $builder->trialDays((int) config('billing.trial_days', 14));
+            } else {
+                $builder->skipTrial();
+            }
+            $checkout = $builder
                 ->allowPromotionCodes()
                 ->collectTaxIds()
                 ->checkout([
@@ -113,54 +126,29 @@ class BillingController extends Controller
     public function change(Request $request, FeatureAccess $features, OperationalIncidentRecorder $incidents): RedirectResponse
     {
         $data = $request->validate(['plan' => ['required', Rule::exists('plans', 'key')->where('purchasable', true)->where('active', true)], 'interval' => ['required', Rule::in(['monthly', 'yearly'])]]);
-        $subscription = $request->user()->subscription('default');
-        if (! $subscription || ! $subscription->valid()) {
-            return back()->withErrors(['billing' => 'Start a subscription before changing its plan.']);
-        }
         $target = PlanPrice::query()->whereHas('plan', fn ($query) => $query->where('key', $data['plan']))->where('interval', $data['interval'])->where('kind', 'base')->where('active', true)->with('plan')->firstOrFail();
         if (! $target->stripe_price_id) {
             return back()->withErrors(['billing' => 'This billing option has not been configured yet.']);
         }
-        $current = $features->effectivePlan($request->user());
         try {
-            if ($target->plan->tier > $current->tier) {
-                $subscription->swapAndInvoice($target->stripe_price_id);
-                $message = 'Your upgrade was applied immediately and Stripe calculated the proration.';
-            } else {
-                $stripeSubscription = $subscription->asStripeSubscription();
-                $schedule = $stripeSubscription->schedule
-                    ? Cashier::stripe()->subscriptionSchedules->retrieve(is_string($stripeSubscription->schedule) ? $stripeSubscription->schedule : $stripeSubscription->schedule->id)
-                    : Cashier::stripe()->subscriptionSchedules->create(['from_subscription' => $subscription->stripe_id]);
-                $currentItems = collect($stripeSubscription->items->data)->map(fn ($item) => ['price' => $item->price->id, 'quantity' => $item->quantity ?: 1])->values()->all();
-                Cashier::stripe()->subscriptionSchedules->update($schedule->id, ['end_behavior' => 'release', 'phases' => [['items' => $currentItems, 'start_date' => $stripeSubscription->current_period_start, 'end_date' => $stripeSubscription->current_period_end, 'proration_behavior' => 'none'], ['items' => [['price' => $target->stripe_price_id, 'quantity' => 1]], 'start_date' => $stripeSubscription->current_period_end, 'iterations' => 1, 'proration_behavior' => 'none']]]);
-                $message = 'Your plan change is scheduled for the next renewal. No immediate proration was charged.';
-            }
-            $features->invalidate($request->user());
-
-            return back()->with('status', $message);
+            return back()->with('status', app(BillingPlanChanges::class)->change($request->user(), $target));
+        } catch (ValidationException $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             $reference = $this->recordFailure($request, $exception, 'billing.plan_change_failed', $incidents);
 
-            return back()->withErrors(['billing' => 'We could not change the subscription. No local access change was applied. Reference: '.$reference]);
+            return back()->withErrors(['billing' => 'We could not confirm the plan change. Refresh billing before trying again. Reference: '.$reference]);
         }
     }
 
     public function cancel(Request $request, FeatureAccess $features, OperationalIncidentRecorder $incidents): RedirectResponse
     {
-        $subscription = $request->user()->subscription('default');
-        if (! $subscription || ! $subscription->valid()) {
-            return back()->withErrors(['billing' => 'There is no active subscription to cancel.']);
-        }
-
         try {
-            $subscription->cancel();
-            $features->invalidate($request->user());
-
-            return back()->with('status', 'Your subscription will end after the current paid period.');
+            return redirect()->route('billing.index')->with('status', app(BillingPlanChanges::class)->free($request->user()));
         } catch (Throwable $exception) {
             $reference = $this->recordFailure($request, $exception, 'billing.cancellation_failed', $incidents);
 
-            return back()->withErrors(['billing' => 'We could not schedule cancellation. Reference: '.$reference]);
+            return back()->withErrors(['billing' => 'We could not confirm your switch to Free. Refresh billing and try again. Reference: '.$reference]);
         }
     }
 
@@ -173,6 +161,8 @@ class BillingController extends Controller
 
         try {
             $subscription->resume();
+            $request->user()->forceFill(['billing_trial_resolved_subscription' => null])->saveQuietly();
+            app(StripeSubscriptionSync::class)->customer($request->user());
             $features->invalidate($request->user());
 
             return back()->with('status', 'Your subscription has been resumed.');
@@ -183,9 +173,33 @@ class BillingController extends Controller
         }
     }
 
-    public function success(): RedirectResponse
+    public function success(Request $request, StripeSubscriptionSync $sync, OperationalIncidentRecorder $incidents): RedirectResponse
     {
-        return redirect()->route('billing.index')->with('status', 'Checkout completed. Your plan will update as soon as Stripe confirms the subscription.');
+        $data = $request->validate(['session_id' => ['required', 'string', 'max:255']]);
+        try {
+            $sync->checkout($request->user(), $data['session_id']);
+
+            return redirect()->route('billing.index')->with('status', 'Checkout confirmed. Your subscription is up to date.');
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            $this->recordFailure($request, $exception, 'billing.checkout_sync_failed', $incidents);
+
+            return redirect()->route('billing.index')->withErrors(['billing' => 'Checkout returned, but subscription confirmation is delayed. Use Refresh billing to retry.']);
+        }
+    }
+
+    public function sync(Request $request, StripeSubscriptionSync $sync, OperationalIncidentRecorder $incidents): RedirectResponse
+    {
+        try {
+            $sync->customer($request->user());
+
+            return back()->with('status', 'Billing refreshed from Stripe.');
+        } catch (Throwable $exception) {
+            $reference = $this->recordFailure($request, $exception, 'billing.sync_failed', $incidents);
+
+            return back()->withErrors(['billing' => 'Billing could not be refreshed. Please retry. Reference: '.$reference]);
+        }
     }
 
     public function cancelled(): RedirectResponse
