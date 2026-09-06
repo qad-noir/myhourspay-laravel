@@ -26,6 +26,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/terms', [\Laravel\Jetstream\Http\Controllers\Livewire\TermsOfServiceController::class, 'show'])->name('legal.terms');
+Route::get('/policy', [\Laravel\Jetstream\Http\Controllers\Livewire\PrivacyPolicyController::class, 'show'])->name('legal.policy');
+
 Route::get('/logout', function (Request $request) {
     if (! $request->user()) {
         return redirect()->route('login');
@@ -92,6 +95,9 @@ Route::middleware([
             Route::get('/hours', 'hours')->name('hours');
             Route::get('/audit-logs', 'audits')->name('audit-logs');
             Route::get('/incidents', 'incidents')->name('incidents');
+            Route::get('/users/{user}/hours', [\App\Http\Controllers\Admin\CompactDataController::class, 'userHours'])->name('users.hours');
+            Route::get('/workspaces/{workspace}/hours', [\App\Http\Controllers\Admin\CompactDataController::class, 'workspaceHours'])->name('workspaces.hours');
+            Route::get('/support', [\App\Http\Controllers\Admin\CompactDataController::class, 'support'])->name('support');
         });
         Route::prefix('options')->name('options.')->controller(AdminOptionController::class)->group(function (): void {
             Route::get('/users', 'users')->name('users');
@@ -222,6 +228,7 @@ Route::middleware([
                 Route::patch('/entries/{hoursEntry}', 'update')->middleware('workspace.writable')->name('entries.update');
                 Route::delete('/entries/{hoursEntry}', 'destroy')->middleware('workspace.writable')->name('entries.destroy');
                 Route::get('/reports', 'report')->name('reports.index');
+                Route::get('/reports/data', 'reportData')->name('reports.data');
                 Route::get('/reports/export/excel', 'excel')->middleware('feature:excel_pdf_exports')->name('reports.excel');
                 Route::get('/reports/export/csv', 'csv')->name('reports.csv');
                 Route::get('/reports/print', 'print')->middleware('feature:excel_pdf_exports')->name('reports.print');

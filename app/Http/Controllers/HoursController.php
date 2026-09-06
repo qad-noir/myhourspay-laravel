@@ -109,7 +109,7 @@ class HoursController extends Controller
     public function report(Request $request): View
     {
         [$start, $end] = $this->validatedRange($request);
-        $summary = $this->reportSummary($request, $start, $end);
+        $summary = $this->reportSummary($request, $start, $end, false);
         $workspace = $this->current->for($request->user());
         $advanced = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace);
         $projects = $advanced ? $workspace->projects()->with('client')->where('active', true)->orderBy('name')->get() : collect();
@@ -117,12 +117,48 @@ class HoursController extends Controller
         $days = CarbonImmutable::parse($start)->diffInDays(CarbonImmutable::parse($end)) + 1;
         $previousEnd = CarbonImmutable::parse($start)->subDay();
         $previousStart = $previousEnd->subDays($days - 1);
-        $previous = $advanced ? $this->reportSummary($request, $previousStart->toDateString(), $previousEnd->toDateString()) : null;
-        $summary['earnings_minor'] = collect($summary['entries'])->sum('earnings_minor');
-        $previous['earnings_minor'] = $previous ? collect($previous['entries'])->sum('earnings_minor') : 0;
+        $previous = $advanced ? $this->reportSummary($request, $previousStart->toDateString(), $previousEnd->toDateString(), false) : null;
         $exportQuery = array_filter(['start' => $start, 'end' => $end, 'client_id' => $request->query('client_id'), 'project_id' => $request->query('project_id'), 'billable' => $request->query('billable')], fn ($value) => $value !== null && $value !== '');
 
         return view('hours.report', compact('start', 'end', 'summary', 'previous', 'previousStart', 'previousEnd', 'advanced', 'projects', 'clients', 'exportQuery'));
+    }
+
+    public function reportData(Request $request): JsonResponse
+    {
+        $range = $request->duplicate(array_merge($request->query(), ['start' => $request->query('range_start'), 'end' => $request->query('range_end')]));
+        [$start, $end] = $this->validatedRange($range);
+        $workspace = $this->current->for($request->user());
+        $advanced = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace);
+        $calculator = $this->calculator->forWorkspace($workspace);
+        $summary = $this->reportSummary($request, $start, $end, false);
+        $weeks = collect($summary['weeks'])->keyBy('key');
+        $columns = ['work_date', 'start_time', 'break_minutes', null, null, null];
+        if ($advanced) {
+            array_push($columns, null, null);
+        }
+        $columns[] = 'notes';
+        $query = $this->reportQuery($request)->with('project.client')->forPeriod($start, $end);
+        $table = \App\Services\CompactTable::query($query, $request, $columns, ['work_date', 'start_time', 'notes'])
+            ->addColumn('date', fn ($entry) => $entry->work_date->format('Y-m-d'))
+            ->addColumn('time', fn ($entry) => substr($entry->start_time, 0, 5).'–'.substr($entry->end_time, 0, 5))
+            ->addColumn('break', fn ($entry) => $entry->break_minutes.'m '.$entry->break_type)
+            ->addColumn('net', fn ($entry) => $calculator->enrichEntry($entry)['net_formatted'])
+            ->addColumn('week', function ($entry) use ($calculator, $weeks) {
+                $item = $calculator->enrichEntry($entry);
+                $week = $weeks[$item['week_key']];
+
+                return 'W'.$item['week_number'].($week['partial'] ? ' · partial' : '').' · '.$week['formatted'].' · '.$week['variance_formatted'];
+            })
+            ->addColumn('overtime', fn ($entry) => $calculator->formatMinutes(max(0, $weeks[$calculator->enrichEntry($entry)['week_key']]['variance_minutes'])))
+            ->editColumn('notes', fn ($entry) => $entry->notes ?: '—');
+        $visible = ['date', 'time', 'break', 'net', 'week', 'overtime', 'notes'];
+        if ($advanced) {
+            $table->addColumn('project_label', fn ($entry) => ($entry->project?->name ?? '—').' · '.($entry->project?->client?->name ?? '').($entry->billable ? ' · billable' : ''))
+                ->addColumn('earnings', fn ($entry) => $entry->earnings_minor !== null ? strtoupper($entry->currency ?? 'GBP').' '.number_format($entry->earnings_minor / 100, 2) : '—');
+            array_push($visible, 'project_label', 'earnings');
+        }
+
+        return $table->only($visible)->toJson()->header('Cache-Control', 'private, no-store');
     }
 
     public function csv(Request $request, HoursReportExport $export): StreamedResponse
@@ -173,27 +209,34 @@ class HoursController extends Controller
         return view('hours.print', compact('start', 'end', 'summary'));
     }
 
-    private function reportSummary(Request $request, string $start, string $end): array
+    private function reportQuery(Request $request)
     {
         $workspace = $this->current->for($request->user());
-        $calculator = $this->calculator->forWorkspace($workspace);
         $filters = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace)
             ? Validator::make($request->only(['client_id', 'project_id', 'billable']), ['client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')->where('workspace_id', $workspace->id)], 'project_id' => ['nullable', 'integer', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)], 'billable' => ['nullable', Rule::in(['0', '1'])]])->validate()
             : [];
-        $filtered = fn ($query) => $query
+        return $request->user()->hoursEntries()->forWorkspace($workspace)
             ->when($filters['client_id'] ?? null, fn ($query, $client) => $query->whereHas('project', fn ($project) => $project->where('client_id', $client)))
             ->when($filters['project_id'] ?? null, fn ($query, $project) => $query->where('project_id', $project))
             ->when(array_key_exists('billable', $filters), fn ($query) => $query->where('billable', (bool) $filters['billable']));
-        $periodEntries = $filtered($request->user()->hoursEntries()->with('project.client')->forWorkspace($workspace)->forPeriod($start, $end))->orderBy('work_date')->get();
+    }
+
+    private function reportSummary(Request $request, string $start, string $end, bool $retainEntries = true): array
+    {
+        $workspace = $this->current->for($request->user());
+        $calculator = $this->calculator->forWorkspace($workspace);
+        $query = $this->reportQuery($request);
+        $periodEntries = (clone $query)->with('project.client')->forPeriod($start, $end)->orderBy('work_date')->lazy(250);
         $weekStart = CarbonImmutable::parse($start, config('hours.timezone'))->startOfWeek()->toDateString();
         $weekEnd = CarbonImmutable::parse($end, config('hours.timezone'))->endOfWeek()->toDateString();
         $weekSummary = $calculator->summarizeEntries(
-            $filtered($request->user()->hoursEntries()->forWorkspace($workspace)->forPeriod($weekStart, $weekEnd))->orderBy('work_date')->get(),
+            (clone $query)->forPeriod($weekStart, $weekEnd)->orderBy('work_date')->lazy(250),
             $start,
             $end,
+            false,
         );
         $weeks = collect($weekSummary['weeks'])->keyBy('key');
-        $period = $calculator->summarizeEntries($periodEntries, $start, $end);
+        $period = $calculator->summarizeEntries($periodEntries, $start, $end, $retainEntries);
         foreach ($period['entries'] as &$entry) {
             $week = $weeks[$entry['week_key']];
             $entry['weekly_total'] = $week['formatted'];

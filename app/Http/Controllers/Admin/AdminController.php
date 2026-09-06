@@ -45,10 +45,9 @@ class AdminController extends Controller
 
     public function user(User $user, HoursCalculator $calculator): View
     {
-        $user->load(['subscriptions.items', 'entitlementGrants.plan', 'workspaces', 'hoursEntries' => fn ($query) => $query->with('workspace')->latest('work_date')->limit(25)]);
-        $entries = $user->hoursEntries->map(fn (HoursEntry $entry) => $calculator->forWorkspace($entry->workspace)->enrichEntry($entry));
+        $user->load(['subscriptions.items', 'entitlementGrants.plan', 'workspaces']);
 
-        return view('admin.users.show', compact('user', 'entries', 'calculator') + ['billing' => app(SubscriptionState::class)->summary($user)]);
+        return view('admin.users.show', compact('user', 'calculator') + ['billing' => app(SubscriptionState::class)->summary($user)]);
     }
 
     public function updateUser(Request $request, User $user): RedirectResponse
@@ -91,10 +90,9 @@ class AdminController extends Controller
 
     public function workspace(Workspace $workspace, HoursCalculator $calculator): View
     {
-        $workspace->load(['owner', 'users', 'hoursEntries' => fn ($query) => $query->with('user')->latest('work_date')->limit(25)]);
-        $entries = $workspace->hoursEntries->map(fn (HoursEntry $entry) => $calculator->forWorkspace($workspace)->enrichEntry($entry));
+        $workspace->load(['owner', 'users']);
 
-        return view('admin.workspaces.show', compact('workspace', 'entries', 'calculator'));
+        return view('admin.workspaces.show', compact('workspace', 'calculator'));
     }
 
     public function updateWorkspace(Request $request, Workspace $workspace): RedirectResponse

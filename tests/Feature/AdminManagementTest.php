@@ -130,7 +130,8 @@ class AdminManagementTest extends TestCase
         $this->actingAs($admin)->get(route('admin.workspaces.show', $workspace))
             ->assertOk()
             ->assertSee($workspace->name)
-            ->assertSee('07:30');
+            ->assertSee('data-compact-table', false);
+        $this->getJson(route('admin.data.workspaces.hours', $workspace))->assertOk()->assertJsonPath('data.0.net', '07:30');
     }
 
     public function test_admin_can_resolve_and_reopen_an_incident(): void

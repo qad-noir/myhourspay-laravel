@@ -33,24 +33,27 @@
     <section class="dashboard-panel report-results" aria-labelledby="report-results-title">
         <div class="dashboard-panel-heading">
             <div><p class="dashboard-eyebrow">Detailed records</p><h2 id="report-results-title">{{ $start }} to {{ $end }}</h2></div>
-            <span>{{ count($summary['entries']) }} {{ Str::plural('entry', count($summary['entries'])) }}</span>
+            <span>{{ $summary['worked_days'] }} {{ Str::plural('entry', $summary['worked_days']) }}</span>
         </div>
-        @if (count($summary['entries']) === 0)
+        @if ($summary['worked_days'] === 0)
             <x-dashboard.empty-state title="No hours in this period" description="Change the date range or add an hours record from the calendar.">
                 <x-slot name="action"><a wire:navigate href="{{ route('hours.index', ['add' => 1]) }}" class="dashboard-button dashboard-button--primary">Add hours</a></x-slot>
             </x-dashboard.empty-state>
         @else
-            <div class="report-table-wrap"><table class="report-table">
-                <thead><tr><th scope="col">Date</th><th scope="col">Time</th><th scope="col">Break</th><th scope="col">Hours worked</th><th scope="col">Week</th><th scope="col">Overtime</th>@if($advanced)<th scope="col">Client / project</th><th scope="col">Earnings</th>@endif<th scope="col">Notes</th></tr></thead>
-                <tbody>@foreach ($summary['entries'] as $entry)<tr>
-                    <td data-label="Date"><strong>{{ $entry['work_date'] }}</strong><small>{{ $entry['weekday'] }}</small></td>
-                    <td data-label="Time">{{ $entry['start_time'] }}–{{ $entry['end_time'] }}</td><td data-label="Break">{{ $entry['break_minutes'] }}m {{ $entry['break_type'] }}</td><td data-label="Hours worked"><strong>{{ $entry['net_formatted'] }}</strong></td>
-                    <td data-label="Week"><strong>W{{ $entry['week_number'] }}{{ $entry['partial_week'] ? ' · partial' : '' }}</strong><small>{{ $entry['weekly_total'] }} · {{ $entry['weekly_variance'] }}</small></td>
-                    <td data-label="Overtime"><strong>{{ $entry['weekly_overtime_formatted'] }}</strong></td>
-                    @if($advanced)<td data-label="Client / project"><strong>{{ data_get($entry,'project.name') ?? '—' }}</strong><small>{{ data_get($entry,'project.client.name') }}{{ ($entry['billable']??false)?' · billable':'' }}</small></td><td data-label="Earnings"><strong>{{ isset($entry['earnings_minor']) ? ($entry['currency']??'GBP').' '.number_format($entry['earnings_minor']/100,2) : '—' }}</strong></td>@endif
-                    <td data-label="Notes" class="report-notes">{{ $entry['notes'] ?: '—' }}</td>
-                </tr>@endforeach</tbody>
-            </table></div>
+            @php
+                $columns = [
+                    ['data'=>'date','title'=>'Date'], ['data'=>'time','title'=>'Time'],
+                    ['data'=>'break','title'=>'Break'], ['data'=>'net','title'=>'Hours worked','orderable'=>false],
+                    ['data'=>'week','title'=>'Week','orderable'=>false], ['data'=>'overtime','title'=>'Overtime','orderable'=>false],
+                ];
+                if ($advanced) {
+                    $columns[] = ['data'=>'project_label','title'=>'Client / project','orderable'=>false];
+                    $columns[] = ['data'=>'earnings','title'=>'Earnings','orderable'=>false];
+                }
+                $columns[] = ['data'=>'notes','title'=>'Notes'];
+                $dataQuery = array_diff_key($exportQuery, ['start'=>true,'end'=>true]) + ['range_start'=>$start,'range_end'=>$end];
+            @endphp
+            <x-compact-table id="report-records" :url="route('hours.reports.data', $dataQuery)" :columns="$columns" table-class="report-table" />
         @endif
     </section>
 </x-app-layout>

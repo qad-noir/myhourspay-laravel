@@ -105,7 +105,8 @@ class HoursModuleTest extends TestCase
         $this->entry($other, ['notes' => 'other secret']);
         $range = ['start' => '2026-08-01', 'end' => '2026-08-31'];
 
-        $this->actingAs($user)->get(route('hours.reports.index', $range))->assertOk()->assertSee('=HYPERLINK', false)->assertDontSee('other secret');
+        $this->actingAs($user)->get(route('hours.reports.index', $range))->assertOk()->assertSee('data-compact-table', false)->assertDontSee('other secret');
+        $this->getJson(route('hours.reports.data', ['range_start' => $range['start'], 'range_end' => $range['end']]))->assertOk()->assertSee('=HYPERLINK', false)->assertDontSee('other secret');
         $this->actingAs($user)->get(route('hours.reports.print', $range))->assertOk()->assertDontSee('other secret');
         $csv = $this->actingAs($user)->get(route('hours.reports.csv', $range))->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $csvContent = $csv->streamedContent();

@@ -14,18 +14,7 @@ class AdminSupportController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = SupportRequest::query()->with(['user', 'workspace'])->latest();
-        if ($request->filled('status')) {
-            $query->where('status', $request->query('status'));
-        }
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->query('priority'));
-        }
-        if ($request->filled('q')) {
-            $query->where(fn ($builder) => $builder->where('subject', 'like', '%'.$request->query('q').'%')->orWhere('public_id', 'like', $request->query('q').'%')->orWhereHas('user', fn ($user) => $user->where('email', 'like', $request->query('q').'%')));
-        }
-
-        return view('admin.support.index', ['requests' => $query->paginate(30)->withQueryString()]);
+        return view('admin.support.index');
     }
 
     public function show(SupportRequest $supportRequest): View

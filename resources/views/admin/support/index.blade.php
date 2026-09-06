@@ -12,7 +12,7 @@
             @if(request()->hasAny(['q','status','priority']))<a wire:navigate class="admin-filter__reset" href="{{ route('admin.support.index') }}">Clear</a>@endif
         </x-admin.filter-bar>
     </form>
-    <div class="admin-table-scroll"><table class="admin-table"><thead><tr><th>Reference</th><th>Customer</th><th>Subject</th><th>Plan</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>@forelse($requests as $item)<tr><td>{{ str($item->public_id)->limit(13) }}</td><td><strong>{{ $item->user?->name }}</strong><small>{{ $item->user?->email }}</small></td><td>{{ $item->subject }}</td><td>{{ str($item->plan_key)->headline() }}</td><td>{{ str($item->priority)->headline() }}</td><td>{{ str($item->status)->headline() }}</td><td><a wire:navigate href="{{ route('admin.support.show',$item) }}">Review</a></td></tr>@empty<tr><td colspan="7">No support requests match these filters.</td></tr>@endforelse</tbody></table></div>
-    <div class="admin-pagination">{{ $requests->links() }}</div>
+    <x-compact-table id="support-records" :url="route('admin.data.support', request()->only('q','status','priority'))" :columns="[['data'=>'public_id','title'=>'Reference'],['data'=>'customer','title'=>'Customer'],['data'=>'subject','title'=>'Subject'],['data'=>'plan_key','title'=>'Plan'],['data'=>'priority','title'=>'Priority'],['data'=>'status','title'=>'Status'],['data'=>'actions','title'=>'','orderable'=>false]]" />
+    <div class="admin-pagination"></div>
 </section>
 @endsection
