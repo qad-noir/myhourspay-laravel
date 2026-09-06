@@ -62,6 +62,22 @@ class AdminBillingTest extends TestCase
             ->assertSee('3 uses');
     }
 
+    public function test_capability_overview_limits_results_and_full_list_is_admin_only(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        foreach (range(1, 12) as $index) {
+            $feature = Feature::create(['key' => 'usage_test_'.$index, 'name' => 'Usage test '.$index, 'category' => 'reports', 'mode' => 'premium', 'value_type' => 'boolean']);
+            FeatureUsageDaily::create(['feature_id' => $feature->id, 'user_id' => $admin->id, 'usage_date' => today(), 'usage_count' => $index]);
+        }
+        $this->actingAs($admin)->get(route('admin.billing.overview'))
+            ->assertOk()->assertViewHas('topFeatures', fn ($features) => $features->count() === 10 && $features->first()->uses == 12)
+            ->assertSee(route('admin.billing.capabilities'));
+        $this->get(route('admin.billing.capabilities'))->assertOk()
+            ->assertSee('Usage test 1')->assertSee('Usage test 12')
+            ->assertViewHas('features', fn ($features) => $features->total() >= 12);
+        $this->actingAs(User::factory()->create())->get(route('admin.billing.capabilities'))->assertForbidden();
+    }
+
     public function test_first_enforcement_launch_creates_one_time_thirty_day_pro_grants(): void
     {
         $admin = User::factory()->create(['is_admin' => true, 'email_verified_at' => now()]);

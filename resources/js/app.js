@@ -16,6 +16,7 @@ import '../css/admin-refinement.css';
 import '../css/dashboard-type-rendering.css';
 import '../css/tool-workspaces.css';
 import '../css/billing-lifecycle.css';
+import '../css/select-controls.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
@@ -98,7 +99,7 @@ const remoteSelectRenderers = {
         return `<div class="admin-remote-option"><span><strong>${escape(item.text)}</strong>${item.email ? `<small>${escape(item.email)}</small>` : ''}</span>${status ? `<em class="is-${status.toLowerCase()}">${escape(status)}</em>` : ''}</div>`;
     },
     item(item, escape) {
-        return `<div class="admin-remote-item"><strong>${escape(item.text)}</strong>${item.email ? `<small>${escape(item.email)}</small>` : ''}</div>`;
+        return `<div class="admin-remote-item"><span class="select-selection-badge">✓ Selected</span><strong>${escape(item.text)}</strong>${item.email ? `<small>${escape(item.email)}</small>` : ''}</div>`;
     },
     loading() {
         return '<div class="admin-remote-message"><i></i>Searching records…</div>';

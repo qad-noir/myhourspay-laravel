@@ -101,6 +101,7 @@ Route::middleware([
             Route::get('/', 'overview')->name('overview');
             Route::put('/switches', 'updateSwitch')->name('switches.update');
             Route::get('/features', 'features')->name('features');
+            Route::get('/capabilities', 'capabilities')->name('capabilities');
             Route::put('/features/{feature}', 'updateFeature')->name('features.update');
             Route::get('/plans', 'plans')->name('plans');
             Route::put('/plans/{plan}/prices/{planPrice}', 'updatePlanPrice')->name('plans.prices.update');

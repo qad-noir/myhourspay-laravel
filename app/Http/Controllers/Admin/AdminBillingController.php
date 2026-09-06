@@ -54,7 +54,8 @@ class AdminBillingController extends Controller
             ->where('usage_date', '>=', today()->subDays(30))
             ->groupBy('features.id', 'features.key')
             ->orderByDesc('uses')
-            ->limit(8)
+            ->orderBy('features.key')
+            ->limit(10)
             ->get();
 
         return view('admin.billing.overview', [
@@ -67,6 +68,20 @@ class AdminBillingController extends Controller
             'planDistribution' => $planDistribution,
             'topFeatures' => $topFeatures,
         ]);
+    }
+
+    public function capabilities(): View
+    {
+        $usage = FeatureUsageDaily::query()
+            ->select('feature_id', DB::raw('SUM(usage_count) as uses'))
+            ->where('usage_date', '>=', today()->subDays(30))
+            ->groupBy('feature_id');
+        $features = Feature::query()
+            ->leftJoinSub($usage, 'usage', 'usage.feature_id', '=', 'features.id')
+            ->select('features.*', DB::raw('COALESCE(usage.uses, 0) as uses'))
+            ->orderByDesc('uses')->orderBy('features.key')->paginate(25);
+
+        return view('admin.billing.capabilities', compact('features'));
     }
 
     public function updateSwitch(Request $request, MonetizationManager $manager, AdminAudit $audit): RedirectResponse

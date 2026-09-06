@@ -1,0 +1,49 @@
+/* Shared defaults cover existing, dynamically inserted and future native selects.
+   Only arrow properties override page backgrounds; listboxes retain native UI. */
+select:not([multiple]):not([size]),
+select[size="1"]:not([multiple]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236e6878' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+    background-position: right 12px center !important;
+    background-size: 16px !important;
+    background-repeat: no-repeat !important;
+    padding-right: 38px !important;
+}
+select:disabled { cursor: not-allowed; opacity: .6; }
+select:focus-visible { outline: 2px solid var(--brand-orange, #ff6b35); outline-offset: 2px; }
+
+/* Tom Select owns its arrow because its original select is hidden. */
+.ts-wrapper.single .ts-control::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin-top: -6px;
+    border: solid #6e6878 !important;
+    border-width: 0 2px 2px 0 !important;
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+.ts-wrapper.single.dropdown-active .ts-control::after { transform: rotate(225deg); margin-top: -2px; }
+.ts-wrapper.single.has-items .ts-control {
+    border-color: #52c98a;
+    background-color: #f0faf4;
+    box-shadow: inset 3px 0 0 #52c98a;
+}
+.ts-control .admin-remote-item { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.select-selection-badge {
+    display: block;
+    width: fit-content;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    padding: 3px 6px;
+    color: #17633c;
+    background: #d9f3e3;
+    font: 700 10px/1.4 'DM Sans', sans-serif;
+}
+@media (forced-colors: active) {
+    select:not([multiple]):not([size]), select[size="1"]:not([multiple]) { appearance: auto; background-image: none !important; }
+    .ts-wrapper.single .ts-control::after { border-color: ButtonText !important; }
+}
