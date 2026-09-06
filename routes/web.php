@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Admin\AdminOptionController;
 use App\Http\Controllers\Admin\AdminSupportController;
+use App\Http\Controllers\Admin\CompactDataController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BusinessToolsController;
@@ -21,13 +22,17 @@ use App\Http\Controllers\ProToolsController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Laravel\Jetstream\Http\Controllers\Livewire\PrivacyPolicyController;
+use Laravel\Jetstream\Http\Controllers\Livewire\TermsOfServiceController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/terms', [\Laravel\Jetstream\Http\Controllers\Livewire\TermsOfServiceController::class, 'show'])->name('legal.terms');
-Route::get('/policy', [\Laravel\Jetstream\Http\Controllers\Livewire\PrivacyPolicyController::class, 'show'])->name('legal.policy');
+Route::get('/terms', [TermsOfServiceController::class, 'show'])->name('legal.terms');
+Route::get('/policy', [PrivacyPolicyController::class, 'show'])->name('legal.policy');
+Route::redirect('/terms-of-service', '/terms')->name('terms.show');
+Route::redirect('/privacy-policy', '/policy')->name('policy.show');
 
 Route::get('/logout', function (Request $request) {
     if (! $request->user()) {
@@ -95,9 +100,9 @@ Route::middleware([
             Route::get('/hours', 'hours')->name('hours');
             Route::get('/audit-logs', 'audits')->name('audit-logs');
             Route::get('/incidents', 'incidents')->name('incidents');
-            Route::get('/users/{user}/hours', [\App\Http\Controllers\Admin\CompactDataController::class, 'userHours'])->name('users.hours');
-            Route::get('/workspaces/{workspace}/hours', [\App\Http\Controllers\Admin\CompactDataController::class, 'workspaceHours'])->name('workspaces.hours');
-            Route::get('/support', [\App\Http\Controllers\Admin\CompactDataController::class, 'support'])->name('support');
+            Route::get('/users/{user}/hours', [CompactDataController::class, 'userHours'])->name('users.hours');
+            Route::get('/workspaces/{workspace}/hours', [CompactDataController::class, 'workspaceHours'])->name('workspaces.hours');
+            Route::get('/support', [CompactDataController::class, 'support'])->name('support');
         });
         Route::prefix('options')->name('options.')->controller(AdminOptionController::class)->group(function (): void {
             Route::get('/users', 'users')->name('users');

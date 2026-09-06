@@ -21,6 +21,9 @@ class AccessNotice
             && (! $grant->starts_at || $grant->starts_at->isPast()) && $grant->expires_at?->isFuture()
             && ! $grant->revoked_at && $grant->plan?->active)->sortByDesc('expires_at')->first();
         $trial = $sub && $sub->stripe_status === 'trialing' && $sub->trial_ends_at?->isFuture() && $state['hasAccess'];
+        if (! $trial && $grant && $state['hasAccess'] && $state['plan']?->tier >= $grant->plan->tier) {
+            $grant = null;
+        }
         if (! $trial && ! $grant) {
             return null;
         }

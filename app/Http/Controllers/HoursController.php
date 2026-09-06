@@ -6,6 +6,7 @@ use App\Exports\HoursReportExport;
 use App\Http\Requests\StoreHoursEntryRequest;
 use App\Http\Requests\UpdateHoursEntryRequest;
 use App\Models\HoursEntry;
+use App\Services\CompactTable;
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
 use App\Services\HoursCalculator;
@@ -138,7 +139,7 @@ class HoursController extends Controller
         }
         $columns[] = 'notes';
         $query = $this->reportQuery($request)->with('project.client')->forPeriod($start, $end);
-        $table = \App\Services\CompactTable::query($query, $request, $columns, ['work_date', 'start_time', 'notes'])
+        $table = CompactTable::query($query, $request, $columns, ['work_date', 'start_time', 'notes'])
             ->addColumn('date', fn ($entry) => $entry->work_date->format('Y-m-d'))
             ->addColumn('time', fn ($entry) => substr($entry->start_time, 0, 5).'–'.substr($entry->end_time, 0, 5))
             ->addColumn('break', fn ($entry) => $entry->break_minutes.'m '.$entry->break_type)
@@ -215,10 +216,11 @@ class HoursController extends Controller
         $filters = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace)
             ? Validator::make($request->only(['client_id', 'project_id', 'billable']), ['client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')->where('workspace_id', $workspace->id)], 'project_id' => ['nullable', 'integer', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)], 'billable' => ['nullable', Rule::in(['0', '1'])]])->validate()
             : [];
+
         return $request->user()->hoursEntries()->forWorkspace($workspace)
             ->when($filters['client_id'] ?? null, fn ($query, $client) => $query->whereHas('project', fn ($project) => $project->where('client_id', $client)))
             ->when($filters['project_id'] ?? null, fn ($query, $project) => $query->where('project_id', $project))
-            ->when(array_key_exists('billable', $filters), fn ($query) => $query->where('billable', (bool) $filters['billable']));
+            ->when(isset($filters['billable']) && $filters['billable'] !== '', fn ($query) => $query->where('billable', (bool) $filters['billable']));
     }
 
     private function reportSummary(Request $request, string $start, string $end, bool $retainEntries = true): array

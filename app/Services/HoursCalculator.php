@@ -7,7 +7,6 @@ use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Traversable;
 
 class HoursCalculator
 {
