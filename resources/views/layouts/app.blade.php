@@ -21,7 +21,7 @@
     </head>
     <body class="dashboard-body">
         <x-banner />
-        <div class="dashboard-shell"><x-dashboard.sidebar :$currentWorkspace :$workspaces /><div class="dashboard-backdrop" data-sidebar-backdrop></div><div class="dashboard-workspace"><x-dashboard.header :title="isset($header) ? trim(strip_tags($header)) : 'Overview'" :$currentWorkspace /><main class="dashboard-main"><x-dashboard.flash-message />{{ $slot }}</main><x-dashboard.footer /></div></div>
+        <div class="dashboard-shell"><x-dashboard.sidebar :$currentWorkspace :$workspaces /><div class="dashboard-backdrop" data-sidebar-backdrop></div><div class="dashboard-workspace"><x-access-notice :workspace="$currentWorkspace ?? null" /><x-dashboard.header :title="isset($header) ? trim(strip_tags($header)) : 'Overview'" :$currentWorkspace /><main class="dashboard-main"><x-dashboard.flash-message />{{ $slot }}</main><x-dashboard.footer /></div></div>
 
         @stack('modals')
 

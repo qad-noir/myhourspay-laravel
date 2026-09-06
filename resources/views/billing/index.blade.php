@@ -21,7 +21,7 @@
             <div><span>Status</span><strong>{{ $billing['status'] }}</strong>@if($subscription?->onTrial())<small>Trial ends {{ $subscription->trial_ends_at->format('j M Y') }} · renews automatically</small>@elseif($subscription?->ends_at)<small>Ends {{ $subscription->ends_at->format('j M Y') }}</small>@elseif($subscription?->current_period_ends_at)<small>Next renewal {{ $subscription->current_period_ends_at->format('j M Y') }}</small>@endif</div>
             @if($subscription?->pending_plan_key)<div><span>Scheduled change</span><strong>{{ str($subscription->pending_plan_key)->headline() }} {{ $subscription->pending_interval ? '· '.$subscription->pending_interval : '' }}</strong><small>{{ $subscription->pending_change_at?->format('j M Y') }}</small></div>@endif
             @if($currentPlan->id !== $billing['plan']?->id && $currentPlan->tier > 0)<p class="billing-access-note">Additional access: {{ $currentPlan->name }} through an entitlement grant.</p>@endif
-            @unless($enforcementEnabled)<p class="billing-access-note">Paid enforcement is off. Premium tools are currently available independently of your subscription.</p>@endunless
+            @unless($enforcementEnabled)<p class="billing-access-note">Beta access: premium features are currently available while we test myhourspay.</p>@endunless
         </div>
         @if(auth()->user()->hasStripeId())<div class="billing-summary__actions"><form method="POST" action="{{ route('billing.sync') }}">@csrf<button class="dashboard-button dashboard-button--secondary">Refresh billing</button></form><form method="POST" action="{{ route('billing.portal') }}">@csrf<button class="dashboard-primary-button">Manage billing securely</button></form></div>@endif
     </section>
