@@ -27,12 +27,20 @@ select:focus-visible { outline: 2px solid var(--brand-orange, #ff6b35); outline-
     pointer-events: none;
 }
 .ts-wrapper.single.dropdown-active .ts-control::after { transform: rotate(225deg); margin-top: -2px; }
-.ts-wrapper.single.has-items .ts-control {
-    border-color: #52c98a;
+.ts-wrapper.user-search-control .ts-control::after { display: none; }
+.ts-wrapper.user-search-control .ts-control { padding-right: 12px; }
+.ts-control .admin-remote-item {
+    width: fit-content;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    border: 1px solid #52c98a;
+    border-radius: 8px;
+    padding: 8px 12px;
     background-color: #f0faf4;
     box-shadow: inset 3px 0 0 #52c98a;
+    overflow-wrap: anywhere;
 }
-.ts-control .admin-remote-item { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 .select-selection-badge {
     display: block;
     width: fit-content;

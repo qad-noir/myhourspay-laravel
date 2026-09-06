@@ -151,6 +151,9 @@ const initializeAdminRemoteSelects = () => {
             persist: false,
             preload: false,
             loadThrottle: 350,
+            onInitialize() {
+                this.wrapper.classList.add('user-search-control');
+            },
             placeholder: userSelect.dataset.placeholder || 'Search users',
             shouldLoad: (query) => query.trim().length >= 2,
             load(query, callback) {
