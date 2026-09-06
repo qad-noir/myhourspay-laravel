@@ -48,8 +48,23 @@ class PricingPageTest extends TestCase
         $response = $this->get(route('pricing', ['interval' => 'yearly']));
 
         $response->assertOk()->assertSee('year')->assertSee('Beta access')->assertSee('Premium features are currently available while we test myhourspay.')
+            ->assertSee('data-pricing-page', false)
+            ->assertSee('data-pricing-switch="monthly"', false)
+            ->assertSee('data-pricing-switch="yearly"', false)
+            ->assertSee('data-pricing-panel="monthly"', false)
+            ->assertSee('data-pricing-panel="yearly"', false)
             ->assertDontSee('paid_enforcement_enabled')
             ->assertDontSee('Paid enforcement');
+    }
+
+    public function test_interval_controls_are_client_side_without_interval_navigation_links(): void
+    {
+        $response = $this->get(route('pricing'));
+
+        $response->assertOk()
+            ->assertSee('data-pricing-interval', false)
+            ->assertDontSee('/pricing?interval=monthly')
+            ->assertDontSee('/pricing?interval=yearly');
     }
 
     public function test_public_header_points_to_pricing_and_privacy(): void
