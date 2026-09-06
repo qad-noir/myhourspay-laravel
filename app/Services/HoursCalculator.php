@@ -99,18 +99,24 @@ class HoursCalculator
         ]);
     }
 
-    public function summarizeEntries(iterable $entries, ?string $rangeStart = null, ?string $rangeEnd = null): array
+    public function summarizeEntries(iterable $entries, ?string $rangeStart = null, ?string $rangeEnd = null, bool $retainEntries = true): array
     {
         $items = [];
         $weeks = [];
         $total = 0;
+        $count = 0;
+        $earnings = 0;
         $breakCount = 0;
         $paidBreakMinutes = 0;
         $unpaidBreakMinutes = 0;
 
-        foreach ($entries instanceof Traversable ? iterator_to_array($entries) : $entries as $entry) {
+        foreach ($entries as $entry) {
             $item = $this->enrichEntry($entry);
-            $items[] = $item;
+            if ($retainEntries) {
+                $items[] = $item;
+            }
+            $count++;
+            $earnings += $item['earnings_minor'] ?? 0;
             $total += $item['net_minutes'];
             if ((int) $item['break_minutes'] > 0) {
                 $breakCount++;
@@ -153,9 +159,10 @@ class HoursCalculator
             'weeks' => array_values($weeks),
             'total_minutes' => $total,
             'total_formatted' => $this->formatMinutes($total),
-            'worked_days' => count($items),
-            'average_minutes' => count($items) > 0 ? (int) round($total / count($items)) : 0,
-            'average_formatted' => $this->formatMinutes(count($items) > 0 ? (int) round($total / count($items)) : 0),
+            'worked_days' => $count,
+            'earnings_minor' => $earnings,
+            'average_minutes' => $count > 0 ? (int) round($total / $count) : 0,
+            'average_formatted' => $this->formatMinutes($count > 0 ? (int) round($total / $count) : 0),
             'break_count' => $breakCount,
             'paid_break_minutes' => $paidBreakMinutes,
             'paid_break_formatted' => $this->formatMinutes($paidBreakMinutes),
