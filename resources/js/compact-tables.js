@@ -9,6 +9,12 @@ const initialize = () => {
         const instance = new DataTable(table, {
             serverSide: true, processing: true, autoWidth: false, scrollX: true,
             pageLength: 10, lengthMenu: [10, 25, 50, 100], searchDelay: 350,
+            createdRow: (row, data) => {
+                const columns = JSON.parse(table.dataset.columns);
+                columns.forEach((column, index) => {
+                    if (['net', 'earnings', 'overtime'].includes(column.data)) row.cells[index]?.setAttribute('data-numeric', '');
+                });
+            },
             order: [[0, 'desc']], columns: JSON.parse(table.dataset.columns),
             ajax: async (data, callback) => {
                 const url = new URL(table.dataset.url, window.location.origin);
@@ -32,7 +38,7 @@ const initialize = () => {
                     callback({ draw: data.draw, recordsTotal: 0, recordsFiltered: 0, data: [] });
                 }
             },
-            language: { search: '', searchPlaceholder: 'Search records', lengthMenu: 'Show _MENU_', emptyTable: 'No records found.', zeroRecords: 'No matching records.', processing: 'Loading records…' },
+            language: { search: '', searchPlaceholder: 'Search records', lengthMenu: 'Show _MENU_', emptyTable: 'No records found.', zeroRecords: 'No matching records.', processing: 'Loading records…', paginate: { previous: '← Previous', next: 'Next →', first: 'First', last: 'Last' } },
         });
         wrapper.querySelector('[data-table-retry]').onclick = () => instance.ajax.reload(null, false);
     });
