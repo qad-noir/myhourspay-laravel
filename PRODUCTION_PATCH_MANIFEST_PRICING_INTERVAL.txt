@@ -1,0 +1,11 @@
+resources/views/pricing.blade.php
+resources/css/public-pricing.css
+resources/js/app.js
+resources/js/public-pricing.js
+tests/Feature/PricingPageTest.php
+public/build/manifest.json
+public/build/assets/app-D9o66adT.css
+public/build/assets/app-JhO8AuiV.css
+public/build/assets/app-BCeJpwpe.js
+PRODUCTION_DEPLOYMENT_PRICING_INTERVAL.md
+PRODUCTION_PATCH_MANIFEST_PRICING_INTERVAL.txt
