@@ -17,6 +17,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
+use App\Http\Controllers\PricingController;
 use App\Http\Controllers\ProController;
 use App\Http\Controllers\ProToolsController;
 use App\Http\Controllers\WorkspaceController;
@@ -31,6 +32,7 @@ Route::get('/', function () {
 
 Route::get('/terms', [TermsOfServiceController::class, 'show'])->name('legal.terms');
 Route::get('/policy', [PrivacyPolicyController::class, 'show'])->name('legal.policy');
+Route::get('/pricing', PricingController::class)->name('pricing');
 Route::redirect('/terms-of-service', '/terms')->name('terms.show');
 Route::redirect('/privacy-policy', '/policy')->name('policy.show');
 

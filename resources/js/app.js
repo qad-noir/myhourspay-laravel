@@ -19,6 +19,7 @@ import '../css/billing-lifecycle.css';
 import '../css/select-controls.css';
 import './compact-tables';
 import '../css/legal-pages.css';
+import '../css/public-pricing.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
