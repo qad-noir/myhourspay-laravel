@@ -69,8 +69,8 @@ class PricingPageTest extends TestCase
 
     public function test_public_header_points_to_pricing_and_privacy(): void
     {
-        foreach ([route('pricing'), route('legal.policy'), route('legal.terms')] as $url) {
-            $this->get($url)->assertOk()->assertSee(route('pricing'))->assertSee(route('legal.policy'))->assertSee(route('legal.terms'));
+        foreach ([route('pricing'), route('legal.policy'), route('legal.terms'), route('faq')] as $url) {
+            $this->get($url)->assertOk()->assertSee(route('pricing'))->assertSee(route('legal.policy'))->assertSee(route('legal.terms'))->assertSee(route('faq'));
         }
     }
 

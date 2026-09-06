@@ -15,6 +15,7 @@ use App\Http\Controllers\BusinessToolsController;
 use App\Http\Controllers\CalendarIntegrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
+use App\Http\Controllers\FaqController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
 use App\Http\Controllers\PricingController;
@@ -33,6 +34,7 @@ Route::get('/', function () {
 Route::get('/terms', [TermsOfServiceController::class, 'show'])->name('legal.terms');
 Route::get('/policy', [PrivacyPolicyController::class, 'show'])->name('legal.policy');
 Route::get('/pricing', PricingController::class)->name('pricing');
+Route::get('/faq', FaqController::class)->name('faq');
 Route::redirect('/terms-of-service', '/terms')->name('terms.show');
 Route::redirect('/privacy-policy', '/policy')->name('policy.show');
 

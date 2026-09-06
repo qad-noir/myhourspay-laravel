@@ -11,6 +11,12 @@
 <main data-pricing-page data-initial-interval="{{ $interval }}">
     @php
         $money = fn ($amount, $currency) => (strtolower($currency) === 'gbp' ? '£' : strtoupper($currency).' ').number_format($amount / 100, 2);
+        $faqItems = [
+            ['question' => 'Can I start for free?', 'answer' => 'Yes. The Free plan includes core time tracking and CSV export.'.($checkoutEnabled && config('billing.trial_days') > 0 ? ' Eligible accounts can also start a '.config('billing.trial_days').'-day paid-plan trial. It renews automatically at the selected price unless cancelled before the trial ends.' : '')],
+            ['question' => 'Can I change or cancel my plan?', 'answer' => 'Manage your subscription in Plans & billing. Paid upgrades may apply immediately with proration. Downgrades and cancellation normally take effect at the end of the current trial or paid period.'],
+            ['question' => 'What happens to my records if I downgrade?', 'answer' => 'A downgrade preserves your records. The Free plan limits apply to future use, and your personal data export remains available.'],
+            ['question' => 'Where can I read the privacy policy and terms?', 'answer' => 'Read our privacy policy and terms of service before creating your account.'],
+        ];
     @endphp
     <section class="public-container pricing-intro">
         <p class="public-eyebrow">A plan for the way you work</p>
@@ -93,15 +99,15 @@
         </div>
     </section>
     @endif
-    <section class="public-container pricing-questions">
-        <div><p class="public-eyebrow">Before you choose</p><h2>Clear plans.<br>No guesswork.</h2><p>Need help choosing?<br><a href="mailto:{{ config('site.contact.email') }}">{{ config('site.contact.email') }}</a></p></div>
-        <div>
-            <details open><summary>Can I start for free?</summary><p>Yes. The Free plan includes core time tracking and CSV export.@if($checkoutEnabled && config('billing.trial_days') > 0) Eligible accounts can also start a {{ config('billing.trial_days') }}-day paid-plan trial. It renews automatically at the selected price unless cancelled before the trial ends.@endif</p></details>
-            <details><summary>Can I change or cancel my plan?</summary><p>Manage your subscription in Plans & billing. Paid upgrades may apply immediately with proration. Downgrades and cancellation normally take effect at the end of the current trial or paid period.</p></details>
-            <details><summary>What happens to my records if I downgrade?</summary><p>A downgrade preserves your records. The Free plan’s limits apply to future use, and your personal data export remains available.</p></details>
-            <details><summary>Where can I read the privacy policy and terms?</summary><p>Read our <a href="{{ route('legal.policy') }}">privacy policy</a> and <a href="{{ route('legal.terms') }}">terms of service</a> before creating your account.</p></details>
-        </div>
-    </section>
+    <x-faq-section
+        :items="$faqItems"
+        eyebrow="Before you choose"
+        title="Clear plans. No guesswork."
+        description="Find quick answers about trials, billing, downgrades and keeping your records safe."
+        support-title="Need help choosing?"
+        support-copy="Tell us what you are trying to do and we will help you find the right plan."
+        support-label="Contact support"
+    />
 </main>
 <x-public-footer />
 </body>

@@ -7,6 +7,7 @@
             <a href="{{ url('/#reports') }}">Reports</a>
             <a href="{{ route('legal.policy') }}">Privacy</a>
             <a href="{{ route('pricing') }}">Pricing</a>
+            <a href="{{ route('faq') }}">FAQ</a>
         </nav>
         <div class="public-nav__actions">
             @auth
@@ -23,7 +24,7 @@
         </button>
     </div>
     <nav id="mobile-navigation" class="public-nav__mobile" aria-label="Mobile navigation" hidden data-mobile-nav>
-        <a href="{{ url('/#features') }}">Features</a><a href="{{ url('/#how-it-works') }}">How It Works</a><a href="{{ url('/#reports') }}">Reports</a><a href="{{ route('legal.policy') }}">Privacy</a><a href="{{ route('pricing') }}">Pricing</a>
+        <a href="{{ url('/#features') }}">Features</a><a href="{{ url('/#how-it-works') }}">How It Works</a><a href="{{ url('/#reports') }}">Reports</a><a href="{{ route('legal.policy') }}">Privacy</a><a href="{{ route('pricing') }}">Pricing</a><a href="{{ route('faq') }}">FAQ</a>
         <div>@auth<a href="{{ route('dashboard') }}" class="public-button public-button--primary">Dashboard</a>@else<a href="{{ route('login') }}" class="public-button public-button--ghost">Log in</a>@if (Route::has('register'))<a href="{{ route('register') }}" class="public-button public-button--primary">Create an account</a>@endif@endauth</div>
     </nav>
 </header>
