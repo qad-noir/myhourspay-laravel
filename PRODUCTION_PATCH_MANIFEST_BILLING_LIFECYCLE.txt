@@ -5,6 +5,7 @@ app/Http/Controllers/Admin/AdminController.php
 app/Http/Controllers/Admin/AdminDataController.php
 app/Http/Controllers/BillingController.php
 app/Http/Controllers/BusinessToolsController.php
+app/Http/Controllers/BusinessController.php
 app/Http/Controllers/StripeWebhookController.php
 app/Http/Middleware/EnsureTrialChoice.php
 app/Models/Subscription.php

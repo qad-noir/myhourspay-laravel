@@ -232,18 +232,18 @@ class BusinessController extends Controller
         if ($profile->format === 'csv') {
             return response()->streamDownload(function () use ($profile, $rows): void {
                 $out = fopen('php://output', 'wb');
-                fputcsv($out, $profile->columns);
+                fputcsv($out, collect($profile->columns)->map(fn ($column) => $column === 'earnings_minor' ? 'earnings' : $column)->all());
                 foreach ($rows as $row) {
-                    fputcsv($out, collect($profile->columns)->map(fn ($column) => $row[$column] ?? '')->all());
+                    fputcsv($out, collect($profile->columns)->map(fn ($column) => $this->payrollExportValue($column, $row))->all());
                 } fclose($out);
             }, 'payroll-'.$data['start'].'-'.$data['end'].'.csv', ['Content-Type' => 'text/csv']);
         }
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->fromArray([$profile->columns], null, 'A1');
+        $sheet->fromArray([collect($profile->columns)->map(fn ($column) => $column === 'earnings_minor' ? 'earnings' : $column)->all()], null, 'A1');
         $line = 2;
         foreach ($rows as $row) {
-            $sheet->fromArray([collect($profile->columns)->map(fn ($column) => $row[$column] ?? '')->all()], null, 'A'.$line++);
+            $sheet->fromArray([collect($profile->columns)->map(fn ($column) => $this->payrollExportValue($column, $row))->all()], null, 'A'.$line++);
         } $path = storage_path('app/private/payroll-'.Str::uuid().'.xlsx');
         (new Xlsx($spreadsheet))->save($path);
         $spreadsheet->disconnectWorksheets();
@@ -317,5 +317,14 @@ class BusinessController extends Controller
 
             return ['employee' => $sheet->user->name, 'email' => $sheet->user->email, 'week' => $sheet->week_start->toDateString(), 'regular_minutes' => min($minutes, $target), 'overtime_minutes' => max(0, $minutes - $target), 'paid_break_minutes' => $sheet->entries->where('break_type', 'paid')->sum('break_minutes'), 'unpaid_break_minutes' => $sheet->entries->where('break_type', 'unpaid')->sum('break_minutes'), 'earnings_minor' => $sheet->entries->sum('earnings_minor'), 'currency' => $sheet->entries->pluck('currency')->filter()->first() ?? 'GBP'];
         })->all();
+    }
+
+    private function payrollExportValue(string $column, array $row): mixed
+    {
+        if ($column === 'earnings_minor') {
+            return number_format(((int) ($row[$column] ?? 0)) / 100, 2, '.', '');
+        }
+
+        return $row[$column] ?? '';
     }
 }

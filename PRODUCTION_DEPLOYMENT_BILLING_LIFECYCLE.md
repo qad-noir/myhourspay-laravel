@@ -22,6 +22,6 @@
 
 - Payroll profiles default to the latest approved or locked week in the current workspace.
 - An unapproved profile shows the links Log hours and Review/View timesheets plus the approval sequence.
-- `earnings_minor` remains an integer minor-unit value. For example, `20560` means £205.60.
+- Earnings remain safely stored as integer minor units internally (`20560` means £205.60), but payroll CSV and Excel exports now write `205.60` in the Earnings column and keep `GBP` in the Currency column.
 
 The patch does not alter Stripe prices, create charges, change the hosted webhook destination, or include environment files.

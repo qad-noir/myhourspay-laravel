@@ -284,7 +284,7 @@ class BusinessPlatformTest extends TestCase
         $this->actingAs($payroll)->get(route('business.payroll.index'))->assertOk()->assertSee('Ask a workspace owner, administrator or manager')->assertSee('View timesheets')->assertDontSee('name="start"', false);
     }
 
-    public function test_csv_and_excel_keep_the_verified_earnings_minor_value(): void
+    public function test_csv_and_excel_export_earnings_in_normal_currency_units(): void
     {
         [$owner, $workspace] = $this->workspaceUser();
         $sheet = $workspace->timesheets()->create(['user_id' => $owner->id, 'week_start' => '2026-08-31', 'status' => 'approved']);
@@ -293,12 +293,13 @@ class BusinessPlatformTest extends TestCase
         DB::table('hours_entries')->where('timesheet_id', $sheet->id)->update(['hourly_rate_minor' => 2570, 'earnings_minor' => 20560]);
         $profile = $workspace->payrollProfiles()->create(['name' => 'Earnings', 'format' => 'csv', 'columns' => ['week', 'earnings_minor', 'currency']]);
         $url = route('business.payroll.download', ['profile' => $profile, 'start' => '2026-08-31', 'end' => '2026-09-06']);
-        $this->assertStringContainsString('2026-08-31,20560,GBP', $this->actingAs($owner)->get($url)->streamedContent());
+        $csv = preg_replace('/\R+/', "\n", $this->actingAs($owner)->get($url)->streamedContent());
+        $this->assertStringContainsString("week,earnings,currency\n2026-08-31,205.60,GBP", $csv);
         $profile->update(['format' => 'xlsx']);
         $response = $this->get($url)->assertOk()->assertDownload('payroll-2026-08-31-2026-09-06.xlsx');
         $path = $response->baseResponse->getFile()->getPathname();
         $book = IOFactory::load($path);
-        $this->assertEquals(20560, $book->getActiveSheet()->getCell('B2')->getValue());
+        $this->assertEquals('205.60', $book->getActiveSheet()->getCell('B2')->getValue());
         $book->disconnectWorksheets();
         unlink($path);
     }
