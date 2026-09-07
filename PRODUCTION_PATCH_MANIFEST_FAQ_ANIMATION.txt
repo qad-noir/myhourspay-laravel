@@ -1,0 +1,9 @@
+resources/js/public-faq.js
+resources/css/public-faq.css
+resources/views/components/faq-section.blade.php
+public/build/manifest.json
+public/build/assets/app-2fTau7gF.css
+public/build/assets/app-BaOgTJGK.css
+public/build/assets/app-CH4M9f4H.js
+PRODUCTION_DEPLOYMENT_FAQ_ANIMATION.md
+PRODUCTION_PATCH_MANIFEST_FAQ_ANIMATION.txt
