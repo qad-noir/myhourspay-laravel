@@ -173,6 +173,55 @@ class AdminBillingTest extends TestCase
             ->assertSee('1 retired price retained for subscription history.');
     }
 
+    public function test_price_versioning_accepts_a_database_foreign_key_returned_as_text(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $plan = Plan::query()->where('key', 'pro')->firstOrFail();
+        $current = $plan->prices()->where('kind', 'base')->where('interval', 'monthly')->where('active', true)->firstOrFail();
+        $url = route('admin.billing.plans.prices.update', [$plan, $current]);
+        $this->actingAs($admin)->get(route('admin.billing.plans'))->assertSee('action="'.$url.'"', false);
+
+        // Some PDO drivers hydrate numeric foreign keys as strings.
+        $dispatcher = PlanPrice::getEventDispatcher();
+        PlanPrice::setEventDispatcher(clone $dispatcher);
+        PlanPrice::retrieved(function (PlanPrice $price): void {
+            $price->setRawAttributes(array_replace($price->getAttributes(), [
+                'plan_id' => (string) $price->getRawOriginal('plan_id'),
+            ]), true);
+        });
+
+        try {
+            $this->actingAs($admin)->put($url, [
+                'amount' => '6.25',
+                'reason' => 'Version a price with a string database foreign key',
+                'confirmed' => 1,
+            ])->assertRedirect(route('admin.billing.plans'))->assertSessionHasNoErrors();
+
+            $this->assertFalse($current->fresh()->active);
+            $this->assertSame(625, $plan->prices()->where('kind', 'base')->where('interval', 'monthly')->where('active', true)->sole()->amount);
+        } finally {
+            PlanPrice::setEventDispatcher($dispatcher);
+        }
+    }
+
+    public function test_price_versioning_rejects_a_price_belonging_to_another_plan(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $plan = Plan::query()->where('key', 'pro')->firstOrFail();
+        $price = PlanPrice::query()->where('plan_id', '!=', $plan->id)->where('active', true)->firstOrFail();
+        $count = PlanPrice::query()->count();
+
+        $this->actingAs($admin)->put(route('admin.billing.plans.prices.update', [$plan, $price]), [
+            'amount' => '6.25',
+            'reason' => 'Attempt to version a price under the wrong plan',
+            'confirmed' => 1,
+        ])->assertNotFound();
+
+        $this->assertTrue($price->fresh()->active);
+        $this->assertDatabaseCount('plan_prices', $count);
+        $this->assertDatabaseMissing('admin_audit_logs', ['action' => 'billing.plan_price_versioned']);
+    }
+
     public function test_checkout_cannot_be_enabled_with_an_incomplete_active_catalogue(): void
     {
         $admin = User::factory()->create(['is_admin' => true]);

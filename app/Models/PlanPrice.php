@@ -12,7 +12,7 @@ class PlanPrice extends Model
 
     protected function casts(): array
     {
-        return ['amount' => 'integer', 'tax_inclusive' => 'boolean', 'active' => 'boolean'];
+        return ['plan_id' => 'integer', 'amount' => 'integer', 'tax_inclusive' => 'boolean', 'active' => 'boolean'];
     }
 
     public function plan(): BelongsTo
