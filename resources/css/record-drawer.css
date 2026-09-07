@@ -16,6 +16,9 @@
 .record-drawer .dashboard-form-field [aria-invalid=true] { border-color: var(--brand-orange-dark); }
 .record-drawer .dashboard-button { min-height: 44px; }
 .record-drawer .dashboard-form-errors { font-size: 12px; }
+.record-drawer__existing, .record-drawer__lookup { display: grid; gap: 3px; margin-bottom: 18px; border-radius: 10px; padding: 12px 13px; color: #2f7658; background: #edf9f2; font-size: 12px; line-height: 1.4; }
+.record-drawer__existing span, .record-drawer__lookup { color: var(--brand-muted); }
+.record-drawer__existing strong { color: #2f7658; }
 .mhp-add-prompt { visibility: visible; }
 .mhp-add-prompt:focus-visible { opacity: 1; outline: 2px solid var(--brand-violet); outline-offset: 2px; }
 .record-drawer .net-preview small { color: var(--brand-muted); font-size: 11px; }

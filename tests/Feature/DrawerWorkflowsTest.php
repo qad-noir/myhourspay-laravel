@@ -78,6 +78,31 @@ class DrawerWorkflowsTest extends TestCase
         $this->assertSoftDeleted($entry);
     }
 
+    public function test_existing_entry_lookup_is_scoped_and_returns_editable_values(): void
+    {
+        [$user, $workspace] = $this->workspaceUser();
+        $entry = $workspace->hoursEntries()->create([
+            'user_id' => $user->id,
+            'work_date' => '2026-08-03',
+            'start_time' => '09:15',
+            'end_time' => '17:00',
+            'break_minutes' => 30,
+            'break_type' => 'unpaid',
+            'notes' => 'Already recorded',
+            'billable' => true,
+        ]);
+
+        $this->actingAs($user)->getJson(route('hours.entries.existing', ['date' => '2026-08-03']))
+            ->assertOk()
+            ->assertJsonPath('entry.id', $entry->id)
+            ->assertJsonPath('entry.start_time', '09:15')
+            ->assertJsonPath('entry.notes', 'Already recorded')
+            ->assertJsonPath('entry.billable', true);
+        $this->actingAs($user)->getJson(route('hours.entries.existing', ['date' => '2026-08-04']))
+            ->assertOk()->assertJsonPath('entry', null);
+        $this->actingAs($user)->getJson(route('hours.entries.existing', ['date' => 'not-a-date']))->assertNotFound();
+    }
+
     public function test_hours_json_requests_cannot_modify_another_users_entry(): void
     {
         [$user] = $this->workspaceUser();

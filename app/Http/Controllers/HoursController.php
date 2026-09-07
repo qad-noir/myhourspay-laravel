@@ -69,6 +69,30 @@ class HoursController extends Controller
         ])->header('Cache-Control', 'private, no-store');
     }
 
+    public function existing(Request $request, string $date): JsonResponse
+    {
+        $entry = $request->user()->hoursEntries()
+            ->forWorkspace($this->current->for($request->user()))
+            ->whereDate('work_date', $date)
+            ->with('project')
+            ->first();
+
+        return response()->json([
+            'entry' => $entry ? [
+                'id' => $entry->id,
+                'work_date' => $entry->work_date->toDateString(),
+                'start_time' => substr($entry->start_time, 0, 5),
+                'end_time' => substr($entry->end_time, 0, 5),
+                'break_minutes' => $entry->break_minutes,
+                'break_type' => $entry->break_type,
+                'notes' => $entry->notes,
+                'project_id' => $entry->project_id,
+                'billable' => (bool) $entry->billable,
+                'project_name' => $entry->project?->name,
+            ] : null,
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
     public function store(StoreHoursEntryRequest $request): RedirectResponse|JsonResponse
     {
         try {

@@ -235,6 +235,7 @@ Route::middleware([
             Route::prefix('hours')->name('hours.')->controller(HoursController::class)->group(function (): void {
                 Route::get('/', 'index')->name('index');
                 Route::get('/events', 'events')->name('events');
+                Route::get('/entries/existing/{date}', 'existing')->where('date', '\\d{4}-\\d{2}-\\d{2}')->name('entries.existing');
                 Route::post('/entries', 'store')->middleware('workspace.writable')->name('entries.store');
                 Route::patch('/entries/{hoursEntry}', 'update')->middleware('workspace.writable')->name('entries.update');
                 Route::delete('/entries/{hoursEntry}', 'destroy')->middleware('workspace.writable')->name('entries.destroy');

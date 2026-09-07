@@ -417,13 +417,30 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
     ...window.recordDrawer({ url, defaults: { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' } }),
     notice: '',
     noticeTimer: null,
+    checkingEntry: false,
     init() {
         window.recordDrawer({}).init.call(this);
         if (openInitially) this.showForm(initialEntry, initialEntry ? {} : { work_date: initialDate });
     },
-    openEntry(date, entry = null, trigger = document.activeElement) {
+    async openEntry(date, entry = null, trigger = document.activeElement) {
+        this.checkingEntry = !entry;
         this.showForm(entry, { work_date: date }, trigger);
         document.querySelector('[data-hours-tooltip]')?.remove();
+        if (entry) return;
+        try {
+            const response = await fetch(`${url}/existing/${encodeURIComponent(date)}`, { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Lookup failed');
+            const payload = await response.json();
+            if (payload.entry) {
+                this.editing = true;
+                this.form = { ...this.form, ...payload.entry };
+                this.baseline = JSON.stringify(this.form);
+            }
+        } catch (_) {
+            this.message = 'We could not check for an existing entry. You can still try to add hours.';
+        } finally {
+            this.checkingEntry = false;
+        }
     },
     saved(payload, deleting) {
         this.showNotice(deleting ? 'Hours entry deleted.' : 'Hours entry saved.');
