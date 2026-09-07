@@ -1,8 +1,0 @@
-resources/js/app.js
-resources/css/select-controls.css
-public/build/manifest.json
-public/build/assets/app-Ss4oZQhZ.css
-public/build/assets/app-JhO8AuiV.css
-public/build/assets/app-Bye3Bfw_.js
-PRODUCTION_DEPLOYMENT_USER_SELECTION.md
-PRODUCTION_PATCH_MANIFEST_USER_SELECTION.txt

@@ -30,3 +30,10 @@ Thumbs.db
 *.zip
 /production-patches
 /deployment-notes
+
+# Local deployment handoff files belong in /deployment-notes.
+/PRODUCTION-DEPLOY.md
+/PRODUCTION_DEPLOYMENT*.md
+/PRODUCTION_PATCH_MANIFEST*.txt
+/PATCH_SHA256*.txt
+/LEGAL_DRAFT_COMPLETION.md
