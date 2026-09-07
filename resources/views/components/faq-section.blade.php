@@ -26,7 +26,7 @@
             <details name="public-faq" class="group rounded-lg bg-neutral-100" @if($loop->first) open @endif>
                 <summary class="flex min-h-[66px] cursor-pointer list-none items-center justify-between gap-4 rounded-lg px-5 py-[18px] text-base font-medium leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-orange)] focus-visible:outline-offset-2 sm:px-6">
                     <span>{{ $item['question'] }}</span>
-                    <span class="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-lg bg-neutral-200 group-open:bg-[var(--brand-ink)] group-open:text-white" aria-hidden="true"><svg class="h-4 w-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-7-7 7 7 7-7"/></svg></span>
+                    <span data-faq-indicator class="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-lg bg-neutral-200 transition-colors duration-300 group-open:bg-[var(--brand-ink)] group-open:text-white motion-reduce:transition-none" aria-hidden="true"><svg class="h-4 w-4 transition-transform duration-300 group-open:rotate-180 motion-reduce:transition-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-7-7 7 7 7-7"/></svg></span>
                 </summary>
                 <div class="px-5 pb-5 sm:px-6"><p class="m-0 text-base leading-7 text-[var(--brand-muted)]">{{ $item['answer'] }}</p>
                     @if(!empty($item['links']))

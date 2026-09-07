@@ -1,1 +1,10 @@
 .public-faq summary::-webkit-details-marker{display:none}
+
+/* Reflect the requested state while a closing details element is still open. */
+.public-faq [data-faq-expanded="false"] [data-faq-indicator] {
+    color: var(--brand-ink);
+    background-color: #e5e5e5;
+}
+.public-faq [data-faq-expanded="false"] [data-faq-indicator] svg {
+    transform: rotate(0deg);
+}
