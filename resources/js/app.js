@@ -25,6 +25,7 @@ import './public-faq';
 import '../css/public-faq.css';
 import './record-drawer';
 import '../css/record-drawer.css';
+import '../css/dashboard-toast.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
@@ -415,10 +416,9 @@ document.addEventListener('click', (event) => {
 window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry = null, initialDate = null, openInitially = false, url = '/hours/entries') => ({
     ...window.recordDrawer({ url, defaults: { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' } }),
     notice: '',
+    noticeTimer: null,
     init() {
         window.recordDrawer({}).init.call(this);
-        this.notice = sessionStorage.getItem('hours-drawer-notice') || '';
-        sessionStorage.removeItem('hours-drawer-notice');
         if (openInitially) this.showForm(initialEntry, initialEntry ? {} : { work_date: initialDate });
     },
     openEntry(date, entry = null, trigger = document.activeElement) {
@@ -426,13 +426,18 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
         document.querySelector('[data-hours-tooltip]')?.remove();
     },
     saved(payload, deleting) {
-        this.notice = deleting ? 'Hours entry deleted.' : 'Hours entry saved.';
+        this.showNotice(deleting ? 'Hours entry deleted.' : 'Hours entry saved.');
         window.hoursFullCalendar?.gotoDate(payload.work_date);
         window.hoursFullCalendar?.refetchEvents();
-        if (!window.hoursFullCalendar) {
-            sessionStorage.setItem('hours-drawer-notice', this.notice);
-            setTimeout(() => window.Livewire.navigate(window.location.href), 250);
-        }
+    },
+    showNotice(message) {
+        window.clearTimeout(this.noticeTimer);
+        this.notice = message;
+        this.noticeTimer = window.setTimeout(() => { this.notice = ''; }, 5000);
+    },
+    clearNotice() {
+        window.clearTimeout(this.noticeTimer);
+        this.notice = '';
     },
     get preview() {
         const parse = (value) => { const parts = String(value).split(':').map(Number); return parts.length === 2 ? parts[0] * 60 + parts[1] : Number.NaN; };

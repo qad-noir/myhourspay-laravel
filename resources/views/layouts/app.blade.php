@@ -27,7 +27,11 @@
             @hours-day-selected.window="openEntry($event.detail.date, $event.detail.entry, $event.detail.trigger)"
             @open-hours.window="openEntry($event.detail?.date || @js(now(config('hours.timezone'))->toDateString()), $event.detail?.entry || null, $event.detail?.trigger || document.activeElement)">
             <x-dashboard.hours-form />
-            <p x-cloak x-show="notice && !open" x-text="notice" role="status" class="fixed bottom-5 right-5 z-50 max-w-[calc(100vw-40px)] rounded-xl border bg-white px-5 py-3 text-sm font-semibold shadow-lg"></p>
+            <div x-cloak x-show="notice && !open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-2 opacity-0" class="dashboard-toast dashboard-toast--success" role="status" aria-live="polite">
+                <span class="dashboard-toast__icon" aria-hidden="true"><x-dashboard.icon name="check" :size="15" /></span>
+                <span class="dashboard-toast__message" x-text="notice"></span>
+                <button type="button" class="dashboard-toast__close" @click="clearNotice()" aria-label="Dismiss notification"><x-dashboard.icon name="close" :size="14" /></button>
+            </div>
         </div>
         @stack('modals')
 

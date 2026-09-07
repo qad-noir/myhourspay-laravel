@@ -1,0 +1,57 @@
+/* Compact success alert for actions completed in the workspace. */
+.dashboard-toast {
+    position: fixed;
+    z-index: 120;
+    right: 24px;
+    bottom: 20px;
+    display: flex;
+    width: max-content;
+    max-width: min(390px, calc(100vw - 32px));
+    min-height: 52px;
+    align-items: center;
+    gap: 11px;
+    border: 1px solid #e4e0e7;
+    border-radius: 13px;
+    padding: 8px 10px 8px 12px;
+    color: var(--brand-ink);
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(23, 20, 33, .14), 0 2px 7px rgba(23, 20, 33, .06);
+    font: 700 13px/1.35 'DM Sans', sans-serif;
+}
+.dashboard-toast::before {
+    position: absolute;
+    inset: 9px auto 9px -1px;
+    width: 3px;
+    border-radius: 3px;
+    content: '';
+    background: var(--brand-green);
+}
+.dashboard-toast__icon {
+    display: grid;
+    width: 27px;
+    height: 27px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 8px;
+    color: #2f815f;
+    background: #eaf8f1;
+}
+.dashboard-toast__message { overflow-wrap: anywhere; }
+.dashboard-toast__close {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    color: var(--brand-muted);
+    background: transparent;
+    cursor: pointer;
+}
+.dashboard-toast__close:hover { background: #f4f1f5; color: var(--brand-ink); }
+.dashboard-toast__close:focus-visible { outline: 3px solid rgba(130, 104, 255, .25); outline-offset: 2px; }
+@media (max-width: 620px) {
+    .dashboard-toast { right: 16px; bottom: 16px; left: 16px; width: auto; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .dashboard-toast { transition-duration: 0ms !important; } }
