@@ -28,3 +28,5 @@ Thumbs.db
 /.history
 /docs
 *.zip
+/production-patches
+/deployment-notes
