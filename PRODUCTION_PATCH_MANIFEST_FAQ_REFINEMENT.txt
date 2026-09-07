@@ -1,0 +1,10 @@
+resources/views/components/faq-section.blade.php
+resources/views/faq.blade.php
+resources/views/pricing.blade.php
+tailwind.config.js
+public/build/manifest.json
+public/build/assets/app-CafFtrDf.css
+public/build/assets/app-CUrbQWvl.css
+public/build/assets/app-D-IIBdps.js
+PRODUCTION_DEPLOYMENT_FAQ_REFINEMENT.md
+PRODUCTION_PATCH_MANIFEST_FAQ_REFINEMENT.txt
