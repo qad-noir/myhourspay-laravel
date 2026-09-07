@@ -3,7 +3,9 @@
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="{{ asset('favicon.ico') }}"><x-site-meta title="Pricing · myhourspay" description="Compare myhourspay plans for personal time tracking, professional reports and team approvals." />
-    <link rel="preconnect" href="https://fonts.bunny.net"><link href="https://fonts.bunny.net/css?family=dm-sans:400,500,600,700&family=manrope:500,600,700,800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=dm-sans:400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=manrope:500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="public-body public-page-body">
@@ -15,7 +17,7 @@
             ['question' => 'Can I start for free?', 'answer' => 'Yes. The Free plan includes core time tracking and CSV export.'.($checkoutEnabled && config('billing.trial_days') > 0 ? ' Eligible accounts can also start a '.config('billing.trial_days').'-day paid-plan trial. It renews automatically at the selected price unless cancelled before the trial ends.' : '')],
             ['question' => 'Can I change or cancel my plan?', 'answer' => 'Manage your subscription in Plans & billing. Paid upgrades may apply immediately with proration. Downgrades and cancellation normally take effect at the end of the current trial or paid period.'],
             ['question' => 'What happens to my records if I downgrade?', 'answer' => 'A downgrade preserves your records. The Free plan limits apply to future use, and your personal data export remains available.'],
-            ['question' => 'Where can I read the privacy policy and terms?', 'answer' => 'Read our privacy policy and terms of service before creating your account.'],
+            ['question' => 'Where can I read the privacy policy and terms?', 'answer' => 'Read our privacy policy and terms of service before creating your account.', 'links' => [['label' => 'Privacy policy', 'url' => route('legal.policy')], ['label' => 'Terms of service', 'url' => route('legal.terms')]]],
         ];
     @endphp
     <section class="public-container pricing-intro">

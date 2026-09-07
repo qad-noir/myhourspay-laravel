@@ -7,28 +7,39 @@
     'supportCopy' => 'We are here to help. Get in touch with our support team for a clear answer.',
     'supportLabel' => 'Contact support',
     'supportHref' => 'mailto:'.config('site.contact.email'),
+    'standalone' => false,
 ])
 
-<section class="public-container public-faq grid grid-cols-1 gap-10 pb-20 pt-28 lg:grid-cols-[.9fr_1.1fr] lg:gap-[72px] lg:pb-[104px] lg:pt-36" data-faq-group>
-    <div class="flex flex-col items-start">
-        <span class="inline-flex items-center gap-2 rounded-full border border-[var(--brand-ink)] px-3.5 py-2 text-xs font-bold text-[var(--brand-ink)]"><span aria-hidden="true" class="text-base leading-none">✣</span>{{ $eyebrow }}</span>
-        <h2 class="mb-[18px] mt-[22px] max-w-[500px] font-[Manrope] text-[clamp(34px,4.2vw,54px)] font-extrabold leading-[1.05] tracking-[-.055em] text-[var(--brand-ink)]">{{ $title }}</h2>
-        <p class="m-0 max-w-[520px] text-base leading-[1.7] text-[var(--brand-muted)]">{{ $description }}</p>
-        <div class="mt-[38px] w-full max-w-[620px] rounded-[17px] border border-[#ddd7df] p-7 shadow-[0_5px_12px_rgba(23,20,33,.05)] lg:mt-auto">
-            <h3 class="mb-[13px] font-[Manrope] text-2xl font-extrabold tracking-[-.035em] text-[var(--brand-ink)]">{{ $supportTitle }}</h3>
-            <p class="mb-[23px] max-w-[450px] text-sm leading-[1.65] text-[var(--brand-muted)]">{{ $supportCopy }}</p>
-            <a class="inline-flex items-center gap-2.5 rounded-full border-2 border-[#8f8a91] bg-[var(--brand-ink)] px-4 py-2 text-[13px] font-bold text-white shadow-[inset_0_0_0_2px_var(--brand-ink),0_0_0_2px_white] transition-colors hover:bg-[var(--brand-violet)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[var(--brand-orange)] focus-visible:outline-offset-3" href="{{ $supportHref }}">{{ $supportLabel }} <span aria-hidden="true" class="text-[17px] leading-none">↗</span></a>
-        </div>
+<section class="public-faq bg-white font-body text-[var(--brand-ink)] {{ $standalone ? 'pt-32 lg:pt-44' : 'pt-16 lg:pt-24' }} pb-16 lg:pb-24" data-faq-group aria-labelledby="faq-heading">
+    <div class="public-container grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-2 xl:gap-x-24">
+    <div>
+        <span class="inline-flex items-center gap-2 rounded-full border border-[var(--brand-ink)] px-3.5 py-2 text-sm font-medium leading-5"><span aria-hidden="true" class="text-lg leading-none">✣</span>{{ $eyebrow }}</span>
+        @if($standalone)
+            <h1 id="faq-heading" class="mb-5 mt-5 font-heading text-3xl font-semibold leading-tight tracking-tight sm:text-[38px]">{{ $title }}</h1>
+        @else
+            <h2 id="faq-heading" class="mb-5 mt-5 font-heading text-3xl font-semibold leading-tight tracking-tight sm:text-[38px]">{{ $title }}</h2>
+        @endif
+        <p class="m-0 text-base leading-7 text-[var(--brand-muted)]">{{ $description }}</p>
     </div>
-    <div class="grid content-start gap-[18px] pt-0.5 max-lg:gap-3">
+    <div class="grid content-start gap-5 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         @foreach($items as $item)
-            <details class="group overflow-hidden rounded-[10px] bg-[#f5f4f4] open:bg-[#f1f0f0]" @if($loop->first) open @endif>
-                <summary class="flex cursor-pointer list-none items-center justify-between gap-[18px] px-[22px] py-[22px] font-[Manrope] text-[15px] font-bold text-[var(--brand-ink)] focus-visible:outline focus-visible:outline-3 focus-visible:outline-[var(--brand-orange)] focus-visible:outline-offset-3">
+            <details name="public-faq" class="group rounded-lg bg-neutral-100" @if($loop->first) open @endif>
+                <summary class="flex min-h-[66px] cursor-pointer list-none items-center justify-between gap-4 rounded-lg px-5 py-[18px] text-base font-medium leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-orange)] focus-visible:outline-offset-2 sm:px-6">
                     <span>{{ $item['question'] }}</span>
-                    <span class="grid h-[30px] w-[30px] flex-none place-items-center rounded-[9px] bg-[#dedddd] text-lg font-normal leading-none text-[var(--brand-ink)] transition-all group-open:rotate-180 group-open:bg-[var(--brand-ink)] group-open:text-white" aria-hidden="true">↓</span>
+                    <span class="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-lg bg-neutral-200 group-open:bg-[var(--brand-ink)] group-open:text-white" aria-hidden="true"><svg class="h-4 w-4 transition-transform group-open:rotate-180 motion-reduce:transition-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-7-7 7 7 7-7"/></svg></span>
                 </summary>
-                <div class="px-[22px] pb-[22px]"><p class="m-0 max-w-[600px] text-sm leading-[1.7] text-[#706d70]">{{ $item['answer'] }}</p></div>
+                <div class="px-5 pb-5 sm:px-6"><p class="m-0 text-base leading-7 text-[var(--brand-muted)]">{{ $item['answer'] }}</p>
+                    @if(!empty($item['links']))
+                        <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">@foreach($item['links'] as $link)<a class="text-sm font-medium underline underline-offset-4 hover:text-[var(--brand-orange)]" href="{{ $link['url'] }}">{{ $link['label'] }}</a>@endforeach</div>
+                    @endif
+                </div>
             </details>
         @endforeach
+    </div>
+    <div class="self-end rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm lg:col-start-1 lg:row-start-2 sm:p-7">
+        <h3 class="mb-3 font-heading text-2xl font-semibold leading-tight tracking-tight">{{ $supportTitle }}</h3>
+        <p class="mb-6 text-base leading-7 text-[var(--brand-muted)]">{{ $supportCopy }}</p>
+        <a class="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-neutral-400 bg-[var(--brand-ink)] px-5 py-2 text-base font-semibold text-white ring-1 ring-neutral-300 transition-colors hover:bg-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand-orange)] focus-visible:outline-offset-4" href="{{ $supportHref }}">{{ $supportLabel }} <svg class="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M6 6h12v12"/></svg></a>
+    </div>
     </div>
 </section>

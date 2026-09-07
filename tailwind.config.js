@@ -15,6 +15,8 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                heading: ['Manrope', ...defaultTheme.fontFamily.sans],
+                body: ['DM Sans', ...defaultTheme.fontFamily.sans],
             },
         },
     },
