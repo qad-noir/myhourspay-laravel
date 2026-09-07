@@ -69,40 +69,56 @@ class HoursController extends Controller
         ])->header('Cache-Control', 'private, no-store');
     }
 
-    public function store(StoreHoursEntryRequest $request): RedirectResponse
+    public function store(StoreHoursEntryRequest $request): RedirectResponse|JsonResponse
     {
         try {
             $request->user()->hoursEntries()->create([...$request->validated(), 'workspace_id' => $this->current->for($request->user())->id]);
         } catch (QueryException $exception) {
             if ($this->isUniqueViolation($exception)) {
+                if ($request->expectsJson()) {
+                    return response()->json(['errors' => ['work_date' => ['An entry already exists for that date.']]], 422);
+                }
                 return back()->withInput()->withErrors(['work_date' => 'An entry already exists for that date.']);
             }
             throw $exception;
         }
 
+        if ($request->expectsJson()) {
+            return response()->json(['saved' => true, 'work_date' => $request->validated('work_date')], 201);
+        }
         return to_route('hours.index', ['month' => substr($request->validated('work_date'), 0, 7)])->with('status', 'Hours entry saved.');
     }
 
-    public function update(UpdateHoursEntryRequest $request, HoursEntry $hoursEntry): RedirectResponse
+    public function update(UpdateHoursEntryRequest $request, HoursEntry $hoursEntry): RedirectResponse|JsonResponse
     {
         Gate::authorize('update', $hoursEntry);
         try {
             $hoursEntry->update($request->validated());
         } catch (QueryException $exception) {
             if ($this->isUniqueViolation($exception)) {
+                if ($request->expectsJson()) {
+                    return response()->json(['errors' => ['work_date' => ['An entry already exists for that date.']]], 422);
+                }
                 return back()->withInput()->withErrors(['work_date' => 'An entry already exists for that date.']);
             }
             throw $exception;
         }
 
+        if ($request->expectsJson()) {
+            return response()->json(['saved' => true, 'work_date' => $hoursEntry->work_date->toDateString()]);
+        }
         return to_route('hours.index', ['month' => $hoursEntry->work_date->format('Y-m')])->with('status', 'Hours entry updated.');
     }
 
-    public function destroy(Request $request, HoursEntry $hoursEntry): RedirectResponse
+    public function destroy(Request $request, HoursEntry $hoursEntry): RedirectResponse|JsonResponse
     {
         Gate::authorize('delete', $hoursEntry);
         $month = $hoursEntry->work_date->format('Y-m');
         $hoursEntry->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['saved' => true, 'work_date' => $hoursEntry->work_date->toDateString()]);
+        }
 
         return to_route('hours.index', ['month' => $month])->with('status', 'Hours entry deleted.');
     }

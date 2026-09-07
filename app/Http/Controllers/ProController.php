@@ -17,6 +17,7 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -85,13 +86,45 @@ class ProController extends Controller
         return back()->with('status', 'Effective pay rate saved. Existing entries retain their snapshotted rate.');
     }
 
-    public function storeExpectedSchedule(Request $request): RedirectResponse
+    public function storeExpectedSchedule(Request $request): RedirectResponse|JsonResponse
     {
         $workspace = $this->current->for($request->user());
-        $data = $request->validate(['project_id' => ['nullable', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)], 'day_of_week' => ['required', 'integer', 'between:1,7'], 'start_time' => ['required', 'date_format:H:i'], 'end_time' => ['required', 'date_format:H:i', 'after:start_time'], 'break_minutes' => ['required', 'integer', 'min:0', 'max:1439'], 'break_type' => ['required', Rule::in(['paid', 'unpaid'])], 'starts_on' => ['nullable', 'date'], 'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on']]);
-        $workspace->expectedSchedules()->create([...$data, 'user_id' => $request->user()->id]);
+        $data = $this->scheduleData($request);
+        $schedule = $workspace->expectedSchedules()->create([...$data, 'user_id' => $request->user()->id]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['saved' => true, 'schedule' => $schedule->load('project')], 201);
+        }
 
         return back()->with('status', 'Weekly schedule suggestion saved. It will never create worked hours automatically.');
+    }
+
+    public function updateExpectedSchedule(Request $request, ExpectedSchedule $schedule): RedirectResponse|JsonResponse
+    {
+        $this->guardWorkspace($request, $schedule->workspace_id);
+        abort_unless((int) $schedule->user_id === (int) $request->user()->id, 403);
+        $schedule->update($this->scheduleData($request));
+
+        return $request->expectsJson()
+            ? response()->json(['saved' => true, 'schedule' => $schedule->fresh()->load('project')])
+            : back()->with('status', 'Schedule updated. Worked hours are unchanged.');
+    }
+
+    public function destroyExpectedSchedule(Request $request, ExpectedSchedule $schedule): RedirectResponse|JsonResponse
+    {
+        $this->guardWorkspace($request, $schedule->workspace_id);
+        abort_unless((int) $schedule->user_id === (int) $request->user()->id, 403);
+        $schedule->delete();
+
+        return $request->expectsJson()
+            ? response()->json(['saved' => true])
+            : back()->with('status', 'Schedule deleted. Worked hours are unchanged.');
+    }
+
+    private function scheduleData(Request $request): array
+    {
+        $workspace = $this->current->for($request->user());
+        return $request->validate(['project_id' => ['nullable', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)], 'day_of_week' => ['required', 'integer', 'between:1,7'], 'start_time' => ['required', 'date_format:H:i'], 'end_time' => ['required', 'date_format:H:i', 'after:start_time'], 'break_minutes' => ['required', 'integer', 'min:0', 'max:1439'], 'break_type' => ['required', Rule::in(['paid', 'unpaid'])], 'starts_on' => ['nullable', 'date'], 'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on']]);
     }
 
     public function convertSchedule(Request $request, ExpectedSchedule $schedule): RedirectResponse

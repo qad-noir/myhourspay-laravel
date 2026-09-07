@@ -200,6 +200,8 @@ Route::middleware([
                 Route::delete('/projects/{project}', 'deleteProject')->middleware(['feature:clients_projects', 'workspace.writable'])->name('projects.destroy');
                 Route::post('/rates', 'storeRate')->middleware(['feature:earnings', 'workspace.writable'])->name('rates.store');
                 Route::post('/schedules', 'storeExpectedSchedule')->middleware(['feature:recurring_schedules', 'workspace.writable'])->name('schedules.store');
+                Route::patch('/schedules/{schedule}', 'updateExpectedSchedule')->middleware(['feature:recurring_schedules', 'workspace.writable'])->name('schedules.update');
+                Route::delete('/schedules/{schedule}', 'destroyExpectedSchedule')->middleware(['feature:recurring_schedules', 'workspace.writable'])->name('schedules.destroy');
                 Route::post('/schedules/{schedule}/convert', 'convertSchedule')->middleware(['feature:recurring_schedules', 'workspace.writable'])->name('schedules.convert');
                 Route::put('/reminders', 'updateReminders')->middleware('feature:smart_reminders')->name('reminders.update');
                 Route::post('/report-templates', 'storeTemplate')->middleware(['feature:export_templates', 'workspace.writable'])->name('templates.store');
