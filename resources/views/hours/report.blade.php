@@ -37,7 +37,7 @@
         </div>
         @if ($summary['worked_days'] === 0)
             <x-dashboard.empty-state title="No hours in this period" description="Change the date range or add an hours record from the calendar.">
-                <x-slot name="action"><a wire:navigate href="{{ route('hours.index', ['add' => 1]) }}" class="dashboard-button dashboard-button--primary">Add hours</a></x-slot>
+                <x-slot name="action"><button type="button" data-open-hours class="dashboard-button dashboard-button--primary">Add hours</button></x-slot>
             </x-dashboard.empty-state>
         @else
             @php

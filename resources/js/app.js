@@ -23,6 +23,8 @@ import '../css/public-pricing.css';
 import './public-pricing';
 import './public-faq';
 import '../css/public-faq.css';
+import './record-drawer';
+import '../css/record-drawer.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
@@ -400,40 +402,43 @@ document.querySelectorAll('[data-submit-once]:not([data-bound])').forEach((form)
 };
 
 document.addEventListener('click', (event) => {
+    const hoursTrigger = event.target.closest('[data-open-hours]');
+    if (hoursTrigger) {
+        event.preventDefault();
+        window.dispatchEvent(new CustomEvent('open-hours', { detail: { trigger: hoursTrigger } }));
+    }
     document.querySelectorAll('.workspace-switcher[open]').forEach((switcher) => {
         if (!switcher.contains(event.target)) switcher.removeAttribute('open');
     });
 });
 
-window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry = null, initialDate = null, openInitially = false) => ({
-    open: openInitially,
-    editing: Boolean(initialEntry),
-    confirmingDelete: false,
-    form: initialEntry ? { break_type: 'unpaid', project_id: '', billable: false, ...initialEntry } : { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' },
+window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry = null, initialDate = null, openInitially = false, url = '/hours/entries') => ({
+    ...window.recordDrawer({ url, defaults: { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' } }),
+    notice: '',
     init() {
-        if (this.open) {
-            document.body.classList.add('dashboard-dialog-open');
-            this.$nextTick(() => document.getElementById('work_date')?.focus());
+        window.recordDrawer({}).init.call(this);
+        this.notice = sessionStorage.getItem('hours-drawer-notice') || '';
+        sessionStorage.removeItem('hours-drawer-notice');
+        if (openInitially) this.showForm(initialEntry, initialEntry ? {} : { work_date: initialDate });
+    },
+    openEntry(date, entry = null, trigger = document.activeElement) {
+        this.showForm(entry, { work_date: date }, trigger);
+        document.querySelector('[data-hours-tooltip]')?.remove();
+    },
+    saved(payload, deleting) {
+        this.notice = deleting ? 'Hours entry deleted.' : 'Hours entry saved.';
+        window.hoursFullCalendar?.gotoDate(payload.work_date);
+        window.hoursFullCalendar?.refetchEvents();
+        if (!window.hoursFullCalendar) {
+            sessionStorage.setItem('hours-drawer-notice', this.notice);
+            setTimeout(() => window.Livewire.navigate(window.location.href), 250);
         }
-    },
-    openEntry(date, entry = null) {
-        this.editing = Boolean(entry);
-        this.confirmingDelete = false;
-        this.form = entry ? { break_type: 'unpaid', project_id: '', billable: false, ...entry } : { id: null, work_date: date, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' };
-        this.open = true;
-        document.body.classList.add('dashboard-dialog-open');
-        this.$nextTick(() => document.getElementById('work_date')?.focus());
-    },
-    close() {
-        this.open = false;
-        this.confirmingDelete = false;
-        document.body.classList.remove('dashboard-dialog-open');
     },
     get preview() {
         const parse = (value) => { const parts = String(value).split(':').map(Number); return parts.length === 2 ? parts[0] * 60 + parts[1] : Number.NaN; };
         const gross = parse(this.form.end_time) - parse(this.form.start_time);
         const minutes = this.form.break_type === 'paid' ? gross : gross - Number(this.form.break_minutes);
-        if (!Number.isFinite(minutes) || minutes <= 0) return 'Invalid shift';
+        if (!Number.isFinite(minutes) || minutes <= 0) return 'Check times';
         return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
     },
 });
@@ -535,9 +540,16 @@ const initializeHoursFullCalendar = () => {
             info.el.classList.add('mhp-calendar-day', current ? 'is-current-month' : 'is-outside-month');
             if (info.isToday) info.el.classList.add('is-today');
             info.el.querySelector('[aria-hidden="true"]')?.classList.add('mhp-calendar-date');
-            const prompt = document.createElement('span');
+            const prompt = document.createElement('button');
+            prompt.type = 'button';
             prompt.className = 'mhp-add-prompt';
             prompt.textContent = '+ Add';
+            const date = `${info.date.getFullYear()}-${String(info.date.getMonth() + 1).padStart(2, '0')}-${String(info.date.getDate()).padStart(2, '0')}`;
+            prompt.setAttribute('aria-label', `Add hours for ${date}`);
+            prompt.addEventListener('click', (event) => {
+                event.stopPropagation();
+                window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date, entry: null, trigger: prompt } }));
+            });
             info.el.appendChild(prompt);
             info.el.addEventListener('mouseenter', () => {
                 info.el.classList.add('is-hovered');
@@ -548,10 +560,16 @@ const initializeHoursFullCalendar = () => {
                 document.querySelector('[data-hours-tooltip]')?.remove();
             });
         },
-        dateClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.dateStr, entry: null } })),
-        eventClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.event.startStr, entry: { id: info.event.id, ...info.event.extendedProps } } })),
+        dateClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.dateStr, entry: null, trigger: info.dayEl.querySelector('.mhp-add-prompt') } })),
+        eventClick: (info) => window.dispatchEvent(new CustomEvent('hours-day-selected', { detail: { date: info.event.startStr, entry: { id: info.event.id, ...info.event.extendedProps }, trigger: info.el } })),
         eventDidMount: (info) => {
             info.el.classList.add('mhp-hours-event');
+            info.el.tabIndex = 0;
+            info.el.setAttribute('role', 'button');
+            info.el.setAttribute('aria-label', `Edit hours for ${info.event.startStr}`);
+            info.el.addEventListener('keydown', (event) => {
+                if (['Enter', ' '].includes(event.key)) { event.preventDefault(); info.el.click(); }
+            });
             info.el.parentElement?.classList.add('mhp-event-harness');
             const dayCell = info.el.closest('[data-date]');
             dayCell?.classList.add('has-hours');

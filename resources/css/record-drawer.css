@@ -1,0 +1,30 @@
+/* Contextual editor using the ledger's existing palette and form controls. */
+.record-drawer { color: var(--brand-ink); font-family: 'DM Sans', sans-serif; }
+.record-drawer__backdrop { background: color-mix(in srgb, var(--brand-ink) 35%, transparent); }
+.record-drawer__panel { height: 100dvh; }
+.record-drawer__panel > header, .record-drawer__footer { border-color: color-mix(in srgb, var(--brand-muted) 20%, transparent); }
+.record-drawer__icon { color: var(--brand-orange-dark); background: color-mix(in srgb, var(--brand-orange) 12%, white); }
+.record-drawer__close { color: var(--brand-muted); }
+.record-drawer__close:hover { background: var(--brand-warm); }
+.record-drawer :where(button, input, select, textarea):focus-visible { outline: 3px solid var(--brand-violet); outline-offset: 2px; }
+.record-drawer__body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 20px; }
+.record-drawer__footer { background: white; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+.record-drawer .dashboard-form-field label { font-size: 12px; }
+.record-drawer .dashboard-form-field label span, .record-drawer .dashboard-form-field small { color: var(--brand-muted); font-size: 11px; }
+.record-drawer .dashboard-form-field :where(input, select, textarea) { min-width: 0; max-width: 100%; font-size: 14px; }
+.record-drawer .dashboard-form-field :where(input:not([type=checkbox]), select) { height: 44px; }
+.record-drawer .dashboard-form-field [aria-invalid=true] { border-color: var(--brand-orange-dark); }
+.record-drawer .dashboard-button { min-height: 44px; }
+.record-drawer .dashboard-form-errors { font-size: 12px; }
+.mhp-add-prompt { visibility: visible; }
+.mhp-add-prompt:focus-visible { opacity: 1; outline: 2px solid var(--brand-violet); outline-offset: 2px; }
+.record-drawer .net-preview small { color: var(--brand-muted); font-size: 11px; }
+.record-drawer .dashboard-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.record-drawer [disabled] { opacity: .6; cursor: wait; }
+.record-drawer .dashboard-checkbox-control { justify-content: flex-start; }
+.record-drawer__days button { min-width: 0; min-height: 44px; border: 1px solid color-mix(in srgb, var(--brand-muted) 25%, white); border-radius: 8px; font-size: 12px; font-weight: 700; }
+.record-drawer__days button[aria-pressed=true] { color: white; background: var(--brand-ink); border-color: var(--brand-ink); }
+.drawer-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: drawer-spin .8s linear infinite; }
+@keyframes drawer-spin { to { transform: rotate(360deg); } }
+@media (max-width: 480px) { .record-drawer__panel { max-width: none; } .record-drawer .dashboard-form-field :where(input, select, textarea) { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { .record-drawer *, .record-drawer { transition-duration: 0ms !important; animation: none !important; } }

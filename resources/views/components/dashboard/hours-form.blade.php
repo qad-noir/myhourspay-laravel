@@ -3,13 +3,11 @@
     $showProjects = app(App\Services\FeatureAccess::class)->allows(auth()->user(), 'clients_projects', $workspace);
     $projects = $showProjects ? $workspace->projects()->with('client')->where('active', true)->orderBy('name')->get() : collect();
 @endphp
-<div x-cloak x-show="open" @keydown.escape.window="confirmingDelete ? confirmingDelete = false : close()" class="hours-dialog" role="dialog" aria-modal="true" aria-labelledby="hours-dialog-title">
-    <div class="hours-dialog__backdrop" @click="close()"></div>
-    <div class="hours-dialog__panel" @click.stop>
-        <header><div><p x-text="editing ? 'Update worked day' : 'Record worked day'"></p><h2 id="hours-dialog-title" x-text="editing ? 'Edit hours' : 'Add hours'"></h2></div><button type="button" @click="close()" aria-label="Close hours form">×</button></header>
-        @if($errors->any())<div class="dashboard-form-errors" role="alert"><strong>Please review the form</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
-        <form method="POST" :action="editing ? '{{ url('/hours/entries') }}/' + form.id : '{{ route('hours.entries.store') }}'" data-submit-once>
+<x-drawer id="hours-drawer" noun="hours" description="Record a worked day without leaving this page." icon="clock">
+        <form method="POST" :action="editing ? '{{ url('/hours/entries') }}/' + form.id : '{{ route('hours.entries.store') }}'" @submit.prevent="save($el)" class="flex min-h-0 flex-1 flex-col">
             @csrf<input type="hidden" name="_method" value="PATCH" :disabled="!editing">
+            <div class="record-drawer__body flex-1">
+            <x-drawer-errors />
             <div class="dashboard-form-field"><label for="work_date">Work date</label><input id="work_date" name="work_date" type="date" x-model="form.work_date" required></div>
             <div class="dashboard-form-grid"><div class="dashboard-form-field"><label for="start_time">Start time</label><input id="start_time" name="start_time" type="time" x-model="form.start_time" required></div><div class="dashboard-form-field"><label for="end_time">End time</label><input id="end_time" name="end_time" type="time" x-model="form.end_time" required></div></div>
             <div class="dashboard-form-field"><label for="break_type">Break type</label><select id="break_type" name="break_type" x-model="form.break_type" required><option value="unpaid">Unpaid break</option><option value="paid">Paid break</option></select></div>
@@ -31,10 +29,9 @@
                     </div>
                 </div>
             @endif
-            <div class="dashboard-form-field"><label for="notes">Notes <span>optional</span></label><textarea id="notes" name="notes" rows="3" maxlength="{{ config('hours.maximum_notes_length') }}" x-model="form.notes"></textarea></div>
+            <div class="dashboard-form-field"><label for="notes">Notes <span>optional</span></label><textarea id="notes" name="notes" rows="3" maxlength="{{ config('hours.maximum_notes_length') }}" x-model="form.notes" placeholder="Add a note about these hours"></textarea></div>
             <div class="net-preview"><span><i><x-dashboard.icon name="clock" :size="15" /></i> Calculated net hours</span><strong x-text="preview"></strong><small>Preview only · confirmed by the server</small></div>
-            <footer><button x-show="editing" type="button" @click="confirmingDelete = true" class="dashboard-button dashboard-button--danger">Delete</button><div><button type="button" @click="close()" class="dashboard-button dashboard-button--secondary">Cancel</button><button type="submit" class="dashboard-button dashboard-button--primary" data-submit-button><span x-text="editing ? 'Save changes' : 'Add hours'"></span></button></div></footer>
+            </div>
+            <x-drawer-footer noun="hours" />
         </form>
-        <div x-show="confirmingDelete" class="delete-confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-title"><div><span aria-hidden="true">!</span><h3 id="delete-title">Delete this worked day?</h3><p>This permanently removes the entry for <strong x-text="form.work_date"></strong>.</p><div><button type="button" @click="confirmingDelete = false" class="dashboard-button dashboard-button--secondary">Keep entry</button><form method="POST" :action="'{{ url('/hours/entries') }}/' + form.id">@csrf @method('DELETE')<button type="submit" class="dashboard-button dashboard-button--danger">Delete entry</button></form></div></div></div>
-    </div>
-</div>
+</x-drawer>

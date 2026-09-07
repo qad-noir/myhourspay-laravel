@@ -7,12 +7,12 @@
     @endphp
 
     <div
-        x-data="hoursCalendar({{ app(App\Services\CurrentWorkspace::class)->for(auth()->user())->default_break_minutes }}, @js(app(App\Services\CurrentWorkspace::class)->for(auth()->user())->default_break_type), @js($initialEntry), @js($initialDate), {{ $openInitially ? 'true' : 'false' }})"
-        @hours-day-selected.window="openEntry($event.detail.date, $event.detail.entry)"
+        x-data="{}"
+        @if($openInitially) x-init="$nextTick(() => $dispatch('open-hours', { date: @js($initialDate), entry: @js($initialEntry) }))" @endif
         data-hours-calendar-page
     >
         <x-dashboard.page-header eyebrow="Monday–Sunday workweeks" title="Hours calendar" description="Navigate months instantly, select a date to add hours, or select an activity to edit it.">
-            <x-slot:actions><div class="dashboard-page-actions"><a wire:navigate href="{{ route('hours.reports.index') }}" class="dashboard-button dashboard-button--secondary">View reports</a><button type="button" @click="openEntry('{{ now(config('hours.timezone'))->toDateString() }}')" class="dashboard-button dashboard-button--primary"><x-dashboard.icon name="plus" :size="16" />Add hours</button></div></x-slot:actions>
+            <x-slot:actions><div class="dashboard-page-actions"><a wire:navigate href="{{ route('hours.reports.index') }}" class="dashboard-button dashboard-button--secondary">View reports</a><button type="button" data-open-hours class="dashboard-button dashboard-button--primary"><x-dashboard.icon name="plus" :size="16" />Add hours</button></div></x-slot:actions>
         </x-dashboard.page-header>
 
         <section class="dashboard-stats" aria-label="Monthly hours summary">
@@ -46,6 +46,5 @@
             <div class="weekly-total-grid" data-weekly-totals aria-live="polite"></div>
         </section>
 
-        <x-dashboard.hours-form />
     </div>
 </x-app-layout>

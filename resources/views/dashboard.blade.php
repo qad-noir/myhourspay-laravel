@@ -32,7 +32,7 @@
         <x-dashboard.panel title="Weekly hours" :description="'Monday to Sunday · '.$targetLabel.' target'">
             <x-slot:actions><span class="weekly-total">{{ $calculator->formatHumanMinutes($week['total_minutes']) }} total</span></x-slot:actions>
             @if($week['worked_days'] === 0)
-                <x-dashboard.empty-state compact><x-slot:action><a wire:navigate href="{{ route('hours.index', ['add' => 1]) }}" class="dashboard-button dashboard-button--primary">Add hours</a></x-slot:action></x-dashboard.empty-state>
+                <x-dashboard.empty-state compact><x-slot:action><button type="button" data-open-hours class="dashboard-button dashboard-button--primary">Add hours</button></x-slot:action></x-dashboard.empty-state>
             @else
                 <div class="weekly-chart" role="group" aria-label="Weekly hours: {{ collect($days)->map(fn($day) => $day['label'].' '.$day['formatted'])->join(', ') }}">
                     @foreach($days as $day)
