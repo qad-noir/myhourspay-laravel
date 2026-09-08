@@ -6,8 +6,8 @@
             <x-drawer-errors />
             <div class="dashboard-form-field"><label for="schedule-project">Project <span>optional</span></label><select id="schedule-project" name="project_id" x-model="form.project_id"><option value="">No project</option>@foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}</option>@endforeach</select></div>
             <div class="dashboard-form-grid">
-                <div class="dashboard-form-field"><label for="schedule-start">Start time</label><input id="schedule-start" type="time" name="start_time" x-model="form.start_time" required></div>
-                <div class="dashboard-form-field"><label for="schedule-end">End time</label><input id="schedule-end" type="time" name="end_time" x-model="form.end_time" required></div>
+                <x-time-field id="schedule-start" name="start_time" label="Start time" />
+                <x-time-field id="schedule-end" name="end_time" label="End time" />
             </div>
             <fieldset class="mb-5" aria-describedby="schedule-day-help drawer-error-day_of_week">
                 <legend class="mb-2 text-xs font-bold">Day</legend>

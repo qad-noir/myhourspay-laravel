@@ -14,8 +14,10 @@
 .record-drawer .dashboard-form-field :where(input, select, textarea) { min-width: 0; max-width: 100%; font-size: 14px; }
 .record-drawer .dashboard-form-field :where(input:not([type=checkbox]), select) { height: 44px; }
 .record-drawer .dashboard-form-field [aria-invalid=true] { border-color: var(--brand-orange-dark); }
-.record-drawer .dashboard-button { min-height: 44px; }
-.record-drawer .dashboard-form-errors { font-size: 12px; }
+.record-drawer .dashboard-button { min-height: 44px; flex-shrink: 0; white-space: nowrap; }
+.record-drawer__footer .dashboard-button--primary { min-width: 120px; justify-content: center; }
+.record-drawer .record-drawer__errors { margin: 0 0 24px; padding: 14px 16px; font-size: 13px; line-height: 1.5; }
+.record-drawer__errors ul { display: grid; gap: 4px; }
 .record-drawer__existing, .record-drawer__lookup { display: grid; gap: 3px; margin-bottom: 18px; border-radius: 10px; padding: 12px 13px; color: #2f7658; background: #edf9f2; font-size: 12px; line-height: 1.4; }
 .record-drawer__existing span, .record-drawer__lookup { color: var(--brand-muted); }
 .record-drawer__existing strong { color: #2f7658; }
@@ -23,11 +25,31 @@
 .mhp-add-prompt:focus-visible { opacity: 1; outline: 2px solid var(--brand-violet); outline-offset: 2px; }
 .record-drawer .net-preview small { color: var(--brand-muted); font-size: 11px; }
 .record-drawer .dashboard-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.record-time-field { display: grid; grid-template-columns: minmax(0, 1fr) 72px; gap: 6px; }
+.record-drawer .record-time-field input { padding-inline: 10px; font-variant-numeric: tabular-nums; }
+.record-drawer .record-time-field select { padding-left: 10px; padding-right: 24px; background-position: right 5px center; }
 .record-drawer [disabled] { opacity: .6; cursor: wait; }
 .record-drawer .dashboard-checkbox-control { justify-content: flex-start; }
 .record-drawer__days button { min-width: 0; min-height: 44px; border: 1px solid color-mix(in srgb, var(--brand-muted) 25%, white); border-radius: 8px; font-size: 12px; font-weight: 700; }
 .record-drawer__days button[aria-pressed=true] { color: white; background: var(--brand-ink); border-color: var(--brand-ink); }
 .drawer-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: drawer-spin .8s linear infinite; }
+.schedule-list { display: grid; gap: 12px; padding: 4px 20px 20px; }
+.schedule-notice { margin: 0 20px 20px; border-left: 3px solid var(--brand-green); padding: 12px 16px; color: var(--brand-ink); background: color-mix(in srgb, var(--brand-green) 10%, white); font-size: 13px; line-height: 1.5; }
+.schedule-record { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 24px; border: 1px solid color-mix(in srgb, var(--brand-muted) 20%, white); border-radius: 14px; padding: 20px; }
+.schedule-record__details { display: flex; align-items: center; gap: 16px; min-width: 0; text-align: left; }
+.schedule-record__day { display: grid; flex-shrink: 0; width: 52px; height: 56px; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--brand-orange) 12%, white); color: var(--brand-orange-dark); font-size: 13px; font-weight: 700; }
+.schedule-record__copy { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 5px 14px; min-width: 0; }
+.schedule-record__copy strong { font: 800 14px 'Manrope', sans-serif; }
+.schedule-record__time { font-size: 14px; font-variant-numeric: tabular-nums; }
+.schedule-record__copy small { grid-column: 1 / -1; color: var(--brand-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.schedule-record__edit { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--brand-muted); font-size: 12px; }
+.schedule-record__convert { display: flex; align-items: end; gap: 10px; padding-left: 24px; border-left: 1px solid color-mix(in srgb, var(--brand-muted) 20%, white); }
+.schedule-record__convert .dashboard-form-field { display: grid; gap: 6px; margin: 0; font-size: 12px; }
+.schedule-record__convert input { min-height: 44px; max-width: 170px; font-size: 13px; }
+.schedule-record__convert .dashboard-button { min-height: 44px; white-space: nowrap; }
+.schedule-record :where(button, input):focus-visible { outline: 3px solid var(--brand-violet); outline-offset: 4px; }
+@media (max-width: 1100px) { .schedule-record { grid-template-columns: minmax(0, 1fr); gap: 18px; } .schedule-record__convert { justify-content: flex-end; border-left: 0; border-top: 1px solid color-mix(in srgb, var(--brand-muted) 20%, white); padding: 16px 0 0; } }
+@media (max-width: 480px) { .schedule-list { padding: 0 12px 12px; } .schedule-record { padding: 16px; } .schedule-record__copy { grid-template-columns: 1fr; } .schedule-record__details { gap: 12px; } .schedule-record__convert { flex-wrap: wrap; } .schedule-record__convert .dashboard-form-field { flex: 1; min-width: 130px; } .schedule-record__convert input { width: 100%; max-width: none; font-size: 16px; } .schedule-record__edit svg { display: none; } }
 @keyframes drawer-spin { to { transform: rotate(360deg); } }
 @media (max-width: 480px) { .record-drawer__panel { max-width: none; } .record-drawer .dashboard-form-field :where(input, select, textarea) { font-size: 16px; } }
 @media (prefers-reduced-motion: reduce) { .record-drawer *, .record-drawer { transition-duration: 0ms !important; animation: none !important; } }

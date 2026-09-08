@@ -38,7 +38,7 @@ class ProToolsTest extends TestCase
         foreach ([
             'pro.clients.index' => 'Organise billable work',
             'pro.earnings.index' => 'Keep earnings historically stable',
-            'pro.schedules.index' => 'Plan expected shifts without creating fake hours',
+            'pro.schedules.index' => 'Plan your working week',
             'pro.reminders.index' => 'Choose the nudges that protect your week',
             'pro.reports.index' => 'Build once, deliver repeatedly',
             'pro.calendars.index' => 'Review events before logging time',

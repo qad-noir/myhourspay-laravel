@@ -1,6 +1,6 @@
 // Shared Alpine state for contextual create/edit forms. The server owns validation.
 window.recordDrawer = (options) => ({
-    open: false, editing: false, busy: false, confirmation: null,
+    open: false, editing: false, busy: false, checkingEntry: false, confirmation: null,
     form: {}, errors: {}, message: '', baseline: '', trigger: null,
     isDirty() { return JSON.stringify(this.form) !== this.baseline; },
     init() {
@@ -33,7 +33,7 @@ window.recordDrawer = (options) => ({
         this.$nextTick(() => this.trigger?.isConnected && this.trigger.focus({ preventScroll: true }));
     },
     async save(element) {
-        if (this.busy || !element.reportValidity()) return;
+        if (this.busy || this.checkingEntry || !element.reportValidity()) return;
         await this.send(element.action, new FormData(element));
     },
     async remove() {
@@ -72,12 +72,13 @@ window.recordDrawer = (options) => ({
     },
     saved() {},
     annotateErrors(element, errors) {
-        element.querySelectorAll('input[name], select[name], textarea[name]').forEach(field => {
+        element.querySelectorAll('input[name], select[name], textarea[name], [data-error-field]').forEach(field => {
             if (field.type === 'hidden') return;
-            const errorId = `drawer-error-${field.name}`;
+            const name = field.dataset.errorField || field.name;
+            const errorId = `drawer-error-${name}`;
             const ids = (field.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== errorId);
-            if (errors[field.name]) ids.push(errorId);
-            field.setAttribute('aria-invalid', errors[field.name] ? 'true' : 'false');
+            if (errors[name]) ids.push(errorId);
+            field.setAttribute('aria-invalid', errors[name] ? 'true' : 'false');
             field.setAttribute('aria-describedby', ids.join(' '));
         });
     },

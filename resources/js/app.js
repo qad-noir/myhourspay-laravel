@@ -24,6 +24,7 @@ import './public-pricing';
 import './public-faq';
 import '../css/public-faq.css';
 import './record-drawer';
+import './time-field';
 import '../css/record-drawer.css';
 import '../css/dashboard-toast.css';
 
