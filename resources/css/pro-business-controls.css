@@ -41,7 +41,7 @@
     font-weight: 700;
 }
 
-.dashboard-form-label > span { color: #aaa5ae; font-size: 8px; font-weight: 500; }
+.dashboard-form-label > span { color: #aaa5ae; font-size: 12px; font-weight: 500; }
 .dashboard-checkbox-control {
     display: flex !important;
     height: 42px;
@@ -124,7 +124,7 @@
 }
 
 .ui-switch strong { color: #3f3844; font-size: 9px; }
-.ui-switch small { margin-top: 3px; color: #918a95; font-size: 7px; font-weight: 500; line-height: 1.4; }
+.ui-switch small { margin-top: 3px; color: #918a95; font-size: 11px; font-weight: 500; line-height: 1.4; }
 .ui-switch input:checked + .ui-switch__track { border-color: #ff6b35; background: #ff6b35; }
 .ui-switch input:checked + .ui-switch__track > span { transform: translateX(16px); }
 .ui-switch input:focus-visible + .ui-switch__track { box-shadow: 0 0 0 4px rgba(130, 104, 255, .18); }
@@ -141,7 +141,7 @@
 .business-options-field legend,
 .pro-reminder-form legend { padding: 0; color: #4d4652; font-size: 9px; font-weight: 800; }
 .business-options-field > p,
-.pro-reminder-form fieldset > p { margin: 5px 0 10px; color: #96909a; font-size: 8px; line-height: 1.45; }
+.pro-reminder-form fieldset > p { margin: 5px 0 10px; color: #96909a; font-size: 12px; line-height: 1.45; }
 
 .business-check-option {
     display: flex !important;
@@ -181,7 +181,7 @@
 .business-payroll-form { grid-template-columns: minmax(150px, 1fr) minmax(120px, .7fr) minmax(360px, 2.1fr) auto; }
 .business-webhook-form { grid-template-columns: minmax(130px, .8fr) minmax(210px, 1.25fr) minmax(180px, 1fr) minmax(330px, 1.7fr) auto; }
 .business-branding-form { grid-template-columns: minmax(250px, 1.5fr) minmax(120px, .65fr) minmax(120px, .65fr) minmax(220px, 1.15fr) auto; }
-.business-branding-form label > small { color: #98919b; font-size: 7px; font-weight: 500; }
+.business-branding-form label > small { color: #98919b; font-size: 11px; font-weight: 500; }
 
 .business-file-input {
     height: 46px !important;
@@ -191,10 +191,10 @@
     border-radius: 10px !important;
     color: #77707c !important;
     background: #fff !important;
-    font: 600 8px "DM Sans", sans-serif !important;
+    font: 600 12px "DM Sans", sans-serif !important;
 }
 
-.business-file-input::file-selector-button { height: 36px; margin-right: 10px; border: 0; border-radius: 7px; padding: 0 12px; color: #6a626e; background: #f2eff4; font: 800 8px "DM Sans", sans-serif; cursor: pointer; }
+.business-file-input::file-selector-button { height: 36px; margin-right: 10px; border: 0; border-radius: 7px; padding: 0 12px; color: #6a626e; background: #f2eff4; font: 800 12px "DM Sans", sans-serif; cursor: pointer; }
 .business-file-input:hover::file-selector-button { color: #a74626; background: #fff0e9; }
 .business-colour-input { width: 100% !important; height: 46px !important; min-height: 46px !important; border: 1px solid #ded9e1 !important; border-radius: 10px !important; padding: 4px !important; background: #fff !important; cursor: pointer; }
 .business-colour-input::-webkit-color-swatch-wrapper { padding: 0; }
@@ -212,8 +212,8 @@
 .business-support-form__intro > span { display: grid; width: 39px; height: 39px; flex: none; place-items: center; border-radius: 11px; color: #d45229; background: #fff0e9; }
 .business-support-form__intro svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .business-support-form__intro strong { font-size: 10px; }
-.business-support-form__intro p { margin: 4px 0 0; color: #8e8792; font-size: 8px; }
-.business-support-form label { display: grid; gap: 6px; color: #716a75; font-size: 8px; font-weight: 800; }
+.business-support-form__intro p { margin: 4px 0 0; color: #8e8792; font-size: 12px; }
+.business-support-form label { display: grid; gap: 6px; color: #716a75; font-size: 12px; font-weight: 800; }
 .business-support-form input,
 .business-support-form textarea { width: 100%; border: 1px solid #ded9e1; border-radius: 10px; padding: 0 11px; color: #302a34; background: #fff; font: 600 9px "DM Sans", sans-serif; outline: none; }
 .business-support-form input { height: 46px; }
@@ -221,13 +221,13 @@
 .business-support-form input:focus,
 .business-support-form textarea:focus { border-color: #ff9b77; box-shadow: 0 0 0 3px rgba(255, 107, 53, .1); }
 .business-support-form footer { display: flex; align-items: center; justify-content: space-between; grid-column: 1 / -1; gap: 20px; }
-.business-support-form footer small { color: #96909a; font-size: 8px; }
+.business-support-form footer small { color: #96909a; font-size: 12px; }
 .business-empty-state { grid-column: 1 / -1; border: 1px dashed #ddd7e0; border-radius: 12px; padding: 19px; color: #766f7a; background: #faf9fb; text-align: center; }
-.business-empty-state p { margin: 5px 0 0; color: #9a939d; font-size: 8px; }
+.business-empty-state p { margin: 5px 0 0; color: #9a939d; font-size: 12px; }
 
 .calendar-provider-unavailable { display: grid; margin-top: 12px; gap: 7px; }
-.calendar-provider-unavailable span { width: max-content; border-radius: 99px; padding: 5px 8px; color: #7f5e25; background: #fff4d7; font-size: 7px; font-weight: 800; }
-.calendar-provider-unavailable small { color: #98919b; font-size: 8px; line-height: 1.45; }
+.calendar-provider-unavailable span { width: max-content; border-radius: 99px; padding: 5px 8px; color: #7f5e25; background: #fff4d7; font-size: 11px; font-weight: 800; }
+.calendar-provider-unavailable small { color: #98919b; font-size: 12px; line-height: 1.45; }
 .calendar-provider-unavailable button[disabled] { cursor: not-allowed; opacity: .58; }
 
 @media (max-width: 1100px) {

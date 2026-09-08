@@ -25,7 +25,7 @@
 
 /* Workspace utility type: compact, but never below a crisp optical size. */
 .dashboard-workspace small {
-    font-size: max(10px, .75em);
+    font-size: max(11px, .75em);
     line-height: 1.45;
 }
 
@@ -57,7 +57,7 @@
 .dashboard-field > p,
 .dashboard-field small,
 .workspace-preferences-grid .dashboard-field p {
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.5;
 }
 
@@ -73,14 +73,14 @@
 .dashboard-sidebar__privacy small {
     margin-top: 4px;
     color: #92909d;
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.5;
 }
 
 .dashboard-sidebar__account small {
     margin-top: 3px;
     color: #8f8d9a;
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.4;
 }
 
@@ -88,7 +88,7 @@
     display: inline-block;
     margin-top: 2px;
     color: #aaa8b3;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1.4;
 }

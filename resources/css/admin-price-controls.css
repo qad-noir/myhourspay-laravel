@@ -25,9 +25,9 @@
 
 .admin-plan-section-heading div > span,
 .admin-plan-section-heading div > strong { display: block; }
-.admin-plan-section-heading div > span { color: #df552b; font-size: 7px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.admin-plan-section-heading div > span { color: #df552b; font-size: 11px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
 .admin-plan-section-heading div > strong { margin-top: 4px; color: #332c37; font-size: 10px; }
-.admin-plan-section-heading > small { border-radius: 99px; padding: 5px 8px; color: #7d7581; background: #f2eff4; font-size: 7px; font-weight: 800; white-space: nowrap; }
+.admin-plan-section-heading > small { border-radius: 99px; padding: 5px 8px; color: #7d7581; background: #f2eff4; font-size: 11px; font-weight: 800; white-space: nowrap; }
 
 .admin-price-editor {
     display: grid;
@@ -59,7 +59,7 @@
 
 .admin-price-editor__heading > div > span {
     color: #8f8792;
-    font-size: 7px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -68,7 +68,7 @@
 .admin-price-editor__heading > div > small {
     margin-top: 4px;
     color: #a099a3;
-    font-size: 7px;
+    font-size: 11px;
 }
 
 .admin-price-editor__heading > strong {
@@ -82,7 +82,7 @@
     min-width: 0;
     gap: 6px;
     color: #706975;
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 800;
 }
 
@@ -147,7 +147,7 @@
     padding: 8px 9px;
     color: #938c97;
     background: #fff;
-    font-size: 7px;
+    font-size: 11px;
 }
 
 .admin-price-editor__current code {
@@ -171,7 +171,7 @@
     color: #fff;
     background: #ff6b35;
     box-shadow: 0 8px 18px rgba(255, 107, 53, .15);
-    font: 800 8px "DM Sans", sans-serif;
+    font: 800 12px "DM Sans", sans-serif;
     cursor: pointer;
 }
 
@@ -188,7 +188,7 @@
 .admin-price-history-note {
     margin: 5px 0 0;
     color: #918a95;
-    font-size: 8px;
+    font-size: 12px;
 }
 
 .admin-price-history-note {
@@ -225,7 +225,7 @@
     background: rgba(250, 249, 251, .97);
     grid-template-columns: minmax(200px, 1fr) minmax(160px, 220px) minmax(220px, 1fr) 104px;
     gap: 12px;
-    font-size: 7px;
+    font-size: 11px;
     font-weight: 900;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -244,14 +244,14 @@
 .admin-entitlement-copy strong,
 .admin-entitlement-copy small { display: block; }
 .admin-entitlement-copy strong { color: #302a34; font-size: 11px; line-height: 1.35; }
-.admin-entitlement-copy small { width: max-content; margin-top: 6px; border-radius: 99px; padding: 4px 7px; color: #7d7480; background: #f1eef3; font-size: 7px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.admin-entitlement-copy small { width: max-content; margin-top: 6px; border-radius: 99px; padding: 4px 7px; color: #7d7480; background: #f1eef3; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .admin-entitlement-control { min-width: 0; }
 .admin-entitlement-control .admin-check { min-height: 34px; justify-content: flex-end; }
-.admin-entitlement-reason { display: grid; min-width: 0; gap: 5px; color: #77707b; font-size: 7px; font-weight: 800; }
+.admin-entitlement-reason { display: grid; min-width: 0; gap: 5px; color: #77707b; font-size: 11px; font-weight: 800; }
 .admin-entitlement-reason input { width: 100%; }
 .admin-plan-features .admin-entitlement-row > button { align-self: end; width: 104px; }
 .admin-plan-features .admin-plan-quota { justify-content: flex-end; }
-.admin-plan-features .admin-plan-quota > label:first-child { display: grid; gap: 4px; color: #8d8691; font-size: 7px; font-weight: 800; }
+.admin-plan-features .admin-plan-quota > label:first-child { display: grid; gap: 4px; color: #8d8691; font-size: 11px; font-weight: 800; }
 .admin-plan-features .admin-plan-quota input[type="number"] { width: 74px; }
 
 @media (max-width: 760px) {
