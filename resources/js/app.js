@@ -38,6 +38,25 @@ const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
         if (DataTable.isDataTable(table)) return;
 
+        // Livewire can restore generated markup without its DataTables instance.
+        // Unwrap that snapshot before rebuilding, so controls cannot nest/duplicate.
+        const tableBody = table.closest('.admin-datatable__body');
+        if (tableBody?.querySelector('.dt-container')) {
+            tableBody.append(table);
+            tableBody.querySelectorAll('.dt-container').forEach(wrapper => wrapper.remove());
+            table.querySelectorAll('tbody, colgroup').forEach(element => element.remove());
+            table.style.removeProperty('width');
+            table.className = 'display responsive';
+            const head = table.tHead || table.createTHead();
+            head.replaceChildren();
+            const row = head.insertRow();
+            JSON.parse(table.dataset.columns).forEach(column => {
+                const cell = document.createElement('th');
+                cell.textContent = column.title;
+                row.append(cell);
+            });
+        }
+
         // Livewire history and the browser back/forward cache can restore the
         // table element without the DataTables instance that set this marker.
         delete table.dataset.bound;
@@ -228,7 +247,11 @@ document.addEventListener('DOMContentLoaded', initializeAdminTables);
 document.addEventListener('DOMContentLoaded', initializeAdminRemoteSelects);
 const teardownAdminEnhancements = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
-        if (DataTable.isDataTable(table)) new DataTable(table).destroy();
+        if (DataTable.isDataTable(table)) {
+            const instance = new DataTable(table);
+            instance.settings()[0].jqXHR?.abort();
+            instance.destroy();
+        }
         delete table.dataset.bound;
     });
     document.querySelectorAll('[data-admin-user-select],[data-admin-workspace-select]').forEach((select) => {
@@ -272,29 +295,42 @@ document.addEventListener('click', (event) => {
     });
 });
 document.addEventListener('toggle', (event) => {
-    if (!event.target.matches?.('.admin-action-menu[open]')) return;
+    if (!event.target.matches?.('.admin-action-menu')) return;
+    const panel = event.target.querySelector('.admin-action-menu__panel');
+    if (!event.target.open) { if (panel?.matches(':popover-open')) panel.hidePopover(); return; }
     document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
         if (menu !== event.target) menu.removeAttribute('open');
     });
-    const panel = event.target.querySelector('.admin-action-menu__panel');
-    if (window.innerWidth <= 780 && panel) {
-        panel.style.removeProperty('position');
-        panel.style.removeProperty('top');
-        panel.style.removeProperty('left');
-        panel.style.removeProperty('right');
-    }
-    if (window.innerWidth > 780 && panel) {
+    if (panel) {
+        if (panel.showPopover) {
+            panel.setAttribute('popover', 'manual');
+            panel.showPopover();
+        }
         const trigger = event.target.querySelector('summary').getBoundingClientRect();
+        const width = Math.min(240, window.innerWidth - 24);
+        panel.style.width = `${width}px`;
+        panel.style.maxHeight = `${window.innerHeight - 24}px`;
         const panelHeight = panel.getBoundingClientRect().height;
         const top = trigger.bottom + 6 + panelHeight > window.innerHeight ? trigger.top - panelHeight - 6 : trigger.bottom + 6;
         panel.style.position = 'fixed';
-        panel.style.top = `${Math.max(8, top)}px`;
-        panel.style.left = `${Math.max(8, Math.min(window.innerWidth - 198, trigger.right - 190))}px`;
+        panel.style.top = `${Math.max(12, Math.min(top, window.innerHeight - panelHeight - 12))}px`;
+        panel.style.left = `${Math.max(12, Math.min(window.innerWidth - width - 12, trigger.right - width))}px`;
         panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
     }
 }, true);
+document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('.admin-action-menu[open]').forEach(menu => {
+        menu.removeAttribute('open');
+        menu.querySelector('summary').focus({ preventScroll: true });
+    });
+});
 window.addEventListener('resize', () => document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => menu.removeAttribute('open')));
-window.addEventListener('scroll', () => document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => menu.removeAttribute('open')), true);
+window.addEventListener('scroll', event => {
+    if (event.target.closest?.('.admin-action-menu__panel')) return;
+    document.querySelectorAll('.admin-action-menu[open]').forEach(menu => menu.removeAttribute('open'));
+}, true);
 const confirmedForms = new WeakSet();
 document.addEventListener('submit', async (event) => {
     const form = event.target;

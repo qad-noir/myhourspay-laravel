@@ -4,6 +4,24 @@ import '../css/compact-tables.css';
 const initialize = () => {
     document.querySelectorAll('[data-compact-table]').forEach((table) => {
         if (DataTable.isDataTable(table)) return;
+        const host = table.closest('.compact-table');
+        if (host.querySelector('.dt-container')) {
+            const wrapper = table.closest('.dt-container');
+            let outer = wrapper;
+            while (outer.parentElement.closest('.dt-container')) outer = outer.parentElement.closest('.dt-container');
+            outer.before(table);
+            outer.remove();
+            table.querySelectorAll('tbody,colgroup').forEach(element => element.remove());
+            table.removeAttribute('style');
+            const head = table.tHead || table.createTHead();
+            head.replaceChildren();
+            const row = head.insertRow();
+            JSON.parse(table.dataset.columns).forEach(column => {
+                const cell = document.createElement('th');
+                cell.textContent = column.title;
+                row.append(cell);
+            });
+        }
         const wrapper = table.closest('.compact-table');
         const error = wrapper.querySelector('.compact-table-error');
         const instance = new DataTable(table, {
