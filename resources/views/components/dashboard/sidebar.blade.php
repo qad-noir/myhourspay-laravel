@@ -13,9 +13,9 @@
     </details>
     <nav>
         <p>Workspace</p>
-        <a wire:navigate href="{{ route('dashboard') }}" @if(request()->routeIs('dashboard')) aria-current="page" @endif><span><x-dashboard.icon name="overview" /></span> Overview</a>
-        <a wire:navigate href="{{ route('hours.index') }}" @if(request()->routeIs('hours.index') || request()->routeIs('hours.entries.*')) aria-current="page" @endif><span><x-dashboard.icon name="calendar" /></span> Hours Calendar</a>
-        <a wire:navigate href="{{ route('hours.reports.index') }}" @if(request()->routeIs('hours.reports.index')) aria-current="page" @endif><span><x-dashboard.icon name="reports" /></span> Reports</a>
+        @foreach(config('navigation.primary') as $item)
+            <a wire:navigate href="{{ route($item['route']) }}" @if(request()->routeIs(...$item['active'])) aria-current="page" @endif><span><x-dashboard.icon :name="$item['icon']" /></span> {{ __($item['label']) }}</a>
+        @endforeach
         <a wire:navigate href="{{ route('hours.reports.index') }}#exports" @if(request()->routeIs('hours.reports.excel', 'hours.reports.csv', 'hours.reports.print')) aria-current="page" @endif><span><x-dashboard.icon name="exports" /></span> Exports</a>
         <a wire:navigate href="{{ route('pro.index') }}" @if(request()->routeIs('pro.*')) aria-current="page" @endif><span><x-dashboard.icon name="trend" /></span> Pro tools</a>
         <a wire:navigate href="{{ route('business.index') }}" @if(request()->routeIs('business.*')) aria-current="page" @endif><span><x-dashboard.icon name="team" /></span> Business tools</a>

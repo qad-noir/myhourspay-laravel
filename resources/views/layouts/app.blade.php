@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
         <link rel="apple-touch-icon" href="{{ asset('brand-mark.png') }}">
@@ -33,6 +33,7 @@
                 <button type="button" class="dashboard-toast__close" @click="clearNotice()" aria-label="Dismiss notification"><x-dashboard.icon name="close" :size="14" /></button>
             </div>
         </div>
+        <x-dashboard.mobile-navigation />
         @stack('modals')
 
         @livewireScripts

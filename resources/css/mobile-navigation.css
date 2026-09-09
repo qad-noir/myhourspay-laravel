@@ -1,0 +1,19 @@
+.mobile-navigation { display:none; }
+@media (max-width:1023px) {
+    .dashboard-body { --mobile-navigation-height:74px; }
+    .dashboard-workspace { padding-bottom:calc(var(--mobile-navigation-height) + env(safe-area-inset-bottom,0px)); }
+    html:has(.mobile-navigation) { scroll-padding-bottom:calc(90px + env(safe-area-inset-bottom,0px)); }
+    /* Header is 40, existing sidebar backdrop is 55, sidebar is 60. */
+    .mobile-navigation { position:fixed;inset:auto 0 0;z-index:40;display:flex;gap:4px;min-height:var(--mobile-navigation-height);padding:7px max(8px,env(safe-area-inset-right,0px)) calc(7px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));border-top:1px solid color-mix(in srgb,var(--brand-muted) 20%,white);background:white;font-family:"DM Sans",sans-serif; }
+    .mobile-navigation > :is(a,button) { display:flex;flex:1 1 0;min-width:0;min-height:58px;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:3px;border:0;border-radius:11px;background:transparent;color:var(--brand-muted);text-decoration:none;cursor:pointer; }
+    .mobile-navigation__icon { display:grid;place-items:center;width:42px;height:28px;border-radius:9px; }
+    .mobile-navigation__label { max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:700;line-height:1.4; }
+    .mobile-navigation [aria-current=page] { color:var(--brand-ink); }
+    .mobile-navigation [aria-current=page] .mobile-navigation__icon { color:var(--brand-orange);background:color-mix(in srgb,var(--brand-orange) 12%,white); }
+    .mobile-navigation > :is(a,button):active { background:color-mix(in srgb,var(--brand-orange) 8%,white); }
+    .mobile-navigation > :is(a,button):focus-visible { outline:2px solid var(--brand-orange);outline-offset:-2px; }
+    .dashboard-drawer-open .mobile-navigation { pointer-events:none; }
+    .dashboard-body .dashboard-toast { bottom:calc(90px + env(safe-area-inset-bottom,0px)); }
+    .dashboard-body:has(input:focus,textarea:focus,[contenteditable=true]:focus) .mobile-navigation { visibility:hidden; }
+}
+@media (prefers-reduced-motion:reduce) { .dashboard-sidebar,.dashboard-backdrop { transition:none!important; } }

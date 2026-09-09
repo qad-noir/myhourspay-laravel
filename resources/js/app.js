@@ -31,6 +31,7 @@ import './mobile-ui';
 import '../css/mobile-refinements.css';
 import './admin-navigation';
 import '../css/admin-health.css';
+import '../css/mobile-navigation.css';
 
 const initializeAdminTables = () => {
     DataTable.ext.errMode = 'none';
@@ -410,19 +411,58 @@ if (timer && !reducedMotion) {
 }
 
 const initializeDashboardBehaviors = () => {
-const dashboardSidebar = document.querySelector('[data-dashboard-sidebar]:not([data-bound])');
-if (dashboardSidebar) {
+const dashboardSidebar = document.querySelector('[data-dashboard-sidebar]');
+if (dashboardSidebar && !dashboardSidebar.sidebarBindings) {
+    const bindings = new AbortController();
+    dashboardSidebar.sidebarBindings = bindings;
+    const listenerOptions = { signal: bindings.signal };
     dashboardSidebar.dataset.bound = 'true';
     const sidebarNavigation = dashboardSidebar.querySelector('nav');
     const backdrop = document.querySelector('[data-sidebar-backdrop]');
-    const openButton = document.querySelector('[data-sidebar-open]');
+    const openButtons = [...document.querySelectorAll('[data-sidebar-open]')];
     const closeButton = document.querySelector('[data-sidebar-close]');
-    const setSidebar = (open) => { dashboardSidebar.classList.toggle('is-open', open); backdrop.classList.toggle('is-open', open); openButton?.setAttribute('aria-expanded', String(open)); document.body.classList.toggle('dashboard-drawer-open', open); if (open) closeButton?.focus(); else openButton?.focus(); };
-    openButton?.addEventListener('click', () => setSidebar(true)); closeButton?.addEventListener('click', () => setSidebar(false)); backdrop?.addEventListener('click', () => setSidebar(false));
-    dashboardSidebar.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => { if (window.innerWidth < 1024) setSidebar(false); }));
-    window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && dashboardSidebar.classList.contains('is-open')) setSidebar(false); });
+    const mobile = matchMedia('(max-width: 1023px)');
+    const background = [document.querySelector('.dashboard-workspace'), document.querySelector('[data-mobile-navigation]')];
+    let returnFocus = null;
+    const setSidebar = (requested, restore = true) => {
+        const open = requested && mobile.matches;
+        dashboardSidebar.classList.toggle('is-open', open);
+        backdrop.classList.toggle('is-open', open);
+        openButtons.forEach(button => button.setAttribute('aria-expanded', String(open)));
+        document.body.classList.toggle('dashboard-drawer-open', open);
+        dashboardSidebar.inert = mobile.matches && !open;
+        if (open) { dashboardSidebar.setAttribute('role', 'dialog'); dashboardSidebar.setAttribute('aria-modal', 'true'); }
+        else { dashboardSidebar.removeAttribute('role'); dashboardSidebar.removeAttribute('aria-modal'); }
+        background.forEach(element => { if (element) element.inert = open; });
+        if (open) closeButton?.focus();
+        else if (restore && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    };
+    openButtons.forEach(button => button.addEventListener('click', () => { returnFocus = button; setSidebar(true); }, listenerOptions));
+    closeButton?.addEventListener('click', () => setSidebar(false), listenerOptions);
+    backdrop?.addEventListener('click', () => setSidebar(false), listenerOptions);
+    dashboardSidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', () => { if (mobile.matches) setSidebar(false, false); }, listenerOptions));
+    const keydown = event => {
+        if (!dashboardSidebar.classList.contains('is-open')) return;
+        if (event.key === 'Escape') { event.preventDefault(); setSidebar(false); }
+        if (event.key === 'Tab') {
+            const items = [...dashboardSidebar.querySelectorAll('a[href],button:not([disabled]),summary,input:not([disabled]),select:not([disabled])')].filter(el => el.getClientRects().length);
+            if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items.at(-1)?.focus(); }
+            else if (!event.shiftKey && document.activeElement === items.at(-1)) { event.preventDefault(); items[0]?.focus(); }
+        }
+    };
+    const resize = () => setSidebar(false, false);
+    window.addEventListener('keydown', keydown);
+    mobile.addEventListener('change', resize);
+    document.addEventListener('livewire:navigating', () => {
+        setSidebar(false, false);
+        window.removeEventListener('keydown', keydown);
+        mobile.removeEventListener('change', resize);
+        bindings.abort();
+        delete dashboardSidebar.sidebarBindings;
+    }, { once: true });
+    setSidebar(false, false);
     window.requestAnimationFrame(() => { if (sidebarNavigation) sidebarNavigation.scrollTop = window.dashboardSidebarScrollTop || 0; });
-    sidebarNavigation?.addEventListener('scroll', () => { window.dashboardSidebarScrollTop = sidebarNavigation.scrollTop; }, { passive: true });
+    sidebarNavigation?.addEventListener('scroll', () => { window.dashboardSidebarScrollTop = sidebarNavigation.scrollTop; }, { passive: true, signal: bindings.signal });
 }
 document.querySelector('[data-dismiss-flash]:not([data-bound])')?.addEventListener('click', (event) => { event.currentTarget.dataset.bound = 'true'; event.currentTarget.closest('[data-flash-message]')?.remove(); });
 
