@@ -33,7 +33,9 @@ const initialize = () => {
                     if (['net', 'earnings', 'overtime'].includes(column.data)) row.cells[index]?.setAttribute('data-numeric', '');
                 });
             },
-            order: [[0, 'desc']], columns: JSON.parse(table.dataset.columns),
+            order: [[0, 'desc']], columns: JSON.parse(table.dataset.columns).map((column) => column.data === 'actions'
+                ? { ...column, className: `${column.className || ''} admin-actions-column`.trim() }
+                : column),
             ajax: async (data, callback) => {
                 const url = new URL(table.dataset.url, window.location.origin);
                 const append = (value, key) => {

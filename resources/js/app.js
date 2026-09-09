@@ -61,7 +61,9 @@ const initializeAdminTables = () => {
         // table element without the DataTables instance that set this marker.
         delete table.dataset.bound;
         table.dataset.bound = 'true';
-        const columns = JSON.parse(table.dataset.columns || '[]');
+        const columns = JSON.parse(table.dataset.columns || '[]').map((column) => column.data === 'actions'
+            ? { ...column, responsivePriority: 0, className: `${column.className || ''} admin-actions-column`.trim() }
+            : column);
         const order = JSON.parse(table.dataset.order || '[[0,"asc"]]');
         const filters = document.querySelector(`[data-table-filters="${table.id}"]`);
         const errorPanel = table.closest('.admin-datatable').querySelector('[data-table-error]');

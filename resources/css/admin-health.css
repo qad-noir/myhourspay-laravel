@@ -26,6 +26,10 @@
 .admin-body .admin-action-menu__panel :is(a,button) { min-height:44px;font-size:13px;line-height:1.4; }
 .admin-datatable table.dataTable > tbody > tr > td.dtr-control { position:relative; }
 .admin-datatable table.dataTable > tbody > tr > td.dtr-control::before { position:absolute;top:50%;transform:translateY(-50%);margin:0!important; }
+.admin-datatable table.dataTable th.admin-actions-column,
+.admin-datatable table.dataTable td.admin-actions-column { width:54px!important;min-width:54px!important;padding:8px!important;text-align:center!important; }
+.admin-datatable table.dataTable td.admin-actions-column .admin-action-menu { display:inline-block;width:36px;margin:0; }
+.admin-datatable table.dataTable td.admin-actions-column .admin-action-menu summary { margin:auto; }
 .admin-datatable ul.dtr-details > li { grid-template-columns:minmax(100px, 35%) minmax(0,1fr)!important;align-items:start;gap:12px;padding:10px 0!important; }
 .admin-datatable ul.dtr-details .dtr-title { min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.5; }
 .admin-datatable ul.dtr-details .dtr-data { min-width:0;line-height:1.5; }
