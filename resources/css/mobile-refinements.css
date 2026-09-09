@@ -11,6 +11,8 @@
 .admin-datatable .dt-scroll-body thead .dt-scroll-sizing { height: 0 !important; overflow: hidden; }
 .admin-datatable .dt-empty-footer .dt-scroll-foot { display: none; }
 .admin-datatable .dt-paging nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; }
+.admin-datatable ul.dtr-details > li { column-gap: 12px; }
+.admin-datatable .dtr-title { white-space: normal; overflow-wrap: anywhere; }
 .compact-table.admin-datatable table.dataTable tbody td { white-space: nowrap; overflow-wrap: normal; }
 .compact-table.admin-datatable table.dataTable tbody td:last-child { white-space: normal; min-width: 140px; overflow-wrap: anywhere; }
 .mobile-disclosure > summary { display: none; }
