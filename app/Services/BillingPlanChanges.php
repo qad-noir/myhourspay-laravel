@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\PlanPrice;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Laravel\Cashier\Cashier;
 use Stripe\StripeObject;
@@ -13,7 +12,7 @@ class BillingPlanChanges
 {
     public function change(User $user, PlanPrice $target): string
     {
-        return Cache::lock('billing-change:'.$user->id, 120)->block(10, fn () => $this->changeLocked($user, $target));
+        return app(StripeSubscriptionSync::class)->synchronized($user, fn () => $this->changeLocked($user, $target));
     }
 
     private function changeLocked(User $user, PlanPrice $target): string
@@ -76,7 +75,7 @@ class BillingPlanChanges
 
     public function free(User $user): string
     {
-        return Cache::lock('billing-change:'.$user->id, 120)->block(10, fn () => $this->freeLocked($user));
+        return app(StripeSubscriptionSync::class)->synchronized($user, fn () => $this->freeLocked($user));
     }
 
     private function freeLocked(User $user): string

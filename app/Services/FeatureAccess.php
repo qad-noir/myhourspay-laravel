@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class FeatureAccess
 {
@@ -86,7 +87,7 @@ class FeatureAccess
     public function invalidate(User $user): void
     {
         $user->forceFill(['entitlement_version' => ((int) $user->entitlement_version) + 1])->saveQuietly();
-        Cache::forget('admin:monetization:overview');
+        DB::afterCommit(fn () => Cache::forget('admin:monetization:overview'));
     }
 
     public function checkoutEnabled(): bool

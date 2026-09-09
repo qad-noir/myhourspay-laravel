@@ -13,22 +13,51 @@ use Laravel\Cashier\Subscription;
 
 class StripeSubscriptionSync
 {
-    public function customer(User $user, bool $dryRun = false): int
+    private array $heldLocks = [];
+
+    public function synchronized(User $user, callable $callback): mixed
+    {
+        if (isset($this->heldLocks[$user->id])) {
+            return $callback();
+        }
+
+        return Cache::lock('billing-sync:'.$user->id, 120)->block(10, function () use ($user, $callback) {
+            $this->heldLocks[$user->id] = true;
+            try {
+                return $callback();
+            } finally {
+                unset($this->heldLocks[$user->id]);
+            }
+        });
+    }
+
+    public function customer(User $user, bool $dryRun = false, ?callable $complete = null): int
     {
         if (! $user->hasStripeId()) {
             return 0;
         }
 
-        return Cache::lock('billing-sync:'.$user->id, 120)->block(10, function () use ($user, $dryRun): int {
+        return $this->synchronized($user, function () use ($user, $dryRun, $complete): int {
             $count = 0;
+            $snapshots = [];
             foreach (Cashier::stripe()->subscriptions->all(['customer' => $user->stripe_id, 'status' => 'all', 'limit' => 100])->autoPagingIterator() as $remote) {
                 if (($remote->metadata->type ?? $remote->metadata->name ?? 'default') !== 'default') {
                     continue;
                 }
                 if (! $dryRun) {
-                    $this->persist($user, $remote->toArray());
+                    $snapshots[] = $this->prepare($user, $remote->toArray());
                 }
                 $count++;
+            }
+            if (! $dryRun) {
+                DB::transaction(function () use ($user, $snapshots, $complete) {
+                    foreach ($snapshots as $snapshot) {
+                        $this->apply($user, $snapshot);
+                    }
+                    if ($complete) {
+                        $complete();
+                    }
+                });
             }
             $user->unsetRelation('subscriptions');
 
@@ -47,6 +76,11 @@ class StripeSubscriptionSync
 
     // Only call with a fresh, server-retrieved Stripe snapshot, never an event's historical object.
     public function persist(User $user, array $data): Subscription
+    {
+        return $this->synchronized($user, fn () => $this->apply($user, $this->prepare($user, $data)));
+    }
+
+    private function prepare(User $user, array $data): array
     {
         abort_unless(($data['customer'] ?? null) === $user->stripe_id, 403);
         $pending = ['pending_plan_key' => null, 'pending_interval' => null, 'pending_change_at' => null];
@@ -72,6 +106,13 @@ class StripeSubscriptionSync
                 }
             }
         }
+
+        return compact('data', 'items', 'first', 'periodEnd', 'endsAt', 'pending');
+    }
+
+    private function apply(User $user, array $snapshot): Subscription
+    {
+        extract($snapshot, EXTR_SKIP);
 
         return DB::transaction(function () use ($user, $data, $items, $first, $periodEnd, $endsAt, $pending): Subscription {
             $lockedUser = User::withTrashed()->lockForUpdate()->findOrFail($user->id);

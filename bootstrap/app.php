@@ -7,7 +7,6 @@ use App\Http\Middleware\EnsureTrialChoice;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureWorkspaceIsWritable;
-use App\Services\BillingWebhookTracker;
 use App\Services\DatabaseSchemaIncident;
 use App\Services\UnexpectedApplicationIncident;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -18,6 +17,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -47,13 +47,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $request = app('request');
             if ($request instanceof Request && $request->routeIs('cashier.webhook')) {
-                app(BillingWebhookTracker::class)->failed($request, $exception);
+                // Receipt errors must not mutate an event identified by unverified request data.
+                try {
+                    Log::error('Stripe webhook request failed.', ['exception' => $exception]);
+                } catch (Throwable) {
+                }
             }
         });
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
         $exceptions->render(function (QueryException $exception, Request $request) {
+            if ($request->routeIs('cashier.webhook')) {
+                return response()->json(['message' => 'Webhook temporarily unavailable.'], 503);
+            }
             $incident = app(DatabaseSchemaIncident::class);
             if (! $incident->matches($exception)) {
                 return null;
@@ -78,6 +85,9 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.schema-mismatch', compact('reference'), 503);
         });
         $exceptions->render(function (Throwable $exception, Request $request) {
+            if ($request->routeIs('cashier.webhook')) {
+                return response()->json(['message' => 'Webhook request failed.'], $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500);
+            }
             if ($exception instanceof HttpExceptionInterface
                 || $exception instanceof ValidationException
                 || $exception instanceof AuthenticationException

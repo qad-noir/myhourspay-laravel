@@ -3,39 +3,52 @@
 namespace App\Http\Controllers;
 
 use App\Models\BillingWebhookEvent;
-use App\Models\User;
-use App\Services\StripeSubscriptionSync;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Laravel\Cashier\Events\WebhookHandled;
-use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Cashier\Http\Controllers\WebhookController;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\Webhook;
+use Throwable;
 
 class StripeWebhookController extends WebhookController
 {
+    // Verification is unconditional, including when configuration is missing.
+    public function __construct() {}
+
     public function handleWebhook(Request $request)
     {
-        $payload = $request->json()->all();
-        $type = $payload['type'] ?? '';
-        if (! str_starts_with($type, 'customer.subscription.') && ! str_starts_with($type, 'invoice.')
-            && ! str_starts_with($type, 'subscription_schedule.') && $type !== 'checkout.session.completed') {
-            return parent::handleWebhook($request);
+        $secret = config('cashier.webhook.secret');
+        if (! is_string($secret) || trim($secret) === '') {
+            return response()->json(['message' => 'Webhook signing is not configured.'], 503);
         }
+        try {
+            $event = Webhook::constructEvent($request->getContent(), $request->header('Stripe-Signature', ''), $secret, config('cashier.webhook.tolerance', 300));
+        } catch (SignatureVerificationException $exception) {
+            return response()->json(['message' => 'Invalid webhook signature.'], 403);
+        } catch (\UnexpectedValueException $exception) {
+            return response()->json(['message' => 'Invalid webhook payload.'], 400);
+        }
+        $payload = $event->toArray();
+        if (! is_string($payload['id'] ?? null) || strlen($payload['id']) > 190 || ! is_string($payload['type'] ?? null)) {
+            return response()->json(['message' => 'Invalid webhook event.'], 400);
+        }
+        try {
+            $supported = in_array($payload['type'], config('billing_events.events'), true);
+            // Cron dispatches this durable inbox independently of the HTTP request.
+            BillingWebhookEvent::firstOrCreate(['stripe_event_id' => $payload['id']], [
+                'type' => $payload['type'], 'status' => $supported ? 'received' : 'ignored',
+                'payload' => $supported ? $payload : null,
+                'payload_hash' => hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR)),
+                'available_at' => now(), 'processed_at' => $supported ? null : now(),
+            ]);
 
-        return Cache::lock('billing-event:'.($payload['id'] ?? ''), 120)->block(10, function () use ($payload) {
-            if (BillingWebhookEvent::where('stripe_event_id', $payload['id'])->where('status', 'processed')->exists()) {
-                return response('Webhook already handled', 200);
+            return response()->json(['message' => 'Webhook received.']);
+        } catch (Throwable $exception) {
+            try {
+                report($exception);
+            } catch (Throwable) {
             }
-            WebhookReceived::dispatch($payload);
-            $customer = data_get($payload, 'data.object.customer');
-            $user = is_string($customer) ? User::withTrashed()->where('stripe_id', $customer)->first() : null;
-            if ($user) {
-                // Fetch current state: late delivery cannot restore an old plan or trial.
-                app(StripeSubscriptionSync::class)->customer($user);
-            }
-            WebhookHandled::dispatch($payload);
 
-            return response('Webhook handled', 200);
-        });
+            return response()->json(['message' => 'Webhook storage temporarily unavailable.'], 503);
+        }
     }
 }

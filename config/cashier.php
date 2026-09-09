@@ -1,7 +1,5 @@
 <?php
 
-use Laravel\Cashier\Console\WebhookCommand;
-
 return [
     'key' => env('STRIPE_KEY'),
     'secret' => env('STRIPE_SECRET'),
@@ -9,7 +7,7 @@ return [
     'webhook' => [
         'secret' => env('STRIPE_WEBHOOK_SECRET'),
         'tolerance' => env('STRIPE_WEBHOOK_TOLERANCE', 300),
-        'events' => WebhookCommand::DEFAULT_EVENTS,
+        'events' => (require __DIR__.'/billing_events.php')['events'],
     ],
     'currency' => env('CASHIER_CURRENCY', 'gbp'),
     'currency_locale' => env('CASHIER_CURRENCY_LOCALE', 'en_GB'),

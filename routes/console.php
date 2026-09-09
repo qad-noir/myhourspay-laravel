@@ -10,6 +10,7 @@ Artisan::command('inspire', function () {
 
 Schedule::command('billing:expire-grants')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('billing:reconcile-stripe')->hourly()->withoutOverlapping();
+Schedule::command('billing:process-inbox')->everyMinute()->withoutOverlapping(3);
 Schedule::command('reports:deliver-scheduled')->everyTenMinutes()->withoutOverlapping();
 Schedule::command('reminders:send')->hourly()->withoutOverlapping();
 Schedule::command('webhooks:deliver')->everyFiveMinutes()->withoutOverlapping();
