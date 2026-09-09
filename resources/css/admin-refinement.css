@@ -106,6 +106,12 @@
     grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
 }
 
+/* Keep the compact billing navigation readable inside each fixed grid card. */
+.monetization-links a > span { min-width: 0; flex: 1 1 auto; }
+.monetization-links strong,
+.monetization-links small { overflow-wrap: anywhere; word-break: normal; }
+.monetization-links small { white-space: normal; line-height: 1.35; }
+
 /* Filters form a deliberate rail between page intent and tabular results. */
 .admin-filter {
     display: grid;
