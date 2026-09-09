@@ -85,6 +85,9 @@
         @case('support')
             <path d="M21 15a4 4 0 0 1-4 4H8l-5 3v-7a4 4 0 0 1-1-2.7V7a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4Z"/><path d="M8 8h8M8 12h5"/>
             @break
+        @case('chevron-down')
+            <path d="m6 9 6 6 6-6"/>
+            @break
         @case('arrow')
             <path d="M5 12h14M14 7l5 5-5 5"/>
             @break

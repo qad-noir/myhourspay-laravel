@@ -4,12 +4,14 @@
         <x-slot name="actions"><a wire:navigate href="{{ route('hours.index') }}" class="dashboard-button dashboard-button--secondary">View calendar</a></x-slot>
     </x-dashboard.page-header>
 
+    <x-mobile-disclosure title="Report filters" :description="\Carbon\Carbon::parse($start)->format('d M Y').' – '.\Carbon\Carbon::parse($end)->format('d M Y')" :reveal="$errors->any()" class="report-filter-disclosure">
     <form method="GET" action="{{ route('hours.reports.index') }}" class="report-filter" aria-label="Report date range">
         <div class="dashboard-field"><label for="start">Start date</label><input id="start" name="start" type="date" value="{{ $start }}" required></div>
         <div class="dashboard-field"><label for="end">End date</label><input id="end" name="end" type="date" value="{{ $end }}" required></div>
         @if($advanced)<div class="dashboard-field"><label for="client_id">Client</label><select id="client_id" name="client_id"><option value="">All clients</option>@foreach($clients as $client)<option value="{{ $client->id }}" @selected(request('client_id')==$client->id)>{{ $client->name }}</option>@endforeach</select></div><div class="dashboard-field"><label for="project_id">Project</label><select id="project_id" name="project_id"><option value="">All projects</option>@foreach($projects as $project)<option value="{{ $project->id }}" @selected(request('project_id')==$project->id)>{{ $project->name }}</option>@endforeach</select></div><div class="dashboard-field"><label for="billable">Billing</label><select id="billable" name="billable"><option value="">All time</option><option value="1" @selected(request('billable')==='1')>Billable</option><option value="0" @selected(request('billable')==='0')>Non-billable</option></select></div>@endif
         <div class="report-filter-actions"><button type="submit" class="dashboard-button dashboard-button--primary">Apply range</button><a wire:navigate href="{{ route('hours.reports.index') }}" class="dashboard-text-link">Reset</a></div>
     </form>
+    </x-mobile-disclosure>
 
     <section class="dashboard-stats" aria-label="Period summary">
         <x-dashboard.stat-card label="Period total" :value="$summary['total_formatted']" support="Net recorded time" icon="clock" />
@@ -21,7 +23,8 @@
 
     @if($advanced)<section class="dashboard-panel report-comparison mt-5"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Comparison</p><h2>Previous matching period</h2></div><span>{{ $previousStart->format('d M') }}–{{ $previousEnd->format('d M Y') }}</span></div><div class="report-comparison-grid"><article><span>Hours</span><strong>{{ $summary['total_formatted'] }}</strong><small>{{ ($summary['total_minutes']-$previous['total_minutes'])>=0?'+':'' }}{{ app(App\Services\HoursCalculator::class)->formatHumanMinutes($summary['total_minutes']-$previous['total_minutes']) }} vs previous</small></article><article><span>Overtime</span><strong>{{ $summary['overtime_formatted'] }}</strong><small>{{ ($summary['overtime_minutes']-$previous['overtime_minutes'])>=0?'+':'' }}{{ app(App\Services\HoursCalculator::class)->formatHumanMinutes($summary['overtime_minutes']-$previous['overtime_minutes']) }}</small></article><article><span>Earnings</span><strong>£{{ number_format($summary['earnings_minor']/100,2) }}</strong><small>{{ ($summary['earnings_minor']-$previous['earnings_minor'])>=0?'+':'' }}£{{ number_format(($summary['earnings_minor']-$previous['earnings_minor'])/100,2) }}</small></article><article><span>Breaks</span><strong>{{ $summary['break_count'] }}</strong><small>{{ $summary['paid_break_formatted'] }} paid · {{ $summary['unpaid_break_formatted'] }} unpaid</small></article></div></section>@endif
 
-    <section id="exports" class="dashboard-panel report-export-panel">
+    <x-mobile-disclosure id="exports" title="Download report" description="Excel, CSV or print" class="report-export-disclosure">
+    <section class="dashboard-panel report-export-panel">
         <div><p class="dashboard-eyebrow">Export</p><h2>Download this report</h2><p>Each format uses the selected dates above and includes only your records.</p></div>
         <div class="report-export-actions">
             <a href="{{ route('hours.reports.excel', $exportQuery) }}" class="dashboard-button dashboard-button--primary">Download Excel</a>
@@ -29,6 +32,7 @@
             <a target="_blank" rel="noopener" href="{{ route('hours.reports.print', $exportQuery) }}" class="dashboard-button dashboard-button--secondary">Print view</a>
         </div>
     </section>
+    </x-mobile-disclosure>
 
     <section class="dashboard-panel report-results" aria-labelledby="report-results-title">
         <div class="dashboard-panel-heading">

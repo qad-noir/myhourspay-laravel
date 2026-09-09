@@ -1,0 +1,54 @@
+/* Shared responsive behaviour; keep controls outside horizontal data scrollers. */
+.dashboard-button[data-open-hours] { white-space: nowrap; flex-shrink: 0; }
+.admin-datatable { overflow-x: visible; }
+.admin-datatable :is(.dt-layout-row, .dt-layout-cell, .dt-scroll) { min-width: 0; max-width: 100%; }
+.admin-datatable .dt-layout-table > .dt-layout-cell { display: block !important; width: 100%; }
+.admin-datatable .dt-scroll-body { width: 100% !important; overflow-x: auto !important; overscroll-behavior-x: contain; }
+.admin-datatable .dt-scroll table.dataTable { max-width: none; }
+.admin-datatable .dt-scroll-body table.dataTable { border-radius: 0 !important; border-top: 0 !important; }
+.admin-datatable .dt-scroll-head table.dataTable { border-radius: 12px 12px 0 0 !important; border-bottom: 0 !important; }
+.admin-datatable .dt-scroll-body table.dataTable thead :is(th, td) { height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; }
+.admin-datatable .dt-scroll-body thead .dt-scroll-sizing { height: 0 !important; overflow: hidden; }
+.admin-datatable .dt-empty-footer .dt-scroll-foot { display: none; }
+.admin-datatable .dt-paging nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; }
+.compact-table.admin-datatable table.dataTable tbody td { white-space: nowrap; overflow-wrap: normal; }
+.compact-table.admin-datatable table.dataTable tbody td:last-child { white-space: normal; min-width: 140px; overflow-wrap: anywhere; }
+.mobile-disclosure > summary { display: none; }
+/* The v7 header is a flex item: a height-based flex-basis was shrinking its width. */
+.fullcalendar-panel [role="rowgroup"]:has(.mhp-calendar-weekday),
+.fullcalendar-panel [role="row"]:has(> .mhp-calendar-weekday) { flex: 0 0 auto !important; width: 100% !important; min-width: 0; }
+.fullcalendar-panel [role="row"]:has(> .mhp-calendar-weekday) { display: grid !important; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.fullcalendar-panel .mhp-calendar-weekday { min-width: 0; width: auto !important; letter-spacing: 0; }
+.tool-module-nav:has([data-more-after="false"])::after { opacity: 0; }
+@media (max-width: 650px) {
+    .mobile-disclosure { margin-bottom: 18px; border: 1px solid color-mix(in srgb, var(--brand-muted) 20%, white); border-radius: 16px; background: white; }
+    .mobile-disclosure > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; cursor: pointer; list-style: none; }
+    .mobile-disclosure > summary::-webkit-details-marker { display: none; }
+    .mobile-disclosure > summary span { display: grid; gap: 4px; }
+    .mobile-disclosure > summary strong { font: 800 14px Manrope, sans-serif; color: var(--brand-ink); }
+    .mobile-disclosure > summary small { font-size: 12px; line-height: 1.5; color: var(--brand-muted); }
+    .mobile-disclosure > summary svg { flex-shrink: 0; transition: transform .2s; }
+    .mobile-disclosure[open] > summary svg { transform: rotate(180deg); }
+    .mobile-disclosure > summary:focus-visible { outline: 3px solid var(--brand-violet); outline-offset: 3px; border-radius: 16px; }
+    .mobile-disclosure .report-filter, .mobile-disclosure .report-export-panel { margin: 0; border: 0; border-radius: 0 0 16px 16px; box-shadow: none; padding: 0 18px 18px; }
+    .mobile-disclosure .report-export-panel > div:first-child { display: none; }
+    .mobile-disclosure .report-export-actions { width: 100%; }
+    .admin-datatable .dt-layout-row:not(.dt-layout-table) { width: 100%; }
+    .admin-datatable .dt-layout-row > .dt-layout-cell { width: 100%; margin: 0 !important; }
+    .admin-datatable .dt-search { display: flex; width: 100%; }
+    .admin-datatable .dt-search input { min-width: 0; flex: 1; }
+    .admin-datatable .dt-paging { width: 100%; overflow: visible; }
+    .admin-datatable .dt-paging nav { width: 100%; justify-content: center; flex-wrap: nowrap; }
+    .admin-datatable .dt-paging .dt-paging-button.current { display: inline-grid !important; }
+    .admin-datatable .dt-paging .dt-paging-button:is(.previous, .next) { min-width: 76px !important; }
+    .admin-datatable .dt-paging .dt-paging-button { min-height: 40px !important; }
+    .tool-module-nav__track { padding-right: 6px; }
+    .tool-module-nav a { flex: 0 0 calc((100% - 32px) / 2.5); min-width: 104px; }
+    .tool-workflow__track, .tool-workflow--business .tool-workflow__track { scrollbar-width: none; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+    .tool-workflow__track::-webkit-scrollbar { display: none; }
+    .tool-workflow__track a { flex: 0 0 82%; min-width: 0; scroll-snap-align: start; }
+    .tool-workflow__track[data-more-after="true"] { mask-image: linear-gradient(to right, black calc(100% - 18px), transparent); }
+    .tool-workflow__track[data-more-before="true"][data-more-after="false"] { mask-image: linear-gradient(to right, transparent, black 18px); }
+    .tool-workflow__track[data-more-before="true"][data-more-after="true"] { mask-image: linear-gradient(to right, transparent, black 18px, black calc(100% - 18px), transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .mobile-disclosure > summary svg { transition: none; } }

@@ -27,6 +27,8 @@ import './record-drawer';
 import './time-field';
 import '../css/record-drawer.css';
 import '../css/dashboard-toast.css';
+import './mobile-ui';
+import '../css/mobile-refinements.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
@@ -523,6 +525,8 @@ const initializeHoursFullCalendar = () => {
         initialView: 'dayGridMonth',
         initialDate: element.dataset.initialDate,
         firstDay: 1,
+        dayHeaderFormat: { weekday: 'short' },
+        dayHeaderContent: ({ date }) => date.toLocaleDateString('en-GB', { weekday: 'short' }),
         fixedWeekCount: false,
         showNonCurrentDates: true,
         dayMaxEvents: 2,
