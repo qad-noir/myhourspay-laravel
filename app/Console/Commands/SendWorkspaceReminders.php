@@ -15,18 +15,31 @@ use Throwable;
 
 class SendWorkspaceReminders extends Command
 {
-    protected $signature = 'reminders:send {--limit=500}';
+    protected $signature = 'reminders:send {--limit=500} {--type= : Send only this reminder type} {--user= : Send only for this user ID} {--force : Ignore timing and existing-entry checks for a selected reminder}';
 
     protected $description = 'Send due workspace, trial and billing reminders';
 
     public function handle(FeatureAccess $features, OperationalIncidentRecorder $incidents): int
     {
         $failures = 0;
-        NotificationPreference::query()->with(['user', 'workspace'])->where('enabled', true)->limit(max(1, min(2000, (int) $this->option('limit'))))->get()->each(function (NotificationPreference $preference) use ($features, $incidents, &$failures): void {
+        $sent = 0;
+        $type = $this->option('type');
+        $userId = $this->option('user');
+        if ($type && ! in_array($type, ['missing_entry', 'weekly_target', 'overtime', 'trial_ending', 'payment_failed', 'timesheet_pending', 'access_ending'], true)) {
+            $this->error('Unknown reminder type.');
+
+            return self::INVALID;
+        }
+        if ($this->option('force') && (! $type || ! $userId)) {
+            $this->error('--force requires both --type and --user.');
+
+            return self::INVALID;
+        }
+        NotificationPreference::query()->with(['user', 'workspace'])->where('enabled', true)->when($type, fn ($q) => $q->where('type', $type))->when($userId, fn ($q) => $q->where('user_id', $userId))->limit(max(1, min(2000, (int) $this->option('limit'))))->get()->each(function (NotificationPreference $preference) use ($features, $incidents, &$failures, &$sent): void {
             if (! $preference->user || ! $preference->workspace || ! $features->allows($preference->user, 'smart_reminders', $preference->workspace)) {
                 return;
             }
-            $reminder = $this->dueReminder($preference);
+            $reminder = $this->dueReminder($preference, (bool) $this->option('force'));
             if (! $reminder) {
                 return;
             }
@@ -39,6 +52,7 @@ class SendWorkspaceReminders extends Command
             }
             try {
                 $preference->user->notify(new WorkspaceReminderNotification($reminder['heading'], $reminder['message'], $reminder['url'], $reminder['action'], $preference->channels ?? ['mail']));
+                $sent++;
             } catch (Throwable $exception) {
                 $failures++;
                 $delivery->delete();
@@ -51,12 +65,12 @@ class SendWorkspaceReminders extends Command
             }
         });
 
-        $this->info("Workspace reminders completed with {$failures} failure(s).");
+        $this->info("Workspace reminders completed: {$sent} sent, {$failures} failure(s).");
 
         return $failures === 0 ? self::SUCCESS : self::FAILURE;
     }
 
-    private function dueReminder(NotificationPreference $preference): ?array
+    private function dueReminder(NotificationPreference $preference, bool $force = false): ?array
     {
         $now = CarbonImmutable::now(config('hours.timezone'));
         $workspace = $preference->workspace;
@@ -65,11 +79,11 @@ class SendWorkspaceReminders extends Command
         $weekMinutes = $user->hoursEntries()->forWorkspace($workspace)->whereBetween('work_date', [$weekStart->toDateString(), $weekStart->endOfWeek()->toDateString()])->sum('net_minutes');
 
         return match ($preference->type) {
-            'missing_entry' => $now->isWeekday() && $now->hour >= 18 && ! $user->hoursEntries()->forWorkspace($workspace)->whereDate('work_date', $now)->exists()
+            'missing_entry' => ($force || ($now->isWeekday() && $now->hour >= 18 && ! $user->hoursEntries()->forWorkspace($workspace)->whereDate('work_date', $now)->exists()))
                 ? ['reference' => $now->toDateString(), 'heading' => 'Did you log today’s hours?', 'message' => "No worked hours are recorded for today in {$workspace->name}.", 'url' => route('hours.index'), 'action' => 'Add hours'] : null,
-            'weekly_target' => $now->isSunday() && $weekMinutes < $workspace->weekly_target_minutes
+            'weekly_target' => ($force || ($now->isSunday() && $weekMinutes < $workspace->weekly_target_minutes))
                 ? ['reference' => $weekStart->toDateString(), 'heading' => 'Weekly target reminder', 'message' => 'Your recorded week is '.app(HoursCalculator::class)->formatMinutes((int) $weekMinutes).' against a '.app(HoursCalculator::class)->formatMinutes($workspace->weekly_target_minutes).' target.', 'url' => route('dashboard'), 'action' => 'Review dashboard'] : null,
-            'overtime' => $weekMinutes > $workspace->weekly_target_minutes
+            'overtime' => ($force || $weekMinutes > $workspace->weekly_target_minutes)
                 ? ['reference' => $weekStart->toDateString(), 'heading' => 'Overtime reached this week', 'message' => 'Your recorded hours are now '.app(HoursCalculator::class)->formatMinutes((int) $weekMinutes - $workspace->weekly_target_minutes).' above target.', 'url' => route('dashboard'), 'action' => 'Review overtime'] : null,
             'trial_ending' => ($subscription = $user->subscription('default')) && $subscription->trial_ends_at?->between($now, $now->addDays(3))
                 ? ['reference' => $subscription->trial_ends_at->toDateString(), 'heading' => 'Your trial is ending soon', 'message' => 'Your premium trial ends '.$subscription->trial_ends_at->diffForHumans().'.', 'url' => route('billing.index'), 'action' => 'Review billing'] : null,

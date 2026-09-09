@@ -49,6 +49,19 @@ class ScheduledDeliveryTest extends TestCase
         $this->assertDatabaseCount('notification_deliveries', 1);
     }
 
+    public function test_selected_reminder_can_be_forced_for_delivery_testing(): void
+    {
+        Notification::fake();
+        [$user, $workspace] = $this->workspaceUser();
+        NotificationPreference::query()->create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'type' => 'missing_entry', 'enabled' => true, 'channels' => ['mail']]);
+
+        $this->artisan('reminders:send', ['--type' => 'missing_entry', '--user' => $user->id, '--force' => true])
+            ->assertSuccessful()
+            ->expectsOutputToContain('1 sent');
+
+        Notification::assertSentTo($user, WorkspaceReminderNotification::class, fn ($notification) => $notification->via($user) === ['mail']);
+    }
+
     private function workspaceUser(): array
     {
         $user = User::factory()->create();
