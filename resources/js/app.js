@@ -33,6 +33,7 @@ import './admin-navigation';
 import '../css/admin-health.css';
 
 const initializeAdminTables = () => {
+    DataTable.ext.errMode = 'none';
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
         if (DataTable.isDataTable(table)) return;
 
@@ -43,6 +44,11 @@ const initializeAdminTables = () => {
         const columns = JSON.parse(table.dataset.columns || '[]');
         const order = JSON.parse(table.dataset.order || '[[0,"asc"]]');
         const filters = document.querySelector(`[data-table-filters="${table.id}"]`);
+        const errorPanel = table.closest('.admin-datatable').querySelector('[data-table-error]');
+        const showError = (reference) => {
+            errorPanel.hidden = false;
+            errorPanel.querySelector('[data-table-error-message]').textContent = 'Records could not be loaded. Please retry.' + (reference ? ` Incident reference: ${reference}.` : ' If this continues, contact support.');
+        };
         const dataTable = new DataTable(table, {
             processing: true,
             serverSide: true,
@@ -88,10 +94,21 @@ const initializeAdminTables = () => {
         });
         resizeObserver.observe(table.closest('.admin-datatable'));
         dataTable.on('destroy', () => resizeObserver.disconnect());
-        dataTable.on('xhr', (_event, _settings, json) => {
+        dataTable.on('xhr', (_event, _settings, json, xhr) => {
+            if (!json || json.error || xhr?.status >= 400) {
+                let reference = json?.reference || xhr?.responseJSON?.reference;
+                if (!reference && xhr?.responseText) {
+                    try { reference = JSON.parse(xhr.responseText).reference; } catch { /* Non-JSON proxy response. */ }
+                }
+                showError(reference);
+                return true;
+            }
+            errorPanel.hidden = true;
             const count = table.closest('.admin-datatable')?.querySelector('[data-table-count]');
             if (count && json) count.textContent = `${json.recordsTotal ?? 0} records`;
         });
+        dataTable.on('dt-error', () => { if (errorPanel.hidden) showError(); });
+        errorPanel.querySelector('[data-table-error-retry]').onclick = () => dataTable.ajax.reload(null, false);
         let filterTimer = null;
         filters?.addEventListener('change', () => dataTable.ajax.reload());
         filters?.addEventListener('input', (event) => {

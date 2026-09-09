@@ -41,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Let the application incident handler handle errors, including in debug mode.
+        config(['datatables.error' => 'throw']);
         HoursEntry::observe(HoursEntryObserver::class);
         Workspace::observe(WorkspaceObserver::class);
         User::observe(UserObserver::class);

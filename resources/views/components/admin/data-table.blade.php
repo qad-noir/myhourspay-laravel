@@ -11,6 +11,7 @@
         <span class="admin-datatable__server-badge"><i></i>Live data</span>
     </header>
     <div class="admin-datatable__body">
+        <div class="admin-alert admin-alert--error" data-table-error role="alert" hidden><span data-table-error-message></span> <button type="button" class="admin-button" data-table-error-retry>Retry</button></div>
         <table id="{{ $id }}" class="display responsive" data-admin-table data-url="{{ $url }}" data-columns='@json($columns)' data-order='@json($order)'>
             <thead><tr>@foreach($columns as $column)<th>{{ $column['title'] }}</th>@endforeach</tr></thead>
         </table>
