@@ -47,7 +47,8 @@ class BillingEventProcessor
                         $locked->subscriptions()->update(['stripe_status' => 'canceled', 'ends_at' => now(), 'stripe_synced_at' => now()]);
                         // Preserve historical trial dates and customer linkage for audit/reconciliation.
                     }
-                    $locked->forceFill(['pm_type' => $method?->type, 'pm_last_four' => $method?->card?->last4])->saveQuietly();
+                    $type = $method?->type;
+                    $locked->forceFill(['pm_type' => $type === 'card' ? $method->card->brand : $type, 'pm_last_four' => $type ? ($method->{$type}->last4 ?? null) : null])->saveQuietly();
                     app(FeatureAccess::class)->invalidate($locked);
                     $this->complete($event);
                 });

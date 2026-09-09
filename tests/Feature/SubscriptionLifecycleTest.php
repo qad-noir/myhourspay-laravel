@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ProcessBillingEvent;
+use App\Models\BillingWebhookEvent;
 use App\Models\Plan;
 use App\Models\PlanPrice;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\BillingEventProcessor;
 use App\Services\BillingPlanChanges;
 use App\Services\BillingSettings;
 use App\Services\FeatureAccess;
@@ -131,7 +134,7 @@ class SubscriptionLifecycleTest extends TestCase
         $this->fakeStripe(fn ($method, $url) => str_contains($url, '/checkout/sessions/')
             ? ['object' => 'checkout.session', 'id' => 'cs_owned', 'customer' => 'cus_lifecycle', 'mode' => 'subscription', 'status' => 'complete', 'subscription' => 'sub_lifecycle']
             : $this->listing([$this->remote()]));
-        $this->actingAs($user)->get(route('billing.success', ['session_id' => 'cs_owned']))->assertRedirect(route('billing.index'))->assertSessionHasNoErrors();
+        $this->actingAs($user)->get(route('billing.success', ['session_id' => 'cs_owned']))->assertOk()->assertSee('Checkout confirmation')->assertSessionHasNoErrors();
         $this->assertDatabaseHas('subscriptions', ['stripe_status' => 'trialing']);
     }
 
@@ -145,6 +148,9 @@ class SubscriptionLifecycleTest extends TestCase
         for ($i = 0; $i < 2; $i++) {
             $this->call('POST', '/stripe/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_STRIPE_SIGNATURE' => $signature], $payload)->assertOk();
         }
+        $event = BillingWebhookEvent::where('stripe_event_id', 'evt_late')->firstOrFail();
+        (new ProcessBillingEvent($event->id))->handle(app(BillingEventProcessor::class));
+        (new ProcessBillingEvent($event->id))->handle(app(BillingEventProcessor::class));
         $this->assertDatabaseHas('subscriptions', ['stripe_status' => 'canceled']);
         $this->assertDatabaseHas('billing_webhook_events', ['stripe_event_id' => 'evt_late', 'status' => 'processed']);
         $this->assertCount(1, $this->calls);
@@ -388,8 +394,10 @@ class SubscriptionLifecycleTest extends TestCase
                     $schedule['phases'] = $params['phases'];
                     $remote['schedule'] = 'sched_seats';
                 }
+
                 return $schedule;
             }
+
             return str_ends_with($url, '/subscriptions') ? $this->listing([$remote]) : $remote;
         });
         app(BillingPlanChanges::class)->change($user, PlanPrice::where('stripe_price_id', 'price_business_yearly')->firstOrFail());

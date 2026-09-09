@@ -20,10 +20,12 @@ class ProcessBillingInbox extends Command
         return Cache::lock('billing:inbox-run', 180)->get(function () {
             Cache::put('billing:scheduler-heartbeat', now()->toIso8601String(), now()->addDay());
             BillingWebhookEvent::whereIn('status', ['received', 'failed', 'processing'])
+                ->where(fn ($q) => $q->whereNull('dispatched_at')->orWhere('dispatched_at', '<=', now()->subMinutes(5)))
                 ->whereNotNull('payload')->where(fn ($q) => $q->whereNull('available_at')->orWhere('available_at', '<=', now()))
                 ->where(fn ($q) => $q->whereNull('lease_until')->orWhere('lease_until', '<=', now()))
                 ->orderBy('id')->limit(100)->get()->each(function ($event) {
                     ProcessBillingEvent::dispatch($event->id);
+                    BillingWebhookEvent::whereKey($event->id)->whereIn('status', ['received', 'failed', 'processing'])->update(['dispatched_at' => now()]);
                 });
             // Notification intents are durable too; duplicate jobs are harmless under their intent lock.
             DB::table('billing_notification_intents')->whereNull('sent_at')->where('attempts', '<', 8)->where(fn ($q) => $q->whereNull('available_at')->orWhere('available_at', '<=', now()))->limit(100)->pluck('id')->each(fn ($id) => SendBillingNotification::dispatch($id));

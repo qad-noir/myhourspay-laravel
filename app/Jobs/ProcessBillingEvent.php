@@ -49,7 +49,7 @@ class ProcessBillingEvent implements ShouldQueue
         } catch (Throwable $exception) {
             BillingWebhookEvent::whereKey($event->id)->where('lease_token', $event->lease_token)->where('status', 'processing')->update([
                 'status' => $event->attempts >= config('billing_events.max_attempts') ? 'exhausted' : 'failed',
-                'failed_at' => now(), 'lease_until' => null, 'lease_token' => null,
+                'failed_at' => now(), 'dispatched_at' => null, 'lease_until' => null, 'lease_token' => null,
                 'available_at' => now()->addSeconds(min(3600, 60 * (2 ** ($event->attempts - 1)))),
                 'error_message' => 'Processing failed ('.class_basename($exception).'). Retry or review server logs.',
             ]);

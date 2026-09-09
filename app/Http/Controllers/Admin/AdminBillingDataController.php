@@ -51,9 +51,11 @@ class AdminBillingDataController extends Controller
             ->toJson();
     }
 
-    public function webhooks(): JsonResponse
+    public function webhooks(Request $request): JsonResponse
     {
-        return DataTables::eloquent(BillingWebhookEvent::query())
+        $request->merge(['length' => min(100, max(1, (int) $request->input('length', 10)))]);
+
+        return DataTables::eloquent(BillingWebhookEvent::query()->select(['id', 'stripe_event_id', 'type', 'status', 'attempts', 'created_at', 'processed_at', 'error_message', 'lease_until']))
             ->editColumn('type', fn (BillingWebhookEvent $event) => e($event->type))
             ->editColumn('status', fn (BillingWebhookEvent $event) => '<span class="admin-status admin-status--'.e($event->status).'"><i></i>'.e(str($event->status)->headline()).'</span>')
             ->addColumn('received', fn (BillingWebhookEvent $event) => $event->created_at->format('d M Y H:i:s'))
@@ -61,7 +63,8 @@ class AdminBillingDataController extends Controller
             ->addColumn('message', fn (BillingWebhookEvent $event) => e($event->error_message ? str($event->error_message)->limit(100) : '—'))
             ->orderColumn('received', 'created_at $1')
             ->orderColumn('processed', 'processed_at $1')
-            ->rawColumns(['status'])
+            ->addColumn('actions', fn (BillingWebhookEvent $event) => view('admin.billing.partials.webhook-actions', compact('event'))->render())
+            ->rawColumns(['status', 'actions'])
             ->toJson();
     }
 }

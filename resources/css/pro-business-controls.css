@@ -170,6 +170,8 @@
     transition: border-color .16s, color .16s, background .16s, box-shadow .16s;
 }
 
+.business-check-option > span:last-child { font-size: 12px; }
+
 .business-check-option__box svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .business-check-option input:checked + .business-check-option__box { border-color: #ff6b35; color: #fff; background: #ff6b35; }
 .business-check-option input:checked ~ span:last-child { color: #a44324; }

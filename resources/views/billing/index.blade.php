@@ -23,7 +23,14 @@
             @if($currentPlan->id !== $billing['plan']?->id && $currentPlan->tier > 0)<p class="billing-access-note">Additional access: {{ $currentPlan->name }} through an entitlement grant.</p>@endif
             @unless($enforcementEnabled)<p class="billing-access-note">Beta access: premium features are currently available while we test myhourspay.</p>@endunless
         </div>
-        @if(auth()->user()->hasStripeId())<div class="billing-summary__actions"><form method="POST" action="{{ route('billing.sync') }}">@csrf<button class="dashboard-button dashboard-button--secondary">Refresh billing</button></form><form method="POST" action="{{ route('billing.portal') }}">@csrf<button class="dashboard-primary-button">Manage billing securely</button></form></div>@endif
+        @if(auth()->user()->hasStripeId())
+            <div class="billing-summary__actions">
+                <form method="POST" action="{{ route('billing.portal') }}">@csrf<button type="submit" class="dashboard-button dashboard-button--primary whitespace-nowrap">Manage billing</button></form>
+                @if($needsBillingRefresh)
+                    <form method="POST" action="{{ route('billing.sync') }}" data-confirm="Retrieve your latest subscription and invoice status from Stripe? This does not charge your card or change your plan." data-confirm-tone="neutral" data-confirm-title="Refresh billing?" data-confirm-button="Refresh billing">@csrf<button type="submit" class="dashboard-button dashboard-button--secondary whitespace-nowrap">Refresh billing</button></form>
+                @endif
+            </div>
+        @endif
     </section>
 
     <div class="billing-interval-note"><span>Monthly or annual billing</span><strong>Save two months with annual plans</strong></div>
@@ -63,7 +70,7 @@
                         @elseif($canChange && $option?->stripe_price_id)
                             <form method="POST" action="{{ route('billing.change') }}" data-confirm="{{ $action === 'Upgrade' && !$isCurrent ? 'Apply this upgrade now? A running trial keeps its end date; paid upgrades use Stripe proration.' : 'Schedule this change for the end of your trial or current paid period?' }}">@csrf<input type="hidden" name="plan" value="{{ $plan->key }}"><input type="hidden" name="interval" value="{{ $interval }}"><button class="{{ $interval === 'yearly' ? 'is-secondary' : '' }}">{{ $isCurrent ? 'Switch to' : $action.' to '.$plan->name.' ·' }} {{ $interval === 'yearly' ? 'annual' : 'monthly' }}</button></form>
                         @elseif($subscription && !in_array($subscription->stripe_status, ['canceled','incomplete_expired'],true))
-                            @if($loop->first)<p class="billing-free-note">Refresh billing or open Manage billing securely to resolve your subscription before choosing a plan.</p>@endif
+                            @if($loop->first)<p class="billing-free-note">Open Manage billing to resolve your subscription before choosing a plan.</p>@endif
                         @elseif($checkoutEnabled && $option?->stripe_price_id)
                             <form method="POST" action="{{ route('billing.checkout') }}">@csrf<input type="hidden" name="plan" value="{{ $plan->key }}"><input type="hidden" name="interval" value="{{ $interval }}"><button class="{{ $interval === 'yearly' ? 'is-secondary' : '' }}">Upgrade to {{ $plan->name }} · {{ $interval === 'yearly' ? 'annual' : 'monthly' }}</button></form>
                         @elseif($loop->first)<button type="button" class="billing-coming-soon" disabled>Subscriptions opening soon</button>
@@ -84,7 +91,7 @@
             <div><p class="dashboard-eyebrow">Subscription controls</p><h2>Manage your renewal</h2><p>Stripe securely handles payment methods, invoices and billing details.</p></div>
             <div>
                 @if($subscription->onGracePeriod() && $billing['hasAccess'])
-                    <form method="POST" action="{{ route('billing.resume') }}">@csrf<button class="dashboard-primary-button">Resume subscription</button></form>
+                    <form method="POST" action="{{ route('billing.resume') }}">@csrf<button class="dashboard-button dashboard-button--primary">Resume subscription</button></form>
                 @elseif($billing['hasAccess'])
                     <form method="POST" action="{{ route('billing.cancel') }}" data-confirm="Cancel at the end of your current billing period?">@csrf<button class="billing-danger-button">Switch to Free at period end</button></form>
                 @endif

@@ -7,12 +7,14 @@ use App\Http\Controllers\Admin\AdminDataController;
 use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Admin\AdminOptionController;
+use App\Http\Controllers\Admin\AdminPaymentReviewController;
 use App\Http\Controllers\Admin\AdminSupportController;
 use App\Http\Controllers\Admin\CompactDataController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BusinessToolsController;
 use App\Http\Controllers\CalendarIntegrationController;
+use App\Http\Controllers\CheckoutConfirmationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\FaqController;
@@ -129,6 +131,9 @@ Route::middleware([
             Route::post('/grants', 'storeGrant')->name('grants.store');
             Route::post('/grants/{grant}/revoke', 'revokeGrant')->name('grants.revoke');
             Route::get('/health', 'health')->name('health');
+            Route::get('/payment-reviews', [AdminPaymentReviewController::class, 'index'])->name('payment-reviews');
+            Route::get('/payment-reviews/data', [AdminPaymentReviewController::class, 'data'])->name('payment-reviews.data');
+            Route::post('/webhooks/{event}/retry', [AdminPaymentReviewController::class, 'retry'])->middleware('throttle:10,1')->name('webhooks.retry');
         });
         Route::prefix('data/billing')->name('data.billing.')->controller(AdminBillingDataController::class)->group(function (): void {
             Route::get('/subscribers', 'subscribers')->name('subscribers');
@@ -157,7 +162,8 @@ Route::middleware([
             Route::post('/change', 'change')->name('change');
             Route::post('/cancel', 'cancel')->name('cancel');
             Route::post('/resume', 'resume')->name('resume');
-            Route::get('/success', 'success')->name('success');
+            Route::get('/success', [CheckoutConfirmationController::class, 'show'])->middleware('throttle:12,1')->name('success');
+            Route::get('/confirmations/{confirmation}', [CheckoutConfirmationController::class, 'status'])->middleware('throttle:30,1')->name('confirmation.status');
             Route::get('/cancelled', 'cancelled')->name('cancelled');
         });
 

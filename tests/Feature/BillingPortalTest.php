@@ -5,8 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Cashier\Events\WebhookHandled;
-use Laravel\Cashier\Events\WebhookReceived;
 use Tests\TestCase;
 
 class BillingPortalTest extends TestCase
@@ -37,26 +35,6 @@ class BillingPortalTest extends TestCase
 
         $this->actingAs($user)->post(route('billing.checkout'), ['plan' => 'enterprise', 'interval' => 'weekly'])
             ->assertSessionHasErrors(['plan', 'interval']);
-    }
-
-    public function test_webhook_events_are_recorded_idempotently_and_invalidate_entitlements(): void
-    {
-        $user = User::factory()->create(['stripe_id' => 'cus_test', 'entitlement_version' => 1, 'billing_grace_ends_at' => now()->addDay()]);
-        $payload = [
-            'id' => 'evt_invoice_paid',
-            'type' => 'invoice.paid',
-            'data' => ['object' => ['customer' => 'cus_test', 'status' => 'paid']],
-        ];
-
-        WebhookReceived::dispatch($payload);
-        WebhookReceived::dispatch($payload);
-        WebhookHandled::dispatch($payload);
-
-        $this->assertDatabaseCount('billing_webhook_events', 1);
-        $this->assertDatabaseHas('billing_webhook_events', ['stripe_event_id' => 'evt_invoice_paid', 'status' => 'processed']);
-        $this->assertSame(2, $user->refresh()->entitlement_version);
-        // Historical invoice events do not override grace; fresh subscription snapshots do.
-        $this->assertNotNull($user->billing_grace_ends_at);
     }
 
     private function workspaceUser(): User

@@ -51,6 +51,13 @@ class BillingController extends Controller
             'subscription' => $subscription,
             'invoices' => $invoices,
             'invoiceWarning' => $invoiceWarning,
+            'needsBillingRefresh' => $user->hasStripeId() && (
+                $invoiceWarning || $request->session()->get('billing_refresh_needed') || ! $subscription
+                || ! $subscription->stripe_synced_at
+                || in_array($subscription->stripe_status, ['past_due', 'incomplete', 'unpaid'], true)
+                || $subscription->pending_change_at?->isPast()
+                || ($subscription->stripe_status === 'trialing' && $subscription->trial_ends_at?->isPast())
+            ),
             'checkoutEnabled' => $settings->boolean('checkout_enabled'),
             'enforcementEnabled' => $settings->boolean('paid_enforcement_enabled'),
         ]);
@@ -193,12 +200,13 @@ class BillingController extends Controller
     {
         try {
             $sync->customer($request->user());
+            $request->session()->forget('billing_refresh_needed');
 
             return back()->with('status', 'Billing refreshed from Stripe.');
         } catch (Throwable $exception) {
             $reference = $this->recordFailure($request, $exception, 'billing.sync_failed', $incidents);
 
-            return back()->withErrors(['billing' => 'Billing could not be refreshed. Please retry. Reference: '.$reference]);
+            return back()->with('billing_refresh_needed', true)->withErrors(['billing' => 'Billing could not be refreshed. Please retry. Reference: '.$reference]);
         }
     }
 

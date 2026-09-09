@@ -16,8 +16,8 @@ use Carbon\CarbonImmutable;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -124,6 +124,7 @@ class ProController extends Controller
     private function scheduleData(Request $request): array
     {
         $workspace = $this->current->for($request->user());
+
         return $request->validate(['project_id' => ['nullable', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)], 'day_of_week' => ['required', 'integer', 'between:1,7'], 'start_time' => ['required', 'date_format:H:i'], 'end_time' => ['required', 'date_format:H:i', 'after:start_time'], 'break_minutes' => ['required', 'integer', 'min:0', 'max:1439'], 'break_type' => ['required', Rule::in(['paid', 'unpaid'])], 'starts_on' => ['nullable', 'date'], 'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on']]);
     }
 
@@ -147,8 +148,9 @@ class ProController extends Controller
     public function updateReminders(Request $request): RedirectResponse
     {
         $workspace = $this->current->for($request->user());
-        $data = $request->validate(['types' => ['nullable', 'array'], 'types.*' => [Rule::in(['missing_entry', 'weekly_target', 'overtime', 'trial_ending', 'payment_failed'])], 'email' => ['nullable', 'boolean'], 'in_app' => ['nullable', 'boolean']]);
-        foreach (['missing_entry', 'weekly_target', 'overtime', 'trial_ending', 'payment_failed'] as $type) {
+        $types = ['missing_entry', 'weekly_target', 'overtime', 'trial_ending', 'payment_failed', 'timesheet_pending', 'access_ending'];
+        $data = $request->validate(['types' => ['nullable', 'array'], 'types.*' => [Rule::in($types)], 'email' => ['nullable', 'boolean'], 'in_app' => ['nullable', 'boolean']]);
+        foreach ($types as $type) {
             NotificationPreference::query()->updateOrCreate(['workspace_id' => $workspace->id, 'user_id' => $request->user()->id, 'type' => $type], ['enabled' => in_array($type, $data['types'] ?? [], true), 'channels' => array_keys(array_filter(['mail' => $request->boolean('email'), 'database' => $request->boolean('in_app')]))]);
         }
 

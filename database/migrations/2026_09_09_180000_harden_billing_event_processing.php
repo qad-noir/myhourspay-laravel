@@ -13,6 +13,7 @@ return new class extends Migration
             $table->unsignedInteger('attempts')->default(0);
             $table->timestamp('available_at')->nullable()->index();
             $table->timestamp('lease_until')->nullable();
+            $table->timestamp('dispatched_at')->nullable();
             $table->string('lease_token', 36)->nullable();
         });
         Schema::create('billing_payment_reviews', function (Blueprint $table) {
@@ -51,6 +52,6 @@ return new class extends Migration
         Schema::dropIfExists('billing_checkout_confirmations');
         Schema::dropIfExists('billing_notification_intents');
         Schema::dropIfExists('billing_payment_reviews');
-        Schema::table('billing_webhook_events', fn (Blueprint $table) => $table->dropColumn(['payload', 'attempts', 'available_at', 'lease_until', 'lease_token']));
+        Schema::table('billing_webhook_events', fn (Blueprint $table) => $table->dropColumn(['payload', 'attempts', 'available_at', 'lease_until', 'lease_token', 'dispatched_at']));
     }
 };

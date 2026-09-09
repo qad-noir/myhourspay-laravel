@@ -75,6 +75,10 @@ class SendWorkspaceReminders extends Command
                 ? ['reference' => $subscription->trial_ends_at->toDateString(), 'heading' => 'Your trial is ending soon', 'message' => 'Your premium trial ends '.$subscription->trial_ends_at->diffForHumans().'.', 'url' => route('billing.index'), 'action' => 'Review billing'] : null,
             'payment_failed' => ($subscription = $user->subscription('default')) && $subscription->stripe_status === 'past_due'
                 ? ['reference' => $subscription->updated_at->toDateString(), 'heading' => 'Payment needs attention', 'message' => 'Stripe could not complete your latest subscription payment. Your billing grace period is active.', 'url' => route('billing.index'), 'action' => 'Update billing'] : null,
+            'timesheet_pending' => ($pending = $workspace->timesheets()->where('user_id', $user->id)->where('status', 'submitted')->latest('submitted_at')->first())
+                ? ['reference' => (string) $pending->id, 'heading' => 'Timesheet awaiting approval', 'message' => 'Your submitted week beginning '.$pending->week_start->format('j M Y').' is waiting for review.', 'url' => route('business.index'), 'action' => 'Review timesheet'] : null,
+            'access_ending' => ($subscription = $user->subscription('default')) && ($ends = $subscription->trial_ends_at ?? $subscription->ends_at) && $ends->between($now, $now->addDays(7))
+                ? ['reference' => $ends->toDateString(), 'heading' => 'Premium access ends soon', 'message' => 'Your premium access ends '.$ends->diffForHumans().'. Review your plan to keep these tools available.', 'url' => route('billing.index'), 'action' => 'Manage plan'] : null,
             default => null,
         };
     }
