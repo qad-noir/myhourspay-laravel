@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-globalThis.window = {};
+globalThis.window = {matchMedia: () => ({matches:false, addEventListener(){}, removeEventListener(){}})};
 const { timeField } = await import('../../resources/js/time-field.js');
 await import('../../resources/js/record-drawer.js');
 
@@ -50,4 +50,21 @@ test('schedule drawers initialise the shared footer loading state and block look
     drawer.send = () => { sent = true; };
     await drawer.save({reportValidity:()=>true});
     assert.equal(sent, false);
+});
+
+test('native picker changes sync to the desktop editor and switching modes retains values', () => {
+    const media = {matches:true,addEventListener(_,fn){this.listener=fn;},removeEventListener(_,fn){assert.equal(fn,this.listener);}};
+    window.matchMedia = () => media;
+    const field = timeField();
+    let sync;
+    field.$watch = (_,fn) => {sync=fn;};
+    field.init();
+    assert.equal(field.native,true);
+    field.setNative('16:15');sync(field.value);
+    assert.equal(field.clock,'04:15');assert.equal(field.period,'PM');
+    media.matches=false;media.listener();
+    assert.equal(field.native,false);assert.equal(field.value,'16:15');
+    field.setNative('');sync(field.value);
+    assert.equal(field.clock,'');assert.equal(field.value,'');
+    field.destroy();
 });

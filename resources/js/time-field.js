@@ -1,8 +1,14 @@
 // Keep an explicit 12-hour editor in sync with the server's canonical HH:mm value.
 // Native time inputs hide AM/PM in some OS locales; these controls do not.
 export const timeField = () => ({
-    value: '', clock: '', period: 'AM', emitted: null,
+    value: '', clock: '', period: 'AM', emitted: null, native: false,
     init() {
+        // Touch-first devices keep their platform picker, including landscape/tablets.
+        // A desktop touchscreen with a fine primary pointer keeps the explicit editor.
+        this.media = window.matchMedia('(hover: none) and (pointer: coarse)');
+        this.syncMode = () => { this.native = this.media.matches; };
+        this.media.addEventListener('change', this.syncMode);
+        this.syncMode();
         this.$watch('value', value => {
             if (value === this.emitted) return;
             const match = /^(\d{2}):([0-5]\d)$/.exec(value || '');
@@ -12,6 +18,8 @@ export const timeField = () => ({
             this.period = hour >= 12 ? 'PM' : 'AM';
         });
     },
+    destroy() { this.media.removeEventListener('change', this.syncMode); },
+    setNative(value) { this.emitted = null; this.value = value; },
     commit() {
         const match = /^(0?[1-9]|1[0-2]):([0-5]\d)$/.exec(this.clock.trim());
         this.emitted = match
