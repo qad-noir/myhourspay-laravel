@@ -4,13 +4,16 @@
 <section class="admin-card p-5 mb-6">
     <h2>Billing processing</h2>
     <p class="my-3">Events are processed by the minute cron. Missing or old heartbeats need attention.</p>
+    @if(!$billingEventsReady || !$billingNotificationsReady)
+        <div class="billing-alert billing-alert--warning" role="alert"><strong>Billing reliability migration pending.</strong> Run <code>php artisan migrate --force</code>, then clear and rebuild the route and view caches.</div>
+    @endif
     <dl class="grid gap-4 sm:grid-cols-3">
         <div><dt>Scheduler last seen</dt><dd>{{ \Illuminate\Support\Facades\Cache::get('billing:scheduler-heartbeat', 'Not yet observed') }}</dd></div>
         <div><dt>Worker last seen</dt><dd>{{ \Illuminate\Support\Facades\Cache::get('billing:worker-heartbeat', 'Not yet observed') }}</dd></div>
-        <div><dt>Awaiting processing</dt><dd>{{ \App\Models\BillingWebhookEvent::whereIn('status', ['received', 'failed', 'processing'])->count() }}</dd></div>
-        <div><dt>Oldest pending receipt</dt><dd>{{ \App\Models\BillingWebhookEvent::whereIn('status', ['received', 'failed', 'processing'])->oldest()->value('created_at') ?? 'None' }}</dd></div>
-        <div><dt>Exhausted events</dt><dd>{{ \App\Models\BillingWebhookEvent::where('status', 'exhausted')->count() }}</dd></div>
-        <div><dt>Notifications needing review</dt><dd>{{ \Illuminate\Support\Facades\DB::table('billing_notification_intents')->whereNull('sent_at')->where('attempts', '>=', 8)->count() }}</dd></div>
+        <div><dt>Awaiting processing</dt><dd>{{ $billingEventsReady ? \App\Models\BillingWebhookEvent::whereIn('status', ['received', 'failed', 'processing'])->count() : 'Migration pending' }}</dd></div>
+        <div><dt>Oldest pending receipt</dt><dd>{{ $billingEventsReady ? (\App\Models\BillingWebhookEvent::whereIn('status', ['received', 'failed', 'processing'])->oldest()->value('created_at') ?? 'None') : 'Migration pending' }}</dd></div>
+        <div><dt>Exhausted events</dt><dd>{{ $billingEventsReady ? \App\Models\BillingWebhookEvent::where('status', 'exhausted')->count() : 'Migration pending' }}</dd></div>
+        <div><dt>Notifications needing review</dt><dd>{{ $billingNotificationsReady ? \Illuminate\Support\Facades\DB::table('billing_notification_intents')->whereNull('sent_at')->where('attempts', '>=', 8)->count() : 'Migration pending' }}</dd></div>
     </dl>
     <a class="admin-button mt-4" wire:navigate href="{{ route('admin.billing.payment-reviews') }}">Review refunds &amp; disputes</a>
 </section>

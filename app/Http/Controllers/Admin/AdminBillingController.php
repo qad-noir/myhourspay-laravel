@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Laravel\Cashier\Subscription;
@@ -308,11 +309,16 @@ class AdminBillingController extends Controller
 
     public function health(): View
     {
+        $billingEventsReady = Schema::hasTable('billing_webhook_events') && Schema::hasColumn('billing_webhook_events', 'attempts') && Schema::hasColumn('billing_webhook_events', 'dispatched_at');
+        $billingNotificationsReady = Schema::hasTable('billing_notification_intents');
+
         return view('admin.billing.health', [
             'priceHealth' => Plan::query()->where('purchasable', true)->with([
                 'prices' => fn ($query) => $query->where('active', true)->orderBy('kind')->orderBy('interval'),
             ])->get(),
             'stripeConfigured' => filled(config('cashier.key')) && filled(config('cashier.secret')) && filled(config('cashier.webhook.secret')),
+            'billingEventsReady' => $billingEventsReady,
+            'billingNotificationsReady' => $billingNotificationsReady,
         ]);
     }
 

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\SubscriptionState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Yajra\DataTables\Facades\DataTables;
 
 class AdminBillingDataController extends Controller
@@ -55,9 +56,17 @@ class AdminBillingDataController extends Controller
     {
         $request->merge(['length' => min(100, max(1, (int) $request->input('length', 10)))]);
 
-        return DataTables::eloquent(BillingWebhookEvent::query()->select(['id', 'stripe_event_id', 'type', 'status', 'attempts', 'created_at', 'processed_at', 'error_message', 'lease_until']))
+        $columns = ['id', 'stripe_event_id', 'type', 'status', 'created_at', 'processed_at', 'error_message'];
+        foreach (['attempts', 'lease_until'] as $column) {
+            if (Schema::hasColumn('billing_webhook_events', $column)) {
+                $columns[] = $column;
+            }
+        }
+
+        return DataTables::eloquent(BillingWebhookEvent::query()->select($columns))
             ->editColumn('type', fn (BillingWebhookEvent $event) => e($event->type))
             ->editColumn('status', fn (BillingWebhookEvent $event) => '<span class="admin-status admin-status--'.e($event->status).'"><i></i>'.e(str($event->status)->headline()).'</span>')
+            ->addColumn('attempts', fn (BillingWebhookEvent $event) => $event->attempts ?? '—')
             ->addColumn('received', fn (BillingWebhookEvent $event) => $event->created_at->format('d M Y H:i:s'))
             ->addColumn('processed', fn (BillingWebhookEvent $event) => $event->processed_at?->format('d M Y H:i:s') ?? '—')
             ->addColumn('message', fn (BillingWebhookEvent $event) => e($event->error_message ? str($event->error_message)->limit(100) : '—'))
