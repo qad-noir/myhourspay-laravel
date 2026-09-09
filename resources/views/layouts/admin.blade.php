@@ -9,7 +9,9 @@
 </head>
 <body class="admin-body">
 <div class="admin-shell">
-    <aside class="admin-sidebar">
+    <button class="admin-nav-backdrop" aria-label="Close administration menu" hidden></button>
+    <aside class="admin-sidebar" id="admin-navigation" aria-label="Administration menu">
+        <button class="admin-nav-close" aria-label="Close administration menu">×</button>
         <a wire:navigate href="{{ route('admin.dashboard') }}" class="admin-brand"><x-brand-logo dark /></a>
         <div><small>Platform administration</small><strong>{{ auth()->user()->name }}</strong></div>
         <nav>
@@ -26,7 +28,7 @@
         <a wire:navigate href="{{ route('dashboard') }}" class="admin-back"><x-admin.icon name="back"/>Personal dashboard</a>
     </aside>
     <main class="admin-main">
-        <header><div><small>myhourspay control centre</small><h1>@yield('title')</h1></div><span class="admin-badge">Platform admin</span></header>
+        <header><button class="admin-nav-toggle" aria-label="Open administration menu" aria-controls="admin-navigation" aria-expanded="false">☰</button><div><small>myhourspay control centre</small><h1>@yield('title')</h1></div><span class="admin-badge">Platform admin</span></header>
         @if(session('status'))<div class="admin-alert" role="status">{{ session('status') }}</div>@endif
         @if($errors->any())<div class="admin-alert admin-alert--error" role="alert">{{ $errors->first() }}</div>@endif
         @yield('content')

@@ -29,6 +29,8 @@ import '../css/record-drawer.css';
 import '../css/dashboard-toast.css';
 import './mobile-ui';
 import '../css/mobile-refinements.css';
+import './admin-navigation';
+import '../css/admin-health.css';
 
 const initializeAdminTables = () => {
     document.querySelectorAll('[data-admin-table]').forEach((table) => {
@@ -49,7 +51,7 @@ const initializeAdminTables = () => {
                 data: (data) => filters?.querySelectorAll('[name]').forEach((field) => { data[field.name] = field.value; }),
             },
             columns,
-            responsive: { details: { display: DataTable.Responsive.display.childRowImmediate, renderer: DataTable.Responsive.renderer.listHidden() } },
+            responsive: { details: { renderer: DataTable.Responsive.renderer.listHidden() } },
             pageLength: 10,
             lengthMenu: [10, 20, 50, 100],
             searchDelay: 350,
@@ -72,6 +74,20 @@ const initializeAdminTables = () => {
                 paginate: { first: 'First', previous: '← Previous', next: 'Next →', last: 'Last' },
             },
         });
+        let lastWidth = 0;
+        const resizeObserver = new ResizeObserver(([entry]) => {
+            const width = Math.round(entry.contentRect.width);
+            if (!width || width === lastWidth) return;
+            lastWidth = width;
+            requestAnimationFrame(() => {
+                if (table.isConnected && DataTable.isDataTable(table)) {
+                    dataTable.columns.adjust();
+                    dataTable.responsive.recalc();
+                }
+            });
+        });
+        resizeObserver.observe(table.closest('.admin-datatable'));
+        dataTable.on('destroy', () => resizeObserver.disconnect());
         dataTable.on('xhr', (_event, _settings, json) => {
             const count = table.closest('.admin-datatable')?.querySelector('[data-table-count]');
             if (count && json) count.textContent = `${json.recordsTotal ?? 0} records`;
