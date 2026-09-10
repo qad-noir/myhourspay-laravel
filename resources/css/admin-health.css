@@ -23,6 +23,8 @@
 .admin-datatable table.dataTable > tbody > tr > td.dtr-control { padding-left:30px!important; }
 .admin-datatable table.dataTable > tbody > tr > td.dtr-control::before { left:8px; }
 .admin-body .admin-action-menu__panel { margin:0;overflow-y:auto;overscroll-behavior:contain;white-space:normal; }
+.admin-body .admin-action-menu__panel { visibility:hidden; }
+.admin-body .admin-action-menu[open] .admin-action-menu__panel[data-positioned] { visibility:visible; }
 .admin-body .admin-action-menu__panel :is(a,button) { min-height:44px;font-size:13px;line-height:1.4; }
 .admin-datatable table.dataTable > tbody > tr > td.dtr-control { position:relative; }
 .admin-datatable table.dataTable > tbody > tr > td.dtr-control::before { position:absolute;top:50%;transform:translateY(-50%);margin:0!important; }

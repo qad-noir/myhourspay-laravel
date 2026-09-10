@@ -299,6 +299,9 @@ document.addEventListener('click', (event) => {
 document.addEventListener('toggle', (event) => {
     if (!event.target.matches?.('.admin-action-menu')) return;
     const panel = event.target.querySelector('.admin-action-menu__panel');
+    // A native details toggle is queued after opening; CSS keeps the panel
+    // hidden until its final dimensions and viewport coordinates are ready.
+    panel?.removeAttribute('data-positioned');
     if (!event.target.open) { if (panel?.matches(':popover-open')) panel.hidePopover(); return; }
     document.querySelectorAll('.admin-action-menu[open]').forEach((menu) => {
         if (menu !== event.target) menu.removeAttribute('open');
@@ -319,6 +322,7 @@ document.addEventListener('toggle', (event) => {
         panel.style.left = `${Math.max(12, Math.min(window.innerWidth - width - 12, trigger.right - width))}px`;
         panel.style.right = 'auto';
         panel.style.bottom = 'auto';
+        panel.setAttribute('data-positioned', '');
     }
 }, true);
 document.addEventListener('keydown', event => {
