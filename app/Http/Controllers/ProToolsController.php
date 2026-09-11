@@ -49,7 +49,7 @@ class ProToolsController extends Controller
 
         $clientProjectExists = $access['clients_projects'] && $workspace->projects()->whereNotNull('client_id')->exists();
         $rateReady = $access['earnings'] && ($rateCount > 0 || $workspace->projects()->whereNotNull('hourly_rate_minor')->exists());
-        $trackedHoursReady = $access['invoicing'] && $this->billableEntries($request)->exists();
+        $invoiceHoursReady = $access['invoicing'] && $this->invoiceReadyEntries($request)->exists();
 
         return view('pro.overview', $context + [
             'moduleCounts' => [
@@ -65,8 +65,7 @@ class ProToolsController extends Controller
                 'client' => $clientCount > 0,
                 'project' => $clientProjectExists,
                 'rate' => $rateReady,
-                'hours' => $trackedHoursReady,
-                'invoice' => $invoiceCount > 0,
+                'hours' => $invoiceHoursReady,
             ],
         ]);
     }
@@ -184,11 +183,6 @@ class ProToolsController extends Controller
 
     private function invoiceReadyEntries(Request $request): Builder
     {
-        return $this->billableEntries($request)->whereDoesntHave('invoiceLine');
-    }
-
-    private function billableEntries(Request $request): Builder
-    {
         $workspace = $this->current->for($request->user());
 
         return HoursEntry::query()
@@ -196,6 +190,7 @@ class ProToolsController extends Controller
             ->where('user_id', $request->user()->id)
             ->where('billable', true)
             ->whereNotNull('hourly_rate_minor')
+            ->whereDoesntHave('invoiceLine')
             ->whereHas('project', fn ($query) => $query->whereNotNull('client_id'));
     }
 }
