@@ -11,7 +11,7 @@ class CalendarEvent extends Model
 
     protected function casts(): array
     {
-        return ['starts_at' => 'datetime', 'ends_at' => 'datetime', 'metadata' => 'array'];
+        return ['calendar_connection_id' => 'integer', 'workspace_id' => 'integer', 'user_id' => 'integer', 'hours_entry_id' => 'integer', 'starts_at' => 'datetime', 'ends_at' => 'datetime', 'metadata' => 'array'];
     }
 
     public function connection(): BelongsTo

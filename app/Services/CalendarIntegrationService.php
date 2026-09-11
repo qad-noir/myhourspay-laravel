@@ -88,14 +88,41 @@ class CalendarIntegrationService
 
     private function googleEvents(string $token, CarbonImmutable $start, CarbonImmutable $end): array
     {
-        $items = $this->client($token)->get('https://www.googleapis.com/calendar/v3/calendars/primary/events', ['timeMin' => $start->toIso8601String(), 'timeMax' => $end->toIso8601String(), 'singleEvents' => 'true', 'orderBy' => 'startTime', 'maxResults' => 250])->throw()->json('items', []);
+        $items = [];
+        $pageToken = null;
+        $seen = [];
+        do {
+            $data = $this->client($token)->get('https://www.googleapis.com/calendar/v3/calendars/primary/events', array_filter(['timeMin' => $start->toIso8601String(), 'timeMax' => $end->toIso8601String(), 'singleEvents' => 'true', 'orderBy' => 'startTime', 'maxResults' => 250, 'pageToken' => $pageToken]))->throw()->json();
+            $items = array_merge($items, $data['items'] ?? []);
+            $pageToken = $data['nextPageToken'] ?? null;
+            if ($pageToken && (isset($seen[$pageToken]) || count($seen) >= 99)) {
+                throw new RuntimeException('Calendar pagination could not be completed.');
+            }
+            if ($pageToken) $seen[$pageToken] = true;
+        } while ($pageToken);
+        $items = array_filter($items, fn (array $event) => ($event['status'] ?? '') !== 'cancelled');
 
         return collect($items)->filter(fn (array $event) => isset($event['start']['dateTime'], $event['end']['dateTime']))->map(fn (array $event) => ['id' => $event['id'] ?? null, 'summary' => $event['summary'] ?? null, 'starts_at' => CarbonImmutable::parse($event['start']['dateTime']), 'ends_at' => CarbonImmutable::parse($event['end']['dateTime']), 'metadata' => ['html_link' => $event['htmlLink'] ?? null]])->all();
     }
 
     private function microsoftEvents(string $token, CarbonImmutable $start, CarbonImmutable $end): array
     {
-        $items = $this->client($token)->withHeaders(['Prefer' => 'outlook.timezone="UTC"'])->get('https://graph.microsoft.com/v1.0/me/calendarView', ['startDateTime' => $start->utc()->toIso8601String(), 'endDateTime' => $end->utc()->toIso8601String(), '$top' => 250, '$select' => 'id,subject,start,end,webLink'])->throw()->json('value', []);
+        $items = [];
+        $url = 'https://graph.microsoft.com/v1.0/me/calendarView';
+        $query = ['startDateTime' => $start->utc()->toIso8601String(), 'endDateTime' => $end->utc()->toIso8601String(), '$top' => 250, '$select' => 'id,subject,start,end,webLink,isCancelled,isAllDay'];
+        $seen = [];
+        do {
+            // Never forward the bearer token to a host supplied by a malformed nextLink.
+            if (parse_url($url, PHP_URL_SCHEME) !== 'https' || parse_url($url, PHP_URL_HOST) !== 'graph.microsoft.com' || isset($seen[$url]) || count($seen) >= 100) {
+                throw new RuntimeException('Calendar pagination could not be verified.');
+            }
+            $seen[$url] = true;
+            $data = $this->client($token)->withHeaders(['Prefer' => 'outlook.timezone="UTC"'])->get($url, $query)->throw()->json();
+            $items = array_merge($items, $data['value'] ?? []);
+            $url = $data['@odata.nextLink'] ?? null;
+            $query = [];
+        } while ($url);
+        $items = array_filter($items, fn (array $event) => ! ($event['isCancelled'] ?? false) && ! ($event['isAllDay'] ?? false));
 
         return collect($items)->filter(fn (array $event) => isset($event['start']['dateTime'], $event['end']['dateTime']))->map(fn (array $event) => ['id' => $event['id'] ?? null, 'summary' => $event['subject'] ?? null, 'starts_at' => CarbonImmutable::parse($event['start']['dateTime'], $event['start']['timeZone'] ?? 'UTC'), 'ends_at' => CarbonImmutable::parse($event['end']['dateTime'], $event['end']['timeZone'] ?? 'UTC'), 'metadata' => ['html_link' => $event['webLink'] ?? null]])->all();
     }

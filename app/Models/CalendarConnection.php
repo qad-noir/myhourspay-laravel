@@ -14,7 +14,7 @@ class CalendarConnection extends Model
 
     protected function casts(): array
     {
-        return ['access_token' => 'encrypted', 'refresh_token' => 'encrypted', 'token_expires_at' => 'datetime', 'last_synced_at' => 'datetime'];
+        return ['workspace_id' => 'integer', 'user_id' => 'integer', 'access_token' => 'encrypted', 'refresh_token' => 'encrypted', 'token_expires_at' => 'datetime', 'last_synced_at' => 'datetime'];
     }
 
     public function events(): HasMany

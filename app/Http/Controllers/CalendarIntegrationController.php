@@ -58,15 +58,18 @@ class CalendarIntegrationController extends Controller
     public function callback(Request $request, string $provider): RedirectResponse
     {
         $oauth = (array) $request->session()->pull('calendar_oauth', []);
-        if (! hash_equals((string) ($oauth['state'] ?? ''), (string) $request->query('state')) || ($oauth['provider'] ?? null) !== $provider) {
+        if (empty($oauth['state']) || ! is_string($request->query('state')) || ! hash_equals((string) $oauth['state'], $request->query('state')) || ($oauth['provider'] ?? null) !== $provider) {
             return redirect()->route('pro.calendars.index')->withErrors(['calendar' => 'The calendar connection expired or could not be verified. Please try again.']);
         }
         $workspace = $this->current->for($request->user());
-        abort_unless((int) ($oauth['workspace_id'] ?? 0) === $workspace->id, 403);
+        abort_unless((int) ($oauth['workspace_id'] ?? 0) === (int) $workspace->id, 403);
 
         try {
             if ($request->filled('error')) {
                 throw new \RuntimeException('Calendar authorization was declined: '.$request->query('error'));
+            }
+            if (! is_string($request->query('code')) || blank($request->query('code'))) {
+                return redirect()->route('pro.calendars.index')->withErrors(['calendar' => 'The calendar provider did not complete the connection. Please try again.']);
             }
             $token = $this->calendars->exchange($provider, (string) $request->query('code'));
             $account = $this->calendars->account($provider, $token['access_token']);
@@ -140,12 +143,12 @@ class CalendarIntegrationController extends Controller
 
     private function guard(Request $request, CalendarConnection $connection): void
     {
-        abort_unless($connection->user_id === $request->user()->id && $connection->workspace_id === $this->current->for($request->user())->id, 404);
+        abort_unless((int) $connection->user_id === (int) $request->user()->id && (int) $connection->workspace_id === (int) $this->current->for($request->user())->id, 404);
     }
 
     private function guardEvent(Request $request, CalendarEvent $event): void
     {
-        abort_unless($event->user_id === $request->user()->id && $event->workspace_id === $this->current->for($request->user())->id, 404);
+        abort_unless((int) $event->user_id === (int) $request->user()->id && (int) $event->workspace_id === (int) $this->current->for($request->user())->id, 404);
     }
 
     private function failure(Request $request, Throwable $exception, string $event): RedirectResponse
