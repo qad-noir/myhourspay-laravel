@@ -32,6 +32,7 @@ import '../css/mobile-refinements.css';
 import './admin-navigation';
 import '../css/admin-health.css';
 import '../css/mobile-navigation.css';
+import '../css/invoices.css';
 
 const initializeAdminTables = () => {
     DataTable.ext.errMode = 'none';
