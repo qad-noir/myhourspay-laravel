@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: ['marketing/unsubscribe/*']);
         $middleware->web(append: [EnsureTrialChoice::class]);
         $middleware->alias([
             'email-code.verified' => EnsureEmailCodeVerified::class,

@@ -20,6 +20,7 @@
             <a wire:navigate href="{{ route('admin.workspaces.index') }}" @if(request()->routeIs('admin.workspaces.*')) aria-current="page" @endif><x-admin.icon name="workspaces"/>Workspaces</a>
             <a wire:navigate href="{{ route('admin.hours.index') }}" @if(request()->routeIs('admin.hours.*')) aria-current="page" @endif><x-admin.icon name="hours"/>Hours</a>
             <a wire:navigate href="{{ route('admin.billing.overview') }}" @if(request()->routeIs('admin.billing.*')) aria-current="page" @endif><x-admin.icon name="billing"/>Monetisation</a>
+            <a wire:navigate href="{{ route('admin.marketing.index') }}" @if(request()->routeIs('admin.marketing.*')) aria-current="page" @endif><x-admin.icon name="support"/>Marketing emails</a>
             <a wire:navigate href="{{ route('admin.audit-logs.index') }}" @if(request()->routeIs('admin.audit-logs.*')) aria-current="page" @endif><x-admin.icon name="audit"/>Audit logs</a>
             <a wire:navigate href="{{ route('admin.incidents.index') }}" @if(request()->routeIs('admin.incidents.*')) aria-current="page" @endif><x-admin.icon name="incidents"/>Incidents</a>
             <a wire:navigate href="{{ route('admin.support.index') }}" @if(request()->routeIs('admin.support.*')) aria-current="page" @endif><x-admin.icon name="support"/>Support queue</a>

@@ -1,5 +1,12 @@
 <x-app-layout>
     <x-slot name="header">Overview</x-slot>
+    @php
+        $marketingReady = \Illuminate\Support\Facades\Schema::hasTable('marketing_preferences');
+        $marketingPreference = $marketingReady ? \App\Models\MarketingPreference::where('user_id', auth()->id())->first() : null;
+    @endphp
+    @if($marketingReady && !$marketingPreference && auth()->user()->ownedWorkspaces()->exists())
+        <section class="dashboard-card marketing-invitation"><div><h2>Get more from your hours</h2><p>Optional product tips for your workspace, with occasional offers. You choose whether to subscribe.</p></div><a class="dashboard-button dashboard-button--secondary" href="{{ route('marketing.preferences') }}">Choose email preference</a><form method="POST" action="{{ route('marketing.dismiss') }}">@csrf<button class="dashboard-button dashboard-button--secondary">Not now</button></form></section>
+    @endif
     <x-dashboard.page-header :eyebrow="$now->format('l, j F Y')" :title="$greeting.', '.str(auth()->user()->name)->before(' ').' 👋'" description="Here’s a clear view of your hours for this week and month.">
         <x-slot:actions><a wire:navigate href="{{ route('hours.index', ['month' => $now->format('Y-m')]) }}" class="dashboard-period">{{ $now->format('F Y') }} <span aria-hidden="true">›</span></a></x-slot:actions>
     </x-dashboard.page-header>

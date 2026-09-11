@@ -15,3 +15,4 @@ Schedule::command('reports:deliver-scheduled')->everyTenMinutes()->withoutOverla
 Schedule::command('reminders:send')->hourly()->withoutOverlapping();
 Schedule::command('webhooks:deliver')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('billing:reconcile-seats')->hourly()->withoutOverlapping();
+Schedule::command('marketing:process-inbox')->everyMinute()->withoutOverlapping(3)->runInBackground();

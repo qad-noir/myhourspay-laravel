@@ -41,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('marketing-unsubscribe', fn (Request $request) => Limit::perMinute(30)->by(hash('sha256', (string) $request->route('token'))));
         // Let the application incident handler handle errors, including in debug mode.
         config(['datatables.error' => 'throw']);
         HoursEntry::observe(HoursEntryObserver::class);

@@ -1,0 +1,28 @@
+@extends('layouts.admin')
+@section('title', 'Marketing emails')
+@section('content')
+<section class="admin-card marketing-overview">
+    <div><p class="dashboard-eyebrow">Product tips &amp; offers</p><h2>A useful introduction. Room to breathe.</h2><p>Six opportunities across 30 days, then relevant new updates. Only consenting, verified workspace owners are eligible.</p></div>
+    <span class="marketing-status {{ config('marketing.enabled') ? 'is-active' : '' }}">{{ config('marketing.enabled') ? 'Sending enabled' : 'Sending disabled' }}</span>
+    <dl class="marketing-health"><div><dt>Scheduler last completed check</dt><dd>{{ $scheduler ?? 'Not yet observed' }}</dd></div><div><dt>Worker last completed run</dt><dd>{{ $worker ?? 'Not yet observed' }}</dd></div><div><dt>Pending / retrying</dt><dd>{{ $pending }}</dd></div><div><dt>Oldest due opportunity (UTC)</dt><dd>{{ $oldest ?? 'No backlog' }}</dd></div></dl>
+    <p class="marketing-help">Global sending is controlled by MARKETING_ENABLED. Campaigns also need to be enabled below. These emails never replace operational reminders.</p>
+</section>
+<section class="admin-card marketing-section"><h2>The introductory journey</h2><ol class="marketing-timeline">
+@forelse($campaigns->where('kind', 'intro') as $campaign)
+<li><span class="marketing-day">Day <strong>{{ $campaign->day }}</strong></span><div><a wire:navigate href="{{ route('admin.marketing.edit', $campaign) }}">{{ $campaign->subject }}</a><p>{{ $campaign->preheader }}</p></div><span class="marketing-status {{ $campaign->status === 'active' ? 'is-active' : '' }}">{{ ucfirst($campaign->status) }}</span></li>
+@empty<li><p>Run <code>php artisan marketing:process-inbox --install</code> to install the six paused introductions.</p></li>@endforelse
+</ol></section>
+<section class="admin-card marketing-section"><h2>New monthly updates</h2><p>Publish fresh, relevant content. Previously published campaigns cannot be edited or replayed.</p>
+<form class="marketing-inline-form" method="POST" action="{{ route('admin.marketing.create') }}">@csrf<label>Feature audience<select name="audience">@foreach(\App\Services\MarketingCatalogue::AUDIENCES as $audience)<option value="{{ $audience }}">{{ ucfirst($audience) }}</option>@endforeach</select></label><button class="admin-primary-action">Create draft</button></form>
+<ul class="marketing-campaign-list">@forelse($campaigns->where('kind', 'monthly') as $campaign)<li><a href="{{ route('admin.marketing.edit', $campaign) }}">{{ $campaign->subject }}</a><span class="marketing-status {{ $campaign->status === 'active' ? 'is-active' : '' }}">{{ ucfirst($campaign->status) }}</span></li>@empty<li>No monthly updates yet. Nothing is sent automatically after the introduction.</li>@endforelse</ul>
+</section>
+<section class="admin-card marketing-section"><h2>Delivery history</h2><p>Submitted means accepted by the configured mail transport. It does not confirm inbox delivery.</p>
+<div class="marketing-table-scroll"><table class="marketing-table"><thead><tr><th>Recipient / campaign</th><th>State</th><th>Attempts</th><th>Next check / submitted (UTC)</th><th>Review</th></tr></thead><tbody>
+@forelse($deliveries as $delivery)<tr><td>{{ $delivery->user?->email ?? 'Removed account' }}<small>{{ $delivery->campaign?->subject }} · #{{ $delivery->id }}</small></td><td><span class="marketing-status {{ $delivery->status === 'submitted' ? 'is-active' : (in_array($delivery->status, ['failed','uncertain']) ? 'is-warning' : '') }}">{{ $delivery->status }}</span><small>{{ $delivery->reason }}</small></td><td>{{ $delivery->attempts }}/5</td><td>{{ $delivery->submitted_at ?? $delivery->available_at }}</td><td>@if(in_array($delivery->status, ['failed','uncertain']))<details><summary>Review retry</summary><form class="marketing-form" method="POST" action="{{ route('admin.marketing.retry', $delivery) }}">@csrf<label>Review notes<textarea name="reason" required maxlength="500"></textarea></label><label class="marketing-checkbox"><input type="checkbox" name="not_sent" value="1" required> I verified this message was not submitted to the recipient.</label><button class="admin-primary-action">Retry with eligibility checks</button></form></details>@else — @endif</td></tr>
+@empty<tr><td colspan="5">No delivery attempts yet.</td></tr>@endforelse
+</tbody></table></div>{{ $deliveries->withQueryString()->links() }}</section>
+<section class="admin-card marketing-section"><h2>Consent &amp; suppression</h2><p>Suppress promotional mail after a complaint or known invalid address. User preferences remain separate from operational email.</p>
+<div class="marketing-table-scroll"><table class="marketing-table"><thead><tr><th>Account</th><th>Consent</th><th>Source / version</th><th>Suppression</th></tr></thead><tbody>
+@forelse($preferences as $preference)<tr><td>{{ $preference->email }}</td><td>{{ $preference->consented ? 'Opted in' : 'Opted out' }}<small>{{ $preference->consented_at }}</small></td><td>{{ $preference->source }}<small>{{ $preference->wording_version }}</small></td><td>@if($preference->suppression_reason){{ $preference->suppression_reason }}@else<details><summary>Suppress email</summary><form class="marketing-form" method="POST" action="{{ route('admin.marketing.suppress', $preference) }}">@csrf<label>Reason<input name="reason" required maxlength="191"></label><button class="admin-primary-action">Suppress promotional email</button></form></details>@endif</td></tr>@empty<tr><td colspan="4">No preferences recorded. Existing users have not been enrolled automatically.</td></tr>@endforelse
+</tbody></table></div>{{ $preferences->withQueryString()->links() }}</section>
+@endsection

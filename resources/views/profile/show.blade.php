@@ -44,6 +44,7 @@
     </section>
 
     <div class="profile-settings-wrap">
+        <section class="dashboard-card marketing-account-card"><h2>Product tips &amp; offers</h2><p>Choose whether to receive feature introductions and occasional offers, separately from work reminders.</p><a class="dashboard-button dashboard-button--secondary" href="{{ route('marketing.preferences') }}">Manage promotional emails</a></section>
         <div class="profile-settings-content">
             @if (Laravel\Fortify\Features::canUpdateProfileInformation())
                 @livewire('profile.update-profile-information-form')

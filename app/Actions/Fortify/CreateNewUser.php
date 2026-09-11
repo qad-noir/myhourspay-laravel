@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
+use App\Services\MarketingConsent;
 use App\Services\OperationalIncidentRecorder;
 use App\Services\WorkspaceInvitationContext;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,7 @@ class CreateNewUser implements CreatesNewUsers
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
+            'marketing_consent' => ['nullable', 'boolean'],
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
@@ -47,6 +49,9 @@ class CreateNewUser implements CreatesNewUsers
                     'password' => Hash::make($input['password']),
                 ]);
                 app(EmailVerificationCodeService::class)->issue($user);
+                if (! empty($input['marketing_consent'])) {
+                    app(MarketingConsent::class)->set($user, true, 'signup');
+                }
 
                 return $user;
             });

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminBillingDataController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDataController;
 use App\Http\Controllers\Admin\AdminManagementController;
+use App\Http\Controllers\Admin\AdminMarketingController;
 use App\Http\Controllers\Admin\AdminOperationsController;
 use App\Http\Controllers\Admin\AdminOptionController;
 use App\Http\Controllers\Admin\AdminPaymentReviewController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\HoursController;
 use App\Http\Controllers\HoursSettingsController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\PricingController;
 use App\Http\Controllers\ProController;
 use App\Http\Controllers\ProToolsController;
@@ -36,6 +38,25 @@ Route::get('/', function () {
 Route::get('/terms', [TermsOfServiceController::class, 'show'])->name('legal.terms');
 Route::get('/policy', [PrivacyPolicyController::class, 'show'])->name('legal.policy');
 Route::get('/pricing', PricingController::class)->name('pricing');
+Route::match(['GET', 'POST'], '/marketing/unsubscribe/{token}', [MarketingController::class, 'unsubscribe'])
+    ->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:marketing-unsubscribe')->name('marketing.unsubscribe');
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
+    Route::get('/account/product-tips', [MarketingController::class, 'preferences'])->name('marketing.preferences');
+    Route::put('/account/product-tips', [MarketingController::class, 'update'])->middleware('throttle:20,1')->name('marketing.preferences.update');
+    Route::post('/account/product-tips/dismiss', [MarketingController::class, 'dismiss'])->name('marketing.dismiss');
+    Route::get('/marketing/open/{workspace}', [MarketingController::class, 'open'])->name('marketing.open');
+    Route::prefix('admin/marketing')->name('admin.marketing.')->middleware('admin')->controller(AdminMarketingController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'create')->name('create');
+        Route::get('/campaigns/{campaign}', 'edit')->name('edit');
+        Route::put('/campaigns/{campaign}', 'update')->name('update');
+        Route::post('/campaigns/{campaign}/state', 'state')->name('state');
+        Route::get('/campaigns/{campaign}/preview', 'preview')->name('preview');
+        Route::post('/campaigns/{campaign}/test', 'test')->middleware('throttle:3,1')->name('test');
+        Route::post('/subscribers/{preference}/suppress', 'suppress')->name('suppress');
+        Route::post('/deliveries/{delivery}/retry', 'retry')->name('retry');
+    });
+});
 Route::get('/faq', FaqController::class)->name('faq');
 Route::redirect('/terms-of-service', '/terms')->name('terms.show');
 Route::redirect('/privacy-policy', '/policy')->name('policy.show');
