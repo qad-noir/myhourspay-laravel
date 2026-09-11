@@ -10,7 +10,7 @@
             ['Client','Who the work is for','clients',$workflowReady['client'],route('pro.clients.index')],
             ['Project & rate','What is billable','earnings',$workflowReady['project'] && $workflowReady['rate'],route('pro.clients.index')],
             ['Tracked hours','The work completed','clock',$workflowReady['hours'],route('hours.index')],
-            ['Invoice','A stable financial snapshot','invoice',$workflowReady['hours'],route('pro.invoices.index')],
+            ['Invoice','A stable financial snapshot','invoice',$workflowReady['invoice'],route('pro.invoices.index')],
         ] as $index => [$label,$description,$icon,$complete,$route])
             <a wire:navigate href="{{ $route }}" class="{{ $complete ? 'is-complete' : '' }}"><i>{{ str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT) }}</i><span><x-dashboard.icon :name="$icon" :size="18" /></span><div><strong>{{ $label }}</strong><small>{{ $description }}</small></div></a>
         @endforeach

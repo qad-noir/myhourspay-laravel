@@ -165,6 +165,8 @@ class ProToolsTest extends TestCase
         HoursEntry::query()->create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'project_id' => $project->id, 'billable' => true, 'work_date' => '2026-08-25', 'start_time' => '09:00', 'end_time' => '12:00', 'break_minutes' => 0, 'break_type' => 'paid']);
 
         $payload = ['client_id' => $client->id, 'start' => '2026-08-01', 'end' => '2026-08-31', 'due_on' => '2026-09-30', 'tax_percent' => 20];
+        $this->actingAs($user)->get(route('pro.index'))
+            ->assertViewHas('workflowReady', fn ($ready) => $ready['hours'] && ! $ready['invoice']);
         $this->actingAs($user)->post(route('pro.invoices.store'), $payload)->assertRedirect();
 
         $invoice = ClientInvoice::query()->with('lines')->sole();
@@ -172,6 +174,15 @@ class ProToolsTest extends TestCase
         $this->assertSame(2400, $invoice->tax_minor);
         $this->assertSame(14400, $invoice->total_minor);
         $this->assertSame(1, $invoice->lines->count());
+
+        $this->actingAs($user)->get(route('pro.index'))
+            ->assertViewHas('workflowReady', fn ($ready) => $ready['hours'] && $ready['invoice']);
+        $this->actingAs($user)->get(route('pro.invoices.index'))
+            ->assertViewHas('invoiceReadiness', fn ($ready) => ! $ready['hours']);
+
+        [$otherUser] = $this->workspaceUser();
+        $this->actingAs($otherUser)->get(route('pro.index'))
+            ->assertViewHas('workflowReady', fn ($ready) => ! $ready['hours'] && ! $ready['invoice']);
 
         $this->actingAs($user)->post(route('pro.invoices.store'), $payload)
             ->assertSessionHasErrors('invoice');
