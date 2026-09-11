@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Notifications\VerifyEmailCodeNotification;
 use App\Services\EmailVerificationCodeService;
+use App\Services\MarketingConsent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -37,6 +38,27 @@ class RegistrationTest extends TestCase
         $response = $this->get('/register');
 
         $response->assertStatus(404);
+    }
+
+    public function test_marketing_signup_defaults_checked_but_preserves_an_unchecked_submission(): void
+    {
+        $response = $this->get('/register')->assertOk();
+        $response->assertSee(config('marketing.signup_consent_text'));
+        $this->assertMatchesRegularExpression('/type="checkbox"[^>]*name="marketing_consent"[^>]*checked/', $response->getContent());
+
+        $response = $this->withSession(['_old_input' => ['marketing_consent' => '0']])->get('/register')->assertOk();
+        $this->assertDoesNotMatchRegularExpression('/type="checkbox"[^>]*name="marketing_consent"[^>]*checked/', $response->getContent());
+    }
+
+    public function test_signup_consent_records_the_wording_shown_at_registration(): void
+    {
+        $user = User::factory()->create();
+        app(MarketingConsent::class)->set($user, true, 'signup');
+        $this->assertDatabaseHas('marketing_consent_events', [
+            'user_id' => $user->id,
+            'wording_version' => config('marketing.signup_consent_version'),
+            'wording' => "Yes, sign me up for MyHoursPay's newsletter & Marketing Communication",
+        ]);
     }
 
     public function test_new_users_can_register(): void

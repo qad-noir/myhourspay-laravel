@@ -31,7 +31,8 @@
                 <x-slot:suffix><button type="button" tabindex="-1" class="auth-password-toggle" data-password-toggle="password_confirmation" aria-label="Show password confirmation"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg></button></x-slot:suffix>
             </x-public-input>
             @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())<div class="auth-options"><label><input type="checkbox" name="terms" required class="ui-checkbox"> I agree to the <a href="{{ route('terms.show') }}" target="_blank">terms</a> and <a href="{{ route('policy.show') }}" target="_blank">privacy policy</a></label></div>@endif
-            <div class="auth-options"><label><input type="checkbox" class="ui-checkbox" name="marketing_consent" value="1" @checked(old('marketing_consent'))> {{ config('marketing.consent_text') }}</label></div>
+            <input type="hidden" name="marketing_consent" value="0">
+            <div class="auth-options"><label><input type="checkbox" class="ui-checkbox" name="marketing_consent" value="1" @checked(old('marketing_consent', '1'))> {{ config('marketing.signup_consent_text') }}</label></div>
             <button type="submit" class="public-button public-button--primary auth-submit">Create my account <span aria-hidden="true">→</span></button>
         </form>
         <p class="auth-switch">Already have an account? <a href="{{ route('login') }}">Log in</a></p>
