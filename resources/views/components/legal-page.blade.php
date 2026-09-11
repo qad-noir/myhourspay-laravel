@@ -12,7 +12,7 @@
 <main class="public-container legal-main" id="main-content">
     <header class="legal-heading"><p class="public-eyebrow">Your records. Your trust.</p><h1>{{ $title }}</h1><p>{{ $description }}</p></header>
     <div class="legal-grid">
-        <aside class="legal-sidebar"><nav aria-label="Legal information"><a href="{{ url('/policy') }}" @if($title === 'Privacy policy') aria-current="page" @endif>Privacy policy</a><a href="{{ url('/terms') }}" @if($title === 'Terms of service') aria-current="page" @endif>Terms of service</a></nav><p>Questions about your account or your information?</p><a href="mailto:{{ config('site.contact.email') }}">{{ config('site.contact.email') }}</a></aside>
+        <aside class="legal-sidebar"><nav aria-label="Legal information"><a href="{{ url('/policy') }}" @if($title === 'Privacy policy') aria-current="page" @endif>Privacy policy</a><a href="{{ url('/terms') }}" @if($title === 'Terms of service') aria-current="page" @endif>Terms of service</a><a href="{{ url('/refund-policy') }}" @if($title === 'Refund policy') aria-current="page" @endif>Refund policy</a><a href="{{ url('/cookies') }}" @if($title === 'Cookies') aria-current="page" @endif>Cookies</a></nav><p>Questions about your account or your information?</p><a href="mailto:{{ config('site.contact.email') }}">{{ config('site.contact.email') }}</a></aside>
         <article class="legal-document">{{ $slot }}</article>
     </div>
 </main>

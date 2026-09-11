@@ -33,6 +33,8 @@ import './admin-navigation';
 import '../css/admin-health.css';
 import '../css/mobile-navigation.css';
 import '../css/invoices.css';
+import './cookie-notice';
+import '../css/cookie-notice.css';
 
 const initializeAdminTables = () => {
     DataTable.ext.errMode = 'none';

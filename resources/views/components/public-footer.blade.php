@@ -7,6 +7,6 @@
             <div><h2>Resources</h2><a href="{{ route('faq') }}">FAQ</a><a href="{{ url('/#how-it-works') }}">User guide</a><a href="{{ url('/#how-it-works') }}">Hours explained</a><a href="{{ url('/#reports') }}">Reporting guide</a><a href="mailto:{{ config('site.contact.email') }}">Support</a></div>
             <div class="public-footer__note"><h2>Clear hours. Better records.</h2><p>Keep an accurate view of every workday, week and reporting period.</p><div class="public-footer__email"><input type="email" aria-label="Newsletter email preview" placeholder="Email updates unavailable" disabled><button type="button" disabled aria-label="Newsletter unavailable">→</button></div><small>Newsletter signup is not currently available.</small></div>
         </div>
-        <div class="public-footer__bottom"><span>© 2026 myhourspay</span><div><a href="{{ route('legal.policy') }}">Privacy Policy</a><a href="{{ route('legal.terms') }}">Terms of Service</a><a href="{{ route('pricing') }}">Pricing</a><a href="{{ route('faq') }}">FAQ</a></div></div>
+        <div class="public-footer__bottom"><span>© 2026 myhourspay</span><div><a href="{{ route('legal.policy') }}">Privacy Policy</a><a href="{{ route('legal.terms') }}">Terms of Service</a><a href="{{ url('/refund-policy') }}">Refund policy</a><a href="{{ url('/cookies') }}">Cookies</a><button type="button" data-cookie-settings>Cookie settings</button><a href="{{ route('pricing') }}">Pricing</a><a href="{{ route('faq') }}">FAQ</a></div></div>
     </div>
 </footer>

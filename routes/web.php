@@ -37,6 +37,8 @@ Route::get('/', function () {
 
 Route::get('/terms', [TermsOfServiceController::class, 'show'])->name('legal.terms');
 Route::get('/policy', [PrivacyPolicyController::class, 'show'])->name('legal.policy');
+Route::view('/refund-policy', 'refund-policy')->name('legal.refunds');
+Route::view('/cookies', 'cookies')->name('legal.cookies');
 Route::get('/pricing', PricingController::class)->name('pricing');
 Route::match(['GET', 'POST'], '/marketing/unsubscribe/{token}', [MarketingController::class, 'unsubscribe'])
     ->where('token', '[A-Za-z0-9]{64}')->middleware('throttle:marketing-unsubscribe')->name('marketing.unsubscribe');

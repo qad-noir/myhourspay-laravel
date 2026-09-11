@@ -1,1 +1,1 @@
-<footer class="dashboard-footer"><span>© 2026 myhourspay</span><div><span>Records are saved after each successful update</span>@if(Route::has('policy.show'))<a href="{{ route('policy.show') }}">Privacy</a>@endif</div></footer>
+<footer class="dashboard-footer"><span>© 2026 myhourspay</span><div><span>Records are saved after each successful update</span>@if(Route::has('policy.show'))<a href="{{ route('policy.show') }}">Privacy</a>@endif<a href="{{ url('/cookies') }}">Cookies</a><button type="button" data-cookie-settings>Cookie settings</button></div></footer>

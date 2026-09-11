@@ -1,0 +1,9 @@
+.cookie-notice{position:fixed;z-index:45;right:20px;bottom:20px;left:20px;margin-inline:auto;max-width:760px;display:flex;align-items:center;gap:24px;padding:20px 24px;border:1px solid #ded8e5;border-radius:16px;background:#fff;color:var(--brand-ink);box-shadow:0 12px 36px #17142120;font:14px/1.6 'DM Sans',sans-serif}
+.cookie-notice[hidden]{display:none}.cookie-notice p{margin:5px 0;color:var(--brand-muted)}.cookie-notice a{color:#b63b12;text-decoration:underline}.cookie-notice button{flex-shrink:0;min-height:44px}.cookie-notice :is(a,button):focus-visible{outline:2px solid var(--brand-orange);outline-offset:3px}
+.dashboard-drawer-open .cookie-notice{pointer-events:none}
+@media(max-width:1023px){.dashboard-body .cookie-notice{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+@media(max-width:600px){.cookie-notice{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));gap:12px;flex-direction:column;align-items:stretch;padding:16px;max-height:55dvh;overflow:auto}.cookie-notice button{justify-content:center}}
+@media print{.cookie-notice{display:none}}
+.public-footer__bottom>div{flex-wrap:wrap;min-width:0;row-gap:12px}
+.public-footer__bottom button,.dashboard-footer button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.public-footer__bottom button:hover,.dashboard-footer button:hover{text-decoration:underline}
