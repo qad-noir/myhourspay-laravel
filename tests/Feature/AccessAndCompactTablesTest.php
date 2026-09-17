@@ -139,7 +139,7 @@ class AccessAndCompactTablesTest extends TestCase
     public function test_public_legal_routes_and_legacy_links_render_drafts_without_login(): void
     {
         foreach (['/terms', '/policy'] as $url) {
-            $this->get($url)->assertOk()->assertSee('legal-document')->assertSee('DRAFT')->assertSee('support@myhourspay.com')->assertDontSee('Your access period');
+            $this->get($url)->assertOk()->assertSee('legal-document')->assertDontSee('TO COMPLETE')->assertDontSee('DRAFT')->assertSee('support@myhourspay.com')->assertDontSee('Your access period');
         }
         $this->get('/terms-of-service')->assertRedirect('/terms');
         $this->get('/privacy-policy')->assertRedirect('/policy');

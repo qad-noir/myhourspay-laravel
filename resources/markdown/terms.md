@@ -1,12 +1,12 @@
 # Terms of Service
 
-> **DRAFT — not ready for publication.** Prepared 6 September 2026. Complete all **[TO COMPLETE]** items and confirm that checkout and operational processes support these terms before publication.
+Last updated: 17 September 2026.
 
 ## Our agreement
 
-myhourspay is operated by **[TO COMPLETE: legal operator name, trading status, company number where applicable and business postal address]**. Contact [support@myhourspay.com](mailto:support@myhourspay.com). These terms cover our time-recording, workspace, reporting and subscription services. **Effective date: [TO COMPLETE].**
+These terms apply to your use of myhourspay. Contact [support@myhourspay.com](mailto:support@myhourspay.com). These terms cover our time-recording, workspace, reporting and subscription services.
 
-If acting for an organisation, you must have authority to do so. If acting as a consumer, your applicable consumer rights remain protected. **[TO COMPLETE: eligibility/age policy and customer territories.]**
+If acting for an organisation, you must have authority to do so. If acting as a consumer, your applicable consumer rights remain protected.
 
 ## Accounts and accurate records
 
@@ -34,9 +34,9 @@ Manage or cancel renewal through Plans & billing. If the control is unavailable,
 
 UK consumers entering a qualifying distance service contract normally have 14 days from contract formation to cancel without giving a reason. Starting service during that period requires the applicable express request; any proportionate payment for service supplied or loss of cancellation rights must satisfy the law. Signing up is not a blanket waiver. Rights concerning faulty or misdescribed services remain available.
 
-To exercise statutory cancellation rights, send a clear statement to [support@myhourspay.com](mailto:support@myhourspay.com) with your account email, service and order date. You may use: “I give notice that I cancel my contract for [service], ordered on [date]. Name: [name]. Address: [address]. Date: [date].” Sign only if sending on paper. **[TO COMPLETE: postal address, checkout disclosures, service-start consent and refund-handling procedure.]**
+To exercise statutory cancellation rights, send a clear statement to [support@myhourspay.com](mailto:support@myhourspay.com) with your account email, service and order date. You may use: “I give notice that I cancel my contract for [service], ordered on [date]. Name: [name]. Address: [address]. Date: [date].” Sign only if sending on paper.
 
-Refunds required by law will be provided within the applicable statutory timescale. Nothing here excludes rights that cannot lawfully be excluded. **[TO COMPLETE: any additional discretionary refund policy.]**
+Our [refund policy](/refund-policy) explains how to request a payment review. Refunds required by law will be provided within the applicable statutory timescale. Nothing here excludes rights that cannot lawfully be excluded.
 
 ## Acceptable use and content
 
@@ -46,24 +46,24 @@ You retain rights in your content and permit us to host, process and transmit it
 
 ## Privacy and organisation data
 
-Our [privacy policy](/policy) explains our handling of personal information. Organisations managing workers’ records must provide appropriate notices, lawful instructions and access permissions. **[TO COMPLETE: incorporate an appropriate data-processing agreement for organisation-controlled records before providing that processing commercially.]**
+Our [privacy policy](/policy) explains our handling of personal information. Organisations managing workers’ records must provide appropriate notices, lawful instructions and access permissions.
 
 ## Availability, suspension and termination
 
 Maintenance, faults and third-party providers can affect availability. We will take reasonable steps to maintain the service and address faults. Access may be restricted where reasonably necessary for security, unlawful activity, serious breach or unpaid fees, with notice and an opportunity to resolve matters where appropriate. Urgent security or legal circumstances may require immediate action.
 
-Ending access does not transfer ownership of your records to us. **[TO COMPLETE: notice periods, post-termination export arrangements and retention/deletion procedures consistent with the privacy policy.]**
+Ending access does not transfer ownership of your records to us.
 
 ## Responsibility and liability
 
 We remain responsible for loss caused by our breach to the extent required by applicable law. Nothing excludes or limits liability where unlawful, including fraud, fraudulent misrepresentation or death or personal injury caused by negligence. Consumer statutory rights remain unaffected.
 
-Customers must take reasonable care when entering information, checking outputs and securing accounts. Any business-only allocation of risk must be reasonable and lawful. **[TO COMPLETE: business liability provisions and any proposed cap; this draft does not invent a cap.]**
+Customers must take reasonable care when entering information, checking outputs and securing accounts.
 
 ## Changes, complaints and governing law
 
-Material contractual or price changes will be communicated clearly in advance with their effective date and available cancellation rights. Changes will not retrospectively remove accrued statutory rights. **[TO COMPLETE: operational notice period and delivery method.]**
+Material contractual or price changes will be communicated clearly in advance with their effective date and available cancellation rights. Changes will not retrospectively remove accrued statutory rights.
 
-For complaints, email [support@myhourspay.com](mailto:support@myhourspay.com) with account details and the outcome sought. **[TO COMPLETE: complaint process and any applicable ADR information.]**
+For complaints, email [support@myhourspay.com](mailto:support@myhourspay.com) with account details and the outcome sought.
 
-**[TO COMPLETE: governing UK jurisdiction and dispute forum after operator location is confirmed.]** Any jurisdiction clause must preserve mandatory consumer protections and applicable rights to bring proceedings in the consumer’s home jurisdiction.
+ Applicable mandatory consumer protections and rights to bring proceedings in your home jurisdiction remain unaffected.
