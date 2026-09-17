@@ -1,4 +1,7 @@
 /* Compact success alert for actions completed in the workspace. */
+.dashboard-toast__undo{flex-shrink:0;min-height:44px;padding:4px 8px;border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.dashboard-toast__undo:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:4px}
+.dashboard-toast__undo:disabled{opacity:.6;cursor:wait}
 .dashboard-toast {
     position: fixed;
     z-index: 120;

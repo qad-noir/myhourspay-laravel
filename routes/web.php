@@ -268,6 +268,7 @@ Route::middleware([
                 Route::post('/entries', 'store')->middleware('workspace.writable')->name('entries.store');
                 Route::patch('/entries/{hoursEntry}', 'update')->middleware('workspace.writable')->name('entries.update');
                 Route::delete('/entries/{hoursEntry}', 'destroy')->middleware('workspace.writable')->name('entries.destroy');
+                Route::post('/entries/{entry}/restore', 'restore')->whereNumber('entry')->middleware(['workspace.writable', 'signed'])->name('entries.restore');
                 Route::get('/reports', 'report')->name('reports.index');
                 Route::get('/reports/data', 'reportData')->name('reports.data');
                 Route::get('/reports/export/excel', 'excel')->middleware('feature:excel_pdf_exports')->name('reports.excel');

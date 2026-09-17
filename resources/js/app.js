@@ -538,6 +538,8 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
     ...window.recordDrawer({ url, defaults: { id: null, work_date: initialDate, start_time: '09:00', end_time: '17:30', break_minutes: defaultBreak, break_type: defaultBreakType, project_id: '', billable: false, notes: '' } }),
     notice: '',
     noticeTimer: null,
+    undoUrl: null,
+    undoBusy: false,
     checkingEntry: false,
     init() {
         window.recordDrawer({}).init.call(this);
@@ -564,6 +566,7 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
         }
     },
     saved(payload, deleting) {
+        this.undoUrl = deleting ? payload.undo_url : null;
         this.showNotice(deleting ? 'Hours entry deleted.' : 'Hours entry saved.');
         window.hoursFullCalendar?.gotoDate(payload.work_date);
         window.hoursFullCalendar?.refetchEvents();
@@ -571,11 +574,30 @@ window.hoursCalendar = (defaultBreak, defaultBreakType = 'unpaid', initialEntry 
     showNotice(message) {
         window.clearTimeout(this.noticeTimer);
         this.notice = message;
-        this.noticeTimer = window.setTimeout(() => { this.notice = ''; }, 5000);
+        this.noticeTimer = window.setTimeout(() => { this.clearNotice(); }, this.undoUrl ? 10000 : 5000);
+    },
+    pauseNotice() { window.clearTimeout(this.noticeTimer); },
+    resumeNotice() { if (!this.undoBusy) this.showNotice(this.notice); },
+    async undoDelete() {
+        if (!this.undoUrl || this.undoBusy) return;
+        this.undoBusy = true;
+        this.pauseNotice();
+        try {
+            const response = await fetch(this.undoUrl, {method: 'POST', credentials: 'same-origin', headers: {Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content}});
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.saved) throw new Error(payload.message || 'Unable to restore this entry. Please check your records.');
+            this.undoUrl = null;
+            this.showNotice('Hours entry restored.');
+            window.hoursFullCalendar?.gotoDate(payload.work_date);
+            window.hoursFullCalendar?.refetchEvents();
+        } catch (error) {
+            this.showNotice(error.message || 'Unable to restore this entry. Please try again.');
+        } finally { this.undoBusy = false; }
     },
     clearNotice() {
         window.clearTimeout(this.noticeTimer);
         this.notice = '';
+        this.undoUrl = null;
     },
     get preview() {
         const parse = (value) => { const parts = String(value).split(':').map(Number); return parts.length === 2 ? parts[0] * 60 + parts[1] : Number.NaN; };

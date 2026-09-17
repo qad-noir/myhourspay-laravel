@@ -16,6 +16,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -141,10 +143,28 @@ class HoursController extends Controller
         $hoursEntry->delete();
 
         if ($request->expectsJson()) {
-            return response()->json(['saved' => true, 'work_date' => $hoursEntry->work_date->toDateString()]);
+            return response()->json(['saved' => true, 'work_date' => $hoursEntry->work_date->toDateString(), 'undo_url' => URL::temporarySignedRoute('hours.entries.restore', now()->addMinutes(10), ['entry' => $hoursEntry->id, 'deleted_at' => $hoursEntry->deleted_at->toISOString()])]);
         }
 
         return to_route('hours.index', ['month' => $month])->with('status', 'Hours entry deleted.');
+    }
+
+    public function restore(Request $request, int $entry): JsonResponse
+    {
+        try {
+            return DB::transaction(function () use ($request, $entry) {
+                $record = HoursEntry::withTrashed()->lockForUpdate()->findOrFail($entry);
+                Gate::authorize('update', $record);
+                if ($record->trashed()) {
+                    abort_unless($record->deleted_at->toISOString() === $request->query('deleted_at'), 409, 'This undo action is no longer available.');
+                    $record->restore();
+                }
+                return response()->json(['saved' => true, 'work_date' => $record->work_date->toDateString()]);
+            });
+        } catch (QueryException $exception) {
+            if (! $this->isUniqueViolation($exception)) throw $exception;
+            return response()->json(['message' => 'Another entry already exists for this date. The deleted entry was not restored.'], 409);
+        }
     }
 
     public function report(Request $request): View

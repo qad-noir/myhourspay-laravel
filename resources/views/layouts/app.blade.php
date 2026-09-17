@@ -30,6 +30,7 @@
             <div x-cloak x-show="notice && !open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-2 opacity-0" class="dashboard-toast dashboard-toast--success" role="status" aria-live="polite">
                 <span class="dashboard-toast__icon" aria-hidden="true"><x-dashboard.icon name="check" :size="15" /></span>
                 <span class="dashboard-toast__message" x-text="notice"></span>
+                <button type="button" x-show="undoUrl" :disabled="undoBusy" @click="undoDelete()" @mouseenter="pauseNotice()" @mouseleave="resumeNotice()" @focus="pauseNotice()" @blur="resumeNotice()" class="dashboard-toast__undo" x-text="undoBusy ? 'Restoring…' : 'Undo'"></button>
                 <button type="button" class="dashboard-toast__close" @click="clearNotice()" aria-label="Dismiss notification"><x-dashboard.icon name="close" :size="14" /></button>
             </div>
         </div>
