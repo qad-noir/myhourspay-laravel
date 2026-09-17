@@ -29,7 +29,7 @@ class ProcessBillingEvent implements ShouldQueue
         Cache::put('billing:worker-heartbeat', now()->toIso8601String(), now()->addDay());
         $event = DB::transaction(function () {
             $event = BillingWebhookEvent::lockForUpdate()->find($this->eventId);
-            if (! $event || in_array($event->status, ['processed', 'ignored', 'exhausted']) || $event->available_at?->isFuture() || $event->lease_until?->isFuture()) {
+            if (! $event || in_array($event->status, ['processed', 'ignored', 'exhausted', 'unmatched']) || $event->available_at?->isFuture() || $event->lease_until?->isFuture()) {
                 return null;
             }
             if ($event->attempts >= config('billing_events.max_attempts')) {

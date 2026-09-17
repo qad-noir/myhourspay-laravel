@@ -65,7 +65,7 @@ class AdminBillingDataController extends Controller
 
         return DataTables::eloquent(BillingWebhookEvent::query()->select($columns))
             ->editColumn('type', fn (BillingWebhookEvent $event) => e($event->type))
-            ->editColumn('status', fn (BillingWebhookEvent $event) => '<span class="admin-status admin-status--'.e($event->status).'"><i></i>'.e(str($event->status)->headline()).'</span>')
+            ->editColumn('status', fn (BillingWebhookEvent $event) => '<span class="admin-status admin-status--'.e($event->status === 'unmatched' ? 'pending' : $event->status).'"><i></i>'.e(str($event->status)->headline()).'</span>')
             ->addColumn('attempts', fn (BillingWebhookEvent $event) => $event->attempts ?? '—')
             ->addColumn('received', fn (BillingWebhookEvent $event) => $event->created_at->format('d M Y H:i:s'))
             ->addColumn('processed', fn (BillingWebhookEvent $event) => $event->processed_at?->format('d M Y H:i:s') ?? '—')

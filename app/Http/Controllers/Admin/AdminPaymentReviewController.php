@@ -33,7 +33,7 @@ class AdminPaymentReviewController extends Controller
     {
         DB::transaction(function () use ($request, $event, $audit) {
             $event = BillingWebhookEvent::lockForUpdate()->findOrFail($event->id);
-            abort_unless(in_array($event->status, ['failed', 'exhausted', 'processing']) && ! $event->lease_until?->isFuture() && $event->payload, 409, 'This event cannot be retried now.');
+            abort_unless(in_array($event->status, ['failed', 'exhausted', 'processing', 'unmatched']) && ! $event->lease_until?->isFuture() && $event->payload, 409, 'This event cannot be retried now.');
             $before = ['status' => $event->status, 'attempts' => $event->attempts];
             $event->update(['status' => 'received', 'attempts' => 0, 'available_at' => now(), 'dispatched_at' => null, 'lease_until' => null, 'lease_token' => null, 'error_message' => null]);
             $audit->record($request, 'billing.webhook.retry', $event, $before, ['status' => 'received']);

@@ -31,7 +31,18 @@ class BillingEventProcessor
         $customerId = str_starts_with($event->type, 'customer.') && ! str_starts_with($event->type, 'customer.subscription.') ? $id : ($object['customer'] ?? null);
         $user = is_string($customerId) ? User::withTrashed()->where('stripe_id', $customerId)->first() : null;
         if (! $user) {
-            throw new RuntimeException('Customer is not linked locally; reconcile or retry after linking.');
+            $updated = BillingWebhookEvent::whereKey($event->id)->where('status', 'processing')
+                ->where('lease_token', $event->lease_token)->where('lease_until', '>', now())
+                ->update([
+                    'status' => 'unmatched', 'failed_at' => null, 'available_at' => null,
+                    'dispatched_at' => null, 'lease_token' => null, 'lease_until' => null,
+                    'error_message' => 'No local customer link. Verify Stripe environment and ownership before linking; then retry.',
+                ]);
+            if ($updated !== 1) {
+                throw new RuntimeException('Billing processing lease expired.');
+            }
+
+            return;
         }
 
         if (in_array($event->type, ['customer.updated', 'customer.deleted', 'payment_method.automatically_updated'], true)) {

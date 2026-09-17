@@ -198,7 +198,30 @@ class BillingReliabilityTest extends TestCase
     {
         $this->receive()->assertOk();
         $this->process();
-        $this->assertDatabaseHas('billing_webhook_events', ['status' => 'failed']);
+        $this->assertDatabaseHas('billing_webhook_events', ['status' => 'unmatched', 'attempts' => 1, 'processed_at' => null, 'lease_token' => null]);
+        $this->travel(1)->day();
+        $this->receive()->assertOk();
+        $this->process();
+        $this->assertDatabaseHas('billing_webhook_events', ['status' => 'unmatched', 'attempts' => 1]);
+        $this->assertCount(0, $this->calls);
+    }
+
+    public function test_unmatched_receipt_can_be_retried_after_verified_link_is_restored(): void
+    {
+        $user = $this->user();
+        $user->forceFill(['stripe_id' => null])->save();
+        $this->receive()->assertOk();
+        $this->process();
+        $this->assertNull($user->fresh()->stripe_id);
+        $event = BillingWebhookEvent::firstOrFail();
+        $admin = User::factory()->create(['is_admin' => true, 'email_verified_at' => now()]);
+        $this->actingAs($user)->post(route('admin.billing.webhooks.retry', $event))->assertForbidden();
+        $user->forceFill(['stripe_id' => 'cus_lifecycle'])->save();
+        $this->actingAs($admin)->post(route('admin.billing.webhooks.retry', $event))->assertRedirect();
+        $this->fakeStripe(fn () => $this->listing([$this->remote()]));
+        $this->process();
+        $this->assertDatabaseHas('billing_webhook_events', ['id' => $event->id, 'status' => 'processed']);
+        $this->assertDatabaseHas('subscriptions', ['user_id' => $user->id, 'stripe_id' => 'sub_lifecycle']);
     }
 
     public function test_confirmation_only_reads_its_owned_subscription_without_stripe_calls(): void
