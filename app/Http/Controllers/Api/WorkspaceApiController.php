@@ -7,6 +7,7 @@ use App\Models\HoursEntry;
 use App\Models\Timesheet;
 use App\Models\Workspace;
 use App\Services\HoursCalculator;
+use App\Services\TimesheetWorkflow;
 use App\Services\WorkspaceRoles;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -77,7 +78,7 @@ class WorkspaceApiController extends Controller
         abort_unless($request->user()->tokenCan('approvals:write') && $roles->canReview($request->user(), $workspace), 403);
         abort_unless($timesheet->workspace_id === $workspace->id, 404);
         $data = $request->validate(['decision' => ['required', Rule::in(['approved', 'rejected', 'reopened'])], 'review_note' => ['nullable', 'string', 'max:2000']]);
-        $timesheet->update(['status' => $data['decision'] === 'reopened' ? 'draft' : $data['decision'], 'review_note' => $data['review_note'] ?? null, 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'locked_at' => $data['decision'] === 'approved' ? now() : null]);
+        app(TimesheetWorkflow::class)->review($request->user(), $workspace, $timesheet, $data);
 
         return response()->json(['data' => $timesheet->fresh()]);
     }

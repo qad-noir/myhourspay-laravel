@@ -14,12 +14,11 @@ use App\Services\BusinessSeatBilling;
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
 use App\Services\OperationalIncidentRecorder;
-use App\Services\OutboundWebhookDispatcher;
 use App\Services\PublicWebhookUrl;
+use App\Services\TimesheetWorkflow;
 use App\Services\WorkspaceActivity;
 use App\Services\WorkspaceInvitationContext;
 use App\Services\WorkspaceRoles;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -148,19 +147,7 @@ class BusinessController extends Controller
     {
         $workspace = $this->workspaceAndAuthorize($request);
         $data = $request->validate(['week_start' => ['required', 'date'], 'submission_note' => ['nullable', 'string', 'max:2000']]);
-        $week = CarbonImmutable::parse($data['week_start'])->startOfWeek();
-        $weekEntries = $request->user()->hoursEntries()->forWorkspace($workspace)->whereBetween('work_date', [$week->toDateString(), $week->endOfWeek()->toDateString()]);
-        if (! $weekEntries->exists()) {
-            return back()->withInput()->withErrors(['week_start' => 'Log at least one hours entry in this week before submitting a timesheet.']);
-        }
-        $timesheet = Timesheet::query()->firstOrCreate(['workspace_id' => $workspace->id, 'user_id' => $request->user()->id, 'week_start' => $week], ['status' => 'draft']);
-        abort_if($timesheet->isLocked(), 422, 'Approved timesheets must be reopened before changes.');
-        DB::transaction(function () use ($timesheet, $request, $workspace, $week, $data): void {
-            $request->user()->hoursEntries()->forWorkspace($workspace)->whereBetween('work_date', [$week->toDateString(), $week->endOfWeek()->toDateString()])->update(['timesheet_id' => $timesheet->id]);
-            $timesheet->update(['status' => 'submitted', 'submission_note' => $data['submission_note'] ?? null, 'submitted_at' => now(), 'review_note' => null, 'reviewed_by' => null, 'reviewed_at' => null]);
-        });
-        $this->activity->record($workspace, $request->user(), 'timesheet.submitted', $timesheet);
-        app(OutboundWebhookDispatcher::class)->queue($workspace, 'timesheet.submitted', ['timesheet_id' => $timesheet->id, 'user_id' => $timesheet->user_id, 'week_start' => $timesheet->week_start->toDateString()]);
+        app(TimesheetWorkflow::class)->submit($request->user(), $workspace, $data);
 
         return back()->with('status', 'Weekly timesheet submitted for approval.');
     }
@@ -170,10 +157,7 @@ class BusinessController extends Controller
         $workspace = $this->workspaceAndAuthorize($request, 'review');
         abort_unless($timesheet->workspace_id === $workspace->id, 404);
         $data = $request->validate(['decision' => ['required', Rule::in(['approved', 'rejected', 'reopened'])], 'review_note' => ['nullable', 'string', 'max:2000']]);
-        abort_if($data['decision'] !== 'reopened' && $timesheet->status !== 'submitted', 422, 'Only submitted timesheets can be reviewed.');
-        $timesheet->update(['status' => $data['decision'] === 'reopened' ? 'draft' : $data['decision'], 'review_note' => $data['review_note'] ?? null, 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'locked_at' => $data['decision'] === 'approved' ? now() : null]);
-        $this->activity->record($workspace, $request->user(), 'timesheet.'.$data['decision'], $timesheet, ['review_note' => $data['review_note'] ?? null]);
-        app(OutboundWebhookDispatcher::class)->queue($workspace, 'timesheet.'.$data['decision'], ['timesheet_id' => $timesheet->id, 'user_id' => $timesheet->user_id, 'week_start' => $timesheet->week_start->toDateString()]);
+        app(TimesheetWorkflow::class)->review($request->user(), $workspace, $timesheet, $data);
 
         return back()->with('status', 'Timesheet '.$data['decision'].'.');
     }

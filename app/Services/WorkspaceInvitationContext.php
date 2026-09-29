@@ -20,6 +20,9 @@ class WorkspaceInvitationContext
 
     public function pending(Request $request): ?WorkspaceInvitation
     {
+        if (! $request->hasSession()) {
+            return null;
+        }
         $context = $request->session()->get(self::SESSION_KEY);
         if (! is_array($context) || blank($context['invitation'] ?? null) || blank($context['token'] ?? null)) {
             return null;

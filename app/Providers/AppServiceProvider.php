@@ -41,6 +41,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('mobile-api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('mobile-auth', fn (Request $request) => [
+            Limit::perMinute(30)->by('ip:'.$request->ip()),
+            Limit::perMinute(5)->by('identity:'.hash('sha256', strtolower((string) $request->input('email', $request->input('challenge_token', $request->ip()))))),
+        ]);
         RateLimiter::for('marketing-unsubscribe', fn (Request $request) => Limit::perMinute(30)->by(hash('sha256', (string) $request->route('token'))));
         // Let the application incident handler handle errors, including in debug mode.
         config(['datatables.error' => 'throw']);

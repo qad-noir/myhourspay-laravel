@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureTrialChoice;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureWorkspaceIsWritable;
+use App\Http\Middleware\MobileJson;
 use App\Services\DatabaseSchemaIncident;
 use App\Services\UnexpectedApplicationIncident;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -16,6 +17,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(MobileJson::class);
         $middleware->validateCsrfTokens(except: ['marketing/unsubscribe/*']);
         $middleware->web(append: [EnsureTrialChoice::class]);
         $middleware->alias([
@@ -90,6 +93,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => 'Webhook request failed.'], $exception instanceof HttpExceptionInterface ? $exception->getStatusCode() : 500);
             }
             if ($exception instanceof HttpExceptionInterface
+                || $exception instanceof HttpResponseException
                 || $exception instanceof ValidationException
                 || $exception instanceof AuthenticationException
                 || $exception instanceof AuthorizationException
