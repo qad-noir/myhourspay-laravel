@@ -40,7 +40,7 @@ class MobileSocialController extends Controller
         try {
             return DB::transaction(function () use ($request, $provider, $data, $claims, $auth) {
                 $this->consume($provider, $data, $claims);
-                $identity = DB::table('social_accounts')->where('provider', $provider)->where('provider_subject', $claims['sub'])->first();
+                $identity = DB::table('social_accounts')->where('provider', $provider)->where('subject_hash', hash('sha256', $claims['sub']))->first();
                 $user = $identity ? User::find($identity->user_id) : null;
                 if ($identity && ! $user) {
                     MobileResponse::fail('account_unavailable', 'This account is unavailable.');
@@ -58,7 +58,7 @@ class MobileSocialController extends Controller
                     // Social users can establish a password through the existing recovery flow.
                     $user = User::create(['name' => $data['name'], 'email' => $email, 'password' => Str::random(64)]);
                     app(EmailVerificationCodeService::class)->issue($user);
-                    DB::table('social_accounts')->insert(['user_id' => $user->id, 'provider' => $provider, 'provider_subject' => $claims['sub'], 'created_at' => now(), 'updated_at' => now()]);
+                    DB::table('social_accounts')->insert(['user_id' => $user->id, 'provider' => $provider, 'provider_subject' => $claims['sub'], 'subject_hash' => hash('sha256', $claims['sub']), 'created_at' => now(), 'updated_at' => now()]);
                 }
 
                 return response()->json($auth->begin($user, $data['device_name']));
@@ -78,7 +78,7 @@ class MobileSocialController extends Controller
         try {
             return DB::transaction(function () use ($request, $provider, $data, $claims) {
                 $this->consume($provider, $data, $claims);
-                DB::table('social_accounts')->insert(['user_id' => $request->user()->id, 'provider' => $provider, 'provider_subject' => $claims['sub'], 'created_at' => now(), 'updated_at' => now()]);
+                DB::table('social_accounts')->insert(['user_id' => $request->user()->id, 'provider' => $provider, 'provider_subject' => $claims['sub'], 'subject_hash' => hash('sha256', $claims['sub']), 'created_at' => now(), 'updated_at' => now()]);
 
                 return response()->json(['message' => 'Sign-in provider linked.']);
             });

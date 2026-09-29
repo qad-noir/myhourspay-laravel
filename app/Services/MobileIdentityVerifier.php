@@ -24,7 +24,7 @@ class MobileIdentityVerifier
         $keys['keys'] = array_values(array_filter($keys['keys'] ?? [], fn ($key) => ($key['kty'] ?? '') === 'RSA' && ($key['alg'] ?? 'RS256') === 'RS256' && ($key['use'] ?? 'sig') === 'sig'));
         try {
             $claims = (array) JWT::decode($token, JWK::parseKeySet($keys, 'RS256'));
-        } catch (UnexpectedValueException|\DomainException $exception) {
+        } catch (UnexpectedValueException|\DomainException|\InvalidArgumentException $exception) {
             // Bounded refresh permits legitimate key rotation without fetching on every bad token.
             if (Cache::add($cacheKey.':refresh', true, 60)) {
                 Cache::forget($cacheKey);

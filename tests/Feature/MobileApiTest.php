@@ -167,4 +167,62 @@ class MobileApiTest extends TestCase
         $this->assertDatabaseHas('hours_entries', ['workspace_id' => $workspace->id, 'timesheet_id' => $sheet['id']]);
         $this->withToken($token)->getJson($url.'/timesheets/'.$sheet['id'])->assertOk()->assertJsonPath('data.total_minutes', 450);
     }
+
+    public function test_new_mobile_entry_is_visible_through_the_existing_web_hours_endpoint(): void
+    {
+        $user = User::factory()->create();
+        $workspace = $this->workspace($user);
+        $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $token = $this->login($user);
+        $this->withToken($token)->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson($this->base.'/workspaces/'.$workspace->id.'/hours', $this->entry())->assertCreated();
+        $this->actingAs($user, 'web')->getJson('/hours/events?start=2026-09-28&end=2026-10-04&month=2026-09')
+            ->assertOk()->assertJsonPath('events.0.extendedProps.work_date', '2026-09-28')->assertJsonPath('events.0.extendedProps.net_minutes', 450);
+    }
+
+    public function test_restricted_token_cannot_be_promoted_with_wrong_email_code(): void
+    {
+        Notification::fake();
+        $user = User::factory()->unverified()->create();
+        $token = $this->login($user);
+        $code = app(EmailVerificationCodeService::class)->issue($user);
+        $wrong = $code === '000000' ? '111111' : '000000';
+        $this->withToken($token)->postJson($this->base.'/auth/email/verify', ['code' => $wrong])->assertUnprocessable();
+        $this->assertDatabaseHas('email_verification_codes', ['user_id' => $user->id, 'attempts' => 1]);
+        $this->assertFalse($user->tokens()->sole()->can('mobile:access'));
+    }
+
+    public function test_mfa_attempt_limit_cannot_be_bypassed_with_a_correct_sixth_attempt(): void
+    {
+        $user = User::factory()->create(['two_factor_secret' => encrypt('secret'), 'two_factor_confirmed_at' => now(), 'two_factor_recovery_codes' => encrypt(json_encode(['valid']))]);
+        $challenge = app(MobileAuthentication::class)->begin($user, 'Phone')['challenge_token'];
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $this->postJson($this->base.'/auth/two-factor', ['challenge_token' => $challenge, 'recovery_code' => 'wrong'])->assertUnprocessable();
+        }
+        $this->postJson($this->base.'/auth/two-factor', ['challenge_token' => $challenge, 'recovery_code' => 'valid'])->assertUnprocessable();
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_members_cannot_review_timesheets(): void
+    {
+        app(BillingSettings::class)->set('paid_enforcement_enabled', false);
+        $owner = User::factory()->create();
+        $workspace = $this->workspace($owner);
+        $member = User::factory()->create();
+        $workspace->users()->attach($member->id, ['role' => 'member', 'position' => 'Designer']);
+        $sheet = Timesheet::create(['workspace_id' => $workspace->id, 'user_id' => $owner->id, 'week_start' => '2026-09-28', 'status' => 'submitted']);
+        $this->withToken($this->login($member))->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson($this->base.'/workspaces/'.$workspace->id.'/timesheets/'.$sheet->id.'/review', ['decision' => 'approved', 'version' => str_repeat('a', 64)])->assertForbidden();
+    }
+
+    public function test_readonly_workspace_rejects_mobile_writes(): void
+    {
+        app(BillingSettings::class)->set('paid_enforcement_enabled', true);
+        $owner = User::factory()->create();
+        $this->workspace($owner);
+        $archive = $owner->ownedWorkspaces()->create(['name' => 'Archive', 'default_break_type' => 'unpaid', 'default_break_minutes' => 30, 'weekly_target_minutes' => 2400]);
+        $archive->users()->attach($owner->id, ['role' => 'owner', 'position' => 'Designer']);
+        $this->withToken($this->login($owner))->withHeader('Idempotency-Key', (string) Str::uuid())
+            ->postJson($this->base.'/workspaces/'.$archive->id.'/hours', $this->entry())->assertForbidden()->assertJsonPath('code', 'workspace_read_only');
+    }
 }

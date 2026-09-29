@@ -13,8 +13,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('provider', 20);
             $table->string('provider_subject');
+            $table->string('subject_hash', 64);
             $table->timestamps();
-            $table->unique(['provider', 'provider_subject']);
+            $table->unique(['provider', 'subject_hash']);
             $table->unique(['user_id', 'provider']);
         });
         Schema::create('mobile_social_nonces', function (Blueprint $table): void {
