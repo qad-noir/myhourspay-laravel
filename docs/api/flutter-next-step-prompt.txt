@@ -1,0 +1,35 @@
+Continue the existing MHP Flutter project using the implemented Laravel native API.
+Replace the previous draft contract with docs/api/mobile.openapi.yaml from the
+Laravel repository (commit e9653df or later), and read docs/api/mobile-integration.md.
+
+Production base after the backend patch is deployed:
+https://mhp.glsltd.co.uk/api/v1/mobile
+Do not assume deployment has occurred. Test against local/staging by default.
+Core mobile access no longer requires the paid external api_access feature.
+Native password login, registration, MFA, verification, recovery, device sessions,
+workspace/onboarding, hours, projects and timesheets now have implemented routes.
+
+Use status/access_token from authentication responses. Handle two_factor_required
+with a challenge token, and email_verification_required with a restricted bearer
+token replaced after verification. Do not invent a refresh endpoint. Use secure
+storage and the exact JSON shapes in the contract.
+
+Replace the demo-only entry point with the real login → workspace → weekly hours
+→ add/update hours journey. Use Idempotency-Key for documented writes and version
+for edit/review conflicts. Verify a saved mobile record in the website using a
+designated test account. Never claim success from mock data.
+
+Use docs/mobile-design/core-screens.png and account-review-screens.png as the
+visual direction. Read their README for adjustments: no false push notification
+promise; MFA status is read-only; providers and timesheets depend on capabilities.
+Build native, accessible Flutter layouts, not a pixel screenshot as the app UI.
+
+GET /auth/providers before exposing Google/Apple actions. Provider verification
+exists server-side, but developer IDs and device integration still need setup.
+Apple Android needs its HTTPS callback/app handoff configuration; do not invent
+an existing callback or put MHP tokens into callback URLs.
+
+Consult the integration guide for remaining store-release work. Do not let those
+later features block implementation of the now-supported first live hours journey.
+Make incremental commits with meaningful test evidence. Report actual integration
+results and concrete remaining configuration, not a generic demo handoff.
