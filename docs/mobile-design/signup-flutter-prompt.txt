@@ -1,0 +1,39 @@
+Implement the missing MyHoursPay sign-up screen in this Flutter project. The attached signup-concept.png is the visual reference; match the established sign-in and eight-screen design system. Inspect the reference image and existing project before coding. Implement, run, inspect rendered screenshots, and refine; do not stop at a plan.
+
+VISUAL SPECIFICATION
+Use a warm white #FBF8F3 background, ink #171421, MHP orange #FF6B35, thin pale-grey borders, and restrained peach accents. Reuse the existing shared theme and components. Match Manrope headings and DM Sans body using bundled fonts. No heavy outlines, large empty gaps, default purple controls, or decorative gradients.
+
+Reproduce the reference's order and proportions:
+1. Safe area and back action returning to sign-in.
+2. Compact centred orange clock logo and MyHoursPay wordmark, using the real project asset.
+3. Heading: Create your account. Subtitle: Keep your working week in order.
+4. Full name, Email address, Password, Confirm password fields, with thin line icons and visibility controls for both passwords.
+5. Unchecked terms consent: I agree to the Terms of Service and Privacy Policy. Both document names open the project's actual legal URLs; discover them rather than inventing paths.
+6. Full-width orange Create account button.
+7. Fine divider with or continue with.
+8. Outlined Continue with Google and Continue with Apple buttons using official brand assets, only when supported and enabled by the backend/platform configuration.
+9. Footer: Already have an account? Sign in.
+
+Start with 22-24 logical pixels horizontal padding, 12-16 between fields, 52-pixel controls, 10-12 corner radii, a 28-30 bold heading, and 15-16 body text. Refine against the reference. Ensure button-label contrast is accessible; adjust the orange action shade if necessary. Keep the brand accent consistent elsewhere.
+
+Use real Flutter widgets, not the image as the interface. Do not draw fake phone frames, status bars, or browser chrome. Baseline viewport 390x844; also check 360x800 and 430x932. Centre content at roughly 430px maximum width on wide web previews. Use safe areas, a scrollable form, keyboard insets, autofill, sensible focus traversal, and large-text support. Never shrink text or clip controls to force everything into one viewport. Keep entered values through ordinary validation and visibility toggles.
+
+REGISTRATION INTEGRATION
+Preserve the existing API client, navigation, state management, and secure token storage. Inspect the supplied OpenAPI contract rather than inventing endpoints. Production base: https://mhp.glsltd.co.uk/api/v1/mobile.
+
+POST /auth/register sends name, email, password, password_confirmation, device_name, and terms: true after explicit consent. Use a sensible device label, not a user-editable field. Omit marketing_consent unless there is a separate genuinely optional opt-in; do not equate legal consent with marketing permission. Do not add workspace, currency, billing, or payment fields to this screen.
+
+Validate required fields, email syntax, confirmation match, terms consent, and the actual backend password policy. Do not invent password-complexity requirements. Display server 422 field errors near the corresponding inputs and registration-level failures in a compact, helpful banner. Handle offline failures, 429 throttling, and pending submission. Prevent duplicate requests. Never log passwords, credentials, verification codes, or tokens, and do not persist password drafts.
+
+On HTTP 201, consume the actual response fields status, access_token, token_type, expires_at, and user. A new unverified account returns status=email_verification_required and a restricted verification token. Store it securely and route to EMAIL verification; do not immediately load workspaces or assume a full session.
+
+Email verification is distinct from the existing authenticator MFA screen. Use matching styling with an envelope icon, heading Verify your email, copy explaining that the six-digit code was emailed, accessible code entry, Verify email action, and Resend code. POST /auth/email/verify with the restricted bearer token and code. Replace the stored token with the new access_token returned after successful verification. POST /auth/email/resend for resend, respecting server limits without inventing a resend interval. After verification, follow user.onboarding_required and user.trial_choice_required through existing supported flows. Do not create fictional trial-choice endpoints.
+
+For social registration use GET /auth/providers and the existing documented provider exchange flow. Preserve name/terms collection required for new social accounts, provider audience/nonce handling, and conditional availability. Never silently link an existing account by matching its email. Do not implement placeholder successful logins. If providers are unavailable in the real environment, hide them and the divider cleanly; use enabled fixtures solely for visual previews.
+
+VERIFICATION AND DELIVERY
+Create a development-only deterministic sign-up preview with both providers enabled using the real widgets, isolated from release routing and live requests. Include validation, submitting, and email-verification states. Capture and inspect the rendered sign-up screenshot next to the concept, correcting typography, spacing, alignment, borders, logo scale, and button proportions. Do not claim pixel-perfect fidelity without comparison.
+
+Run flutter analyze and relevant tests. Verify password masking/toggles, consent gating, field-error mapping, duplicate-submit prevention, the 201-to-email-verification transition, verification-token replacement, and expired-session handling. Check keyboard-open and enlarged-text layouts. Make incremental commits and preserve unrelated work.
+
+Deliver actual Flutter screenshots, a concise verification summary, commit IDs, and any provider or environment limitations. If rendering/device testing is unavailable, state exactly what remains unverified. The task is to implement this screen and its supported registration flow, not to redesign the existing application again.
