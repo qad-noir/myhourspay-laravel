@@ -1,0 +1,19 @@
+{
+  "info": {
+    "name": "MHP Mobile API - Login diagnostics",
+    "description": "Use Postman Desktop. No cookies or CSRF token required. Set base_url without a trailing slash. Enter credentials directly in the Login request; do not save or share them. Paste only the returned access_token into a private local token variable. Clear credentials and tokens when finished. A verification token cannot access workspaces before email verification; an MFA challenge must be completed first.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "https://mhp.glsltd.co.uk/api/v1/mobile"},
+    {"key": "token", "value": ""}
+  ],
+  "item": [
+    {"name": "1 - Providers (expect 200)", "request": {"method": "GET", "auth": {"type": "noauth"}, "header": [{"key": "Accept", "value": "application/json"}], "url": "{{base_url}}/auth/providers"}},
+    {"name": "2 - Login route probe (expect 422, not 404)", "request": {"method": "POST", "auth": {"type": "noauth"}, "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{}", "options": {"raw": {"language": "json"}}}, "url": "{{base_url}}/auth/login"}},
+    {"name": "3 - Login (enter your credentials)", "request": {"method": "POST", "auth": {"type": "noauth"}, "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\n  \"email\": \"YOUR_EMAIL\",\n  \"password\": \"YOUR_PASSWORD\",\n  \"device_name\": \"Postman test\"\n}", "options": {"raw": {"language": "json"}}}, "url": "{{base_url}}/auth/login"}},
+    {"name": "4 - Current user (requires returned access_token)", "request": {"method": "GET", "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]}, "header": [{"key": "Accept", "value": "application/json"}], "url": "{{base_url}}/me"}},
+    {"name": "5 - Workspaces (requires fully authenticated token)", "request": {"method": "GET", "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]}, "header": [{"key": "Accept", "value": "application/json"}], "url": "{{base_url}}/workspaces"}},
+    {"name": "6 - Logout (revoke this test token)", "request": {"method": "DELETE", "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{token}}", "type": "string"}]}, "header": [{"key": "Accept", "value": "application/json"}], "url": "{{base_url}}/auth/session"}}
+  ]
+}
