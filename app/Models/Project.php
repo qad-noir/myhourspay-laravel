@@ -15,7 +15,7 @@ class Project extends Model
 
     protected function casts(): array
     {
-        return ['hourly_rate_minor' => 'integer', 'active' => 'boolean'];
+        return ['workspace_id' => 'integer', 'client_id' => 'integer', 'hourly_rate_minor' => 'integer', 'active' => 'boolean'];
     }
 
     public function workspace(): BelongsTo

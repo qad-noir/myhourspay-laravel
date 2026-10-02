@@ -35,6 +35,10 @@ class HoursEntry extends Model
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
+            'workspace_id' => 'integer',
+            'project_id' => 'integer',
+            'timesheet_id' => 'integer',
             'work_date' => 'date:Y-m-d',
             'week_start' => 'date:Y-m-d',
             'break_minutes' => 'integer',

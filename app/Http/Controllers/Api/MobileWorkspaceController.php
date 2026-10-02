@@ -130,7 +130,7 @@ class MobileWorkspaceController extends Controller
                 'break_minutes' => 'required|integer|min:0|max:'.config('hours.maximum_break_minutes'), 'break_type' => 'required|in:paid,unpaid',
                 'notes' => 'nullable|string|max:'.config('hours.maximum_notes_length'), 'billable' => 'sometimes|boolean',
                 'project_id' => ['nullable', 'integer', Rule::exists('projects', 'id')->where('workspace_id', $workspace->id)->where('active', true)],
-            ]);
+            ], ['work_date.unique' => 'This date already has an entry. Try editing it instead.']);
             if (! empty($data['project_id']) || ! empty($data['billable'])) {
                 $this->feature($request, $workspace, 'clients_projects');
             }

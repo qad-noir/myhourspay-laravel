@@ -12,7 +12,7 @@ class Timesheet extends Model
 
     protected function casts(): array
     {
-        return ['week_start' => 'date', 'submitted_at' => 'datetime', 'reviewed_at' => 'datetime', 'locked_at' => 'datetime'];
+        return ['workspace_id' => 'integer', 'user_id' => 'integer', 'reviewed_by' => 'integer', 'week_start' => 'date', 'submitted_at' => 'datetime', 'reviewed_at' => 'datetime', 'locked_at' => 'datetime'];
     }
 
     public function workspace(): BelongsTo
