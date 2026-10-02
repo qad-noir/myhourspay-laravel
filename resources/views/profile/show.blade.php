@@ -69,6 +69,10 @@
                 @livewire('profile.logout-other-browser-sessions-form')
             </div>
 
+            <div class="mt-10 sm:mt-0">
+                @livewire('profile.mobile-devices')
+            </div>
+
             @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
 
                 <div class="mt-10 sm:mt-0">

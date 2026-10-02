@@ -1,7 +1,7 @@
 <section class="dashboard-panel security-card settings-card">
     <header><div><p class="dashboard-eyebrow">Active access</p><h2>Browser sessions</h2><p>Review and sign out sessions on your other browsers and devices.</p></div><span class="security-status">{{ count($this->sessions) }} sessions</span></header>
     <div class="security-card__body">
-        <p class="settings-card__lead">If you do not recognise a session, sign it out and update your password immediately.</p>
+        <p class="settings-card__lead">These are browser sessions. Manage native app sign-ins in Mobile devices below. If you do not recognise a session, sign it out and update your password immediately.</p>
         @if(count($this->sessions)>0)<div class="session-list">@foreach($this->sessions as $session)<article><span><x-dashboard.icon :name="$session->agent->isDesktop() ? 'overview' : 'settings'" /></span><div><strong>{{ $session->agent->platform() ?: 'Unknown' }} · {{ $session->agent->browser() ?: 'Unknown' }}</strong><small>{{ $session->ip_address }} @if($session->is_current_device)<b>This device</b>@else · Last active {{ $session->last_active }}@endif</small></div></article>@endforeach</div>@endif
         <div class="settings-form__actions settings-form__actions--start"><x-action-message on="loggedOut">Done.</x-action-message><button type="button" class="dashboard-button dashboard-button--secondary" wire:click="confirmLogout" wire:loading.attr="disabled">Log out other browser sessions</button></div>
     </div>
