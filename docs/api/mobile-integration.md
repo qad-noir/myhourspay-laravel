@@ -115,6 +115,15 @@ are unsupported and wall-clock subtraction does not adjust for DST transitions.
 Breaks must be shorter than the shift, even when paid. Unpaid breaks are deducted.
 One active date per user/workspace is supported; the existing database uniqueness
 also includes soft-deleted rows, so restore/delete-date reuse must follow web rules.
+Duplicate-date validation returns HTTP 422 with `code: validation_failed` and
+`errors.work_date: ["This date already has an entry. Try editing it instead."]`.
+
+Hours, timesheet and project foreign keys are normalized through integer model
+casts, including MySQL drivers that hydrate numeric IDs as decimal strings.
+Nullable foreign keys remain null. Strict user/workspace authorization is retained;
+an owned entry's 404 must be investigated rather than assumed to be a missing route.
+There is no new editing route: continue PATCH with the current version and a UUID
+Idempotency-Key. Refresh records after deployment before beginning a new edit.
 
 Timesheet routes enforce `timesheet_approvals`; project use enforces
 `clients_projects`. Core personal hours do not require paid `api_access`.
@@ -153,6 +162,14 @@ Redact passwords, bearer tokens, provider tokens, nonce and MFA/recovery values
 from logs and telemetry.
 
 ## Remaining store-release work (not a blocker for the first live hours journey)
+
+The web `/user/profile` page now has a separate Mobile devices section alongside
+Jetstream Browser sessions. It lists only owned, unexpired `mobile:` Sanctum tokens,
+including the global Sanctum lifetime when configured. Unused sessions say "Not used
+yet"; expired sessions are omitted. Revocation requires the user's current password
+and uses the CSRF-protected Livewire web update route, with cancelable confirmation.
+No token secrets are rendered. Browser-session controls and native session routes
+remain separate; this feature does not introduce token refresh.
 
 - Native profile editing, account deletion including provider revocation, provider
   unlinking, and push-device registration/delivery are not in this contract.

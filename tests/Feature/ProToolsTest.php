@@ -11,6 +11,7 @@ use App\Models\NotificationPreference;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Workspace;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -158,6 +159,7 @@ class ProToolsTest extends TestCase
 
     public function test_invoice_snapshots_billable_time_and_prevents_double_invoicing(): void
     {
+        $this->travelTo(CarbonImmutable::parse('2026-08-28 12:00:00'));
         [$user, $workspace] = $this->workspaceUser();
         $client = Client::query()->create(['workspace_id' => $workspace->id, 'name' => 'Acme', 'currency' => 'GBP']);
         $project = Project::query()->create(['workspace_id' => $workspace->id, 'client_id' => $client->id, 'name' => 'Website', 'code' => 'WEB', 'hourly_rate_minor' => 4000, 'currency' => 'GBP']);
