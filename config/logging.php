@@ -52,6 +52,14 @@ return [
 
     'channels' => [
 
+        'mobile_identity' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/mobile-identity.log'),
+            'level' => 'notice',
+            'days' => 7,
+            'replace_placeholders' => true,
+        ],
+
         'stack' => [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),
