@@ -1,5 +1,10 @@
 # Google reauthentication investigation — 3 October 2026
 
+Historical investigation: the proposal below has now been superseded by the
+implemented raw Google nonce protocol in mobile-integration.md (contract 2.0.0).
+Use flutter-google-nonce-handoff.md for the coordinated client update. The notes
+below preserve the evidence available before that protocol was implemented.
+
 ## Evidence and limits
 
 Build 8 reportedly sent a Google credential with unverified ageSeconds=3122,

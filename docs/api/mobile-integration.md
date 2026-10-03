@@ -1,4 +1,4 @@
-# MHP native API integration — version 1.0.0
+# MHP native API integration — version 2.0.0
 
 This implementation replaces the earlier `0.1.0-draft` contract. The canonical
 file is `docs/api/mobile.openapi.yaml`. It uses JSON syntax, which is valid YAML
@@ -77,7 +77,7 @@ OAuth client. Android package/signing fingerprints and iOS bundle/client setting
 must also be registered in the provider consoles; they cannot be derived from
 the website URL. Use separate development/production registrations where possible.
 
-POST `/auth/google` or `/auth/apple` with a fresh provider ID token and device_name.
+POST `/auth/google` with a fresh nonce-bound provider ID token, challenge_id and device_name (see the v2 flow below). POST `/auth/apple` retains its existing nonce flow.
 Tokens must have been issued within five minutes. Server validates RS256 signature
 with provider keys, issuer, audience, subject and expiration; successful credentials
 are single-use. Provider credentials never become MHP bearer tokens. Existing MHP
@@ -97,8 +97,7 @@ it may not be returned on later authorizations. A matching existing MHP email
 returns `account_link_required`; it never silently merges identities.
 
 To link: authenticate the existing MHP account, complete MFA/verification, then
-POST `/auth/providers/{provider}/link` with id_token, current_password and Apple's
-nonce where applicable. Social-only accounts can establish a password via recovery.
+POST `/auth/providers/{provider}/link` with id_token and current_password; Google also requires challenge_id and a signed raw nonce, while Apple requires its raw nonce request field. Social-only accounts can establish a password via recovery.
 Stable provider subjects are stored separately; case-sensitive hashes avoid
 collation-dependent identity matching and keep indexes within older MySQL limits.
 
@@ -191,3 +190,64 @@ Keep its production packaging convention: timestamped ZIP under production-patch
 Laravel-relative runtime paths, and separate deployment notes, manifest and checksum
 under ignored deployment-notes. Do not include .env, user data, development caches,
 unrelated work, or test files in the production upload.
+
+## Google nonce-bound exchange � contract 2.0 (coordinated breaking change)
+
+Older Google clients, including Build 8 without a per-attempt nonce adapter, must
+upgrade. GET /auth/providers now includes data.google_challenge_required=true.
+There is no token-only fallback. Password login and Apple's nonce flow are unchanged.
+
+1. POST /auth/google/challenge with no body or bearer. Requires configured Google
+   audiences; returns 503 provider_not_configured otherwise. Throttle: 10/minute/IP.
+   Success: HTTP 201 with:
+   {"challenge_id":"UUID","nonce":"64 lowercase hex characters","nonce_mode":"raw","expires_at":"UTC ISO8601"}
+2. Nonce has 256 random bits, expires in five minutes, and is stored only as SHA-256
+   server-side. Pass the returned RAW nonce to Google, unchanged. Google must return
+   the exact raw string as the signed ID token's nonce claim. Do NOT hash it like Apple.
+3. POST /auth/google:
+   {"challenge_id":"UUID","id_token":"GOOGLE_ID_TOKEN","device_name":"Android phone"}
+   Add name and terms=true when registering. Do not send the raw nonce separately.
+   The server compares the signed claim's hash against the server-issued hash.
+4. A successful exchange atomically marks the challenge consumed, inserts the
+   existing unique token replay hash and creates/finds the identity or issues the
+   existing MFA challenge/device token. Response stays AuthResponse (HTTP 200):
+   authenticated, email_verification_required, or two_factor_required. MFA and email
+   verification are still mandatory where applicable. Successful MFA initiation
+   consumes the Google challenge even before MFA completion.
+5. Every new login and explicit link starts a NEW Google challenge and NEW native
+   credential request. Logout does not delete credential replay records.
+   For POST /auth/providers/google/link send challenge_id, id_token and current_password,
+   authenticated with the existing verified MHP bearer. Never silently merge email matches.
+
+All signature/RS256/key/issuer/audience/exp checks and the five-minute iat freshness
+limit remain unchanged. A nonce does not permit an old or replayed token.
+Challenge consumption uses SELECT FOR UPDATE plus a conditional consumed_at update
+inside the same transaction as token replay insertion and account work. If that
+transaction fails, consumption rolls back. Clients should nevertheless restart
+with a new challenge/native attempt after any failed or uncertain exchange.
+No retry/idempotency exemption exists for provider credentials.
+Expired challenge rows are pruned daily; after pruning they report invalid rather
+than expired/used. The existing credential replay retention/expiry is unchanged.
+
+Errors (existing JSON code/message/errors envelope):
+- 422 validation_failed: missing/malformed challenge_id or other fields.
+- 422 google_challenge_invalid: no matching Google challenge.
+- 422 google_challenge_expired: unconsumed challenge has expired.
+- 422 google_nonce_mismatch: signed nonce absent, wrong type/format, hashed or mismatched.
+- 409 google_challenge_used: challenge already consumed.
+- 409 credential_already_used: exchange token hash already recorded.
+- 409 account_link_required: matching existing MHP email needs explicit linking.
+- 409 account_link_conflict: identity/credential conflict during explicit linking.
+- 422 invalid_provider_credential: cryptographic/issuer/audience/expiry/freshness failure.
+- 403 account restrictions; 429 throttling; 503 provider_not_configured still apply.
+
+Platform requirements:
+google_sign_in 7.2.0's initialize-time nonce is insufficient for per-attempt
+challenges, and repeatedly initializing the singleton is unsupported. Use a native
+Android/iOS adapter (or verified plugin change) accepting nonce on EACH invocation.
+Android Credential Manager's Google button request supports a nonce; iOS must pass
+nonce using the installed Google Sign-In SDK's per-attempt API and prove the signed
+claim in real-device tests. If unsupported, gate Google sign-in on that platform.
+Flutter Web likewise needs its own per-attempt nonce-capable Google flow; do not
+reuse native adapter assumptions. Never send Google client secrets in Flutter.
+See flutter-google-nonce-handoff.md for exact implementation and release steps.

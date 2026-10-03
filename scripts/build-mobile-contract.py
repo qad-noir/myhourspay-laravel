@@ -47,8 +47,18 @@ schemas["Register"] = obj({"name": {"type": "string", "maxLength": 255}, "email"
 schemas["MfaInput"] = obj({"challenge_token": {"type": "string", "minLength": 64, "maxLength": 64}, "code": {"type": "string", "pattern": "^[0-9]{6}$"}, "recovery_code": {"type": "string", "maxLength": 100}}, ["challenge_token"])
 schemas["MfaInput"]["anyOf"] = [{"required": ["code"]}, {"required": ["recovery_code"]}]
 schemas["SocialInput"] = obj({"id_token": {"type": "string", "maxLength": 16000, "writeOnly": True}, "device_name": device, "nonce": {"type": "string", "minLength": 64, "maxLength": 64}, "name": {"type": "string", "maxLength": 255}, "terms": {"const": True}}, ["id_token", "device_name"])
-schemas["SocialInput"]["description"] = "Apple requires nonce. New accounts require name and terms=true. MHP email verification is required for new social accounts. Existing matching emails return account_link_required. Google requires a fresh ID token (iat within 5 minutes); tokens are accepted once."
+schemas["SocialInput"]["description"] = "Google requires challenge_id from /auth/google/challenge and its RAW nonce in the signed ID token; Apple requires nonce from /auth/nonce with its SHA-256 convention. New accounts require name and terms=true. MHP email verification is required for new social accounts. Existing matching emails return account_link_required. Google requires a fresh ID token (iat within 5 minutes); tokens are accepted once."
 schemas["SocialLinkInput"] = obj({"id_token": {"type": "string", "maxLength": 16000}, "current_password": password, "nonce": {"type": "string", "minLength": 64, "maxLength": 64}}, ["id_token", "current_password"])
+# Google nonce exchange is a coordinated breaking change (contract 2.0).
+challenge_id = {"type": "string", "format": "uuid"}
+schemas["GoogleChallenge"] = obj({"challenge_id": challenge_id, "nonce": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "nonce_mode": {"const": "raw"}, "expires_at": instant})
+for base, google, apple in [("SocialInput", "GoogleSocialInput", "AppleSocialInput"), ("SocialLinkInput", "GoogleLinkInput", "AppleLinkInput")]:
+    original = schemas[base]
+    schemas[google] = obj({k: v for k, v in original["properties"].items() if k != "nonce"}, original["required"] + ["challenge_id"])
+    schemas[google]["properties"]["challenge_id"] = challenge_id
+    schemas[apple] = obj(original["properties"], original["required"] + ["nonce"])
+    schemas[base] = {"oneOf": [ref(google), ref(apple)], "description": "Use the Google schema for provider=google and Apple schema for provider=apple. Google challenge_id is mandatory; no legacy token-only fallback."}
+
 schemas["Workspace"] = obj({"id": integer, "name": text, "currency": nullable_text, "default_break_minutes": integer, "default_break_type": {"type": "string", "enum": ["paid", "unpaid"]}, "weekly_target_minutes": integer, "role": text, "writable": boolean, "timezone": text, "features": obj({"clients_projects": boolean, "timesheet_approvals": boolean})})
 schemas["WorkspaceInput"] = obj({"name": {"type": "string", "minLength": 3, "maxLength": 100}, "position": {"type": "string", "minLength": 3, "maxLength": 100}, "default_break_type": {"type": "string", "enum": ["paid", "unpaid"]}, "default_break_minutes": {"type": "integer", "minimum": 0, "maximum": 1439}, "weekly_target_minutes": {"type": "integer", "minimum": 60, "maximum": 10080}})
 hours_input = {"work_date": date, "start_time": clock, "end_time": clock, "break_minutes": {"type": "integer", "minimum": 0, "maximum": 1439}, "break_type": {"type": "string", "enum": ["paid", "unpaid"]}, "notes": {"type": ["string", "null"], "maxLength": 500}, "project_id": nullable_int, "billable": boolean}
@@ -67,7 +77,7 @@ schemas["Session"] = obj({"id": integer, "device_name": text, "last_used_at": {"
 
 document = {
     "openapi": "3.1.0",
-    "info": {"title": "MyHoursPay Native Mobile API", "version": "1.0.0", "description": "Implemented native routes, replacing the 0.1.0 source-inspection draft. Production URL is the deployment target, not evidence of deployment. No paid external api_access requirement. Existing feature entitlements and workspace permissions apply. See mobile-integration.md for platform setup and release limitations."},
+    "info": {"title": "MyHoursPay Native Mobile API", "version": "2.0.0", "description": "Implemented native routes, replacing the 0.1.0 source-inspection draft. Production URL is the deployment target, not evidence of deployment. No paid external api_access requirement. Existing feature entitlements and workspace permissions apply. See mobile-integration.md for platform setup and release limitations."},
     "servers": [{"url": "http://127.0.0.1:8000/api/v1/mobile", "description": "Local Laravel; Android emulator uses 10.0.2.2 instead"}, {"url": "https://mhp.glsltd.co.uk/api/v1/mobile", "description": "Production target after deployment; do not run automated write tests here"}],
     "security": [{"sanctumBearer": []}], "paths": {},
     "components": {"securitySchemes": {"sanctumBearer": {"type": "http", "scheme": "bearer", "description": "Opaque Sanctum token issued by native auth. Normal device lifetime defaults to 30 days, verification token to 60 minutes. No refresh endpoint. MFA challenge is not a bearer token."}}, "schemas": schemas},
@@ -102,10 +112,11 @@ def operation(path, method, name, summary, response=None, body=None, status=200,
     document["paths"].setdefault(path, {})[method] = result
 
 
-operation('/auth/providers', 'get', 'getAuthProviders', 'Provider availability', envelope(obj({'google': boolean, 'apple': boolean})), public=True)
+operation('/auth/providers', 'get', 'getAuthProviders', 'Provider availability', envelope(obj({'google': boolean, 'apple': boolean, 'google_challenge_required': {'const': True}})), public=True)
+operation('/auth/google/challenge', 'post', 'createGoogleChallenge', 'Start nonce-bound Google authentication', ref('GoogleChallenge'), status=201, public=True, description='No body or bearer required. Throttled to 10/minute per IP. Cryptographically random nonce expires in five minutes. Pass nonce UNCHANGED to the per-attempt native Google adapter; do not hash it. Exchange the resulting signed ID token plus challenge_id. Also used for explicit linking. Responses are private/no-store; never log nonce or token.')
 operation('/auth/nonce', 'post', 'createAppleNonce', 'Start Apple sign-in', obj({'nonce': text, 'expires_at': instant}), public=True, description='Send SHA-256(raw nonce) to Apple as nonce. Submit raw nonce to MHP with the Apple ID token. Expires after five minutes; single use.')
-operation('/auth/{provider}', 'post', 'exchangeProviderCredential', 'Exchange Google or Apple identity', ref('AuthResponse'), ref('SocialInput'), public=True)
-operation('/auth/providers/{provider}/link', 'post', 'linkProvider', 'Link identity to authenticated account', ref('Message'), ref('SocialLinkInput'), description='Requires verified mobile token and current MHP password. Apple requires nonce from /auth/nonce. Never merges accounts by email. Set a password via recovery if originally registered socially.')
+operation('/auth/{provider}', 'post', 'exchangeProviderCredential', 'Exchange Google or Apple identity', ref('AuthResponse'), ref('SocialInput'), public=True, description='Google requires a fresh per-attempt challenge and a signed RAW nonce match. iat within five minutes and all signature/issuer/audience/expiry/replay checks remain mandatory. A successful exchange consumes challenge and credential atomically, including when MFA or email verification is next. New accounts require name and terms=true. Older apps without nonce support must upgrade.')
+operation('/auth/providers/{provider}/link', 'post', 'linkProvider', 'Link identity to authenticated account', ref('Message'), ref('SocialLinkInput'), description='Requires verified mobile token and current MHP password. Google requires challenge_id and signed raw nonce from /auth/google/challenge. Apple requires nonce from /auth/nonce. Never merges accounts by email. Set a password via recovery if originally registered socially.')
 operation('/auth/login', 'post', 'login', 'Password sign-in', ref('AuthResponse'), ref('Login'), public=True)
 operation('/auth/register', 'post', 'register', 'Create account', ref('TokenResponse'), ref('Register'), status=201, public=True)
 operation('/auth/two-factor', 'post', 'completeTwoFactor', 'Complete MFA challenge', ref('TokenResponse'), ref('MfaInput'), public=True, description='Five-minute single-use challenge; at most five failed attempts. Recovery codes are consumed. Password or MFA changes invalidate pending challenges.')
@@ -129,6 +140,10 @@ operation(workspace+'/timesheets/{timesheet}', 'get', 'getTimesheet', 'Timesheet
 operation(workspace+'/timesheets', 'post', 'submitTimesheet', 'Submit own weekly timesheet', envelope(ref('Timesheet')), obj({'week_start': date, 'submission_note': {'type': ['string', 'null'], 'maxLength': 2000}}, ['week_start']), status=201, idempotent=True, description='Requires timesheet_approvals and writable workspace. Normalizes date to Monday. Requires at least one entry. Approved/locked weeks must first be reopened.')
 operation(workspace+'/timesheets/{timesheet}/review', 'post', 'reviewTimesheet', 'Approve, reject or reopen a timesheet', envelope(ref('Timesheet')), obj({'decision': {'type': 'string', 'enum': ['approved', 'rejected', 'reopened']}, 'review_note': {'type': ['string', 'null'], 'maxLength': 2000}, 'version': version}, ['decision', 'version']), idempotent=True, description='Requires reviewer role, writable workspace and timesheet_approvals. Approve/reject only submitted sheets. Version includes current entry contents; reload after any hours or status change.')
 
+for path_name in ['/auth/{provider}', '/auth/providers/{provider}/link']:
+    responses = document['paths'][path_name]['post']['responses']
+    responses['422']['description'] = 'validation_failed (missing/malformed challenge_id or other fields); invalid_provider_credential (signature/issuer/audience/expiry/freshness); google_challenge_invalid; google_challenge_expired; google_nonce_mismatch; invalid_nonce (Apple); invalid_credentials (link password); provider_email_required.'
+    responses['409']['description'] = 'google_challenge_used; credential_already_used (exchange); account_link_required; account_link_conflict (link). Start a new challenge/native attempt; never replay credentials.'
 path = root / 'docs/api/mobile.openapi.yaml'
 content = json.dumps(document, indent=2, ensure_ascii=False) + '\n'
 if '--check' in sys.argv:
