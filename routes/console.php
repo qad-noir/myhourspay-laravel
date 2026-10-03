@@ -17,7 +17,7 @@ Schedule::command('reminders:send')->hourly()->withoutOverlapping();
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Schedule::call(fn () => DB::table('mobile_auth_challenges')->where('expires_at', '<', now())->delete())->daily()->name('mobile:prune-challenges');
 Schedule::call(function (): void {
-    foreach (['mobile_social_nonces', 'mobile_social_credentials'] as $table) {
+    foreach (['mobile_social_nonces', 'mobile_social_credentials', 'mobile_google_challenges'] as $table) {
         DB::table($table)->where('expires_at', '<', now())->delete();
     }
 })->daily()->name('mobile:prune-social-credentials');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
 use App\Services\MobileAuthentication;
+use App\Services\MobileGoogleChallenge;
 use App\Services\MobileIdentityVerifier;
 use App\Support\MobileResponse;
 use Carbon\CarbonImmutable;
@@ -19,7 +20,16 @@ class MobileSocialController extends Controller
 {
     public function capabilities()
     {
-        return response()->json(['data' => ['google' => count(config('mobile.google_audiences')) > 0, 'apple' => count(config('mobile.apple_audiences')) > 0]]);
+        return response()->json(['data' => ['google' => count(config('mobile.google_audiences')) > 0, 'apple' => count(config('mobile.apple_audiences')) > 0, 'google_challenge_required' => true]]);
+    }
+
+    public function googleChallenge(MobileGoogleChallenge $challenges)
+    {
+        if (! config('mobile.google_audiences')) {
+            MobileResponse::fail('provider_not_configured', 'This sign-in provider is not configured yet.', 503);
+        }
+
+        return response()->json($challenges->issue(), 201);
     }
 
     public function nonce()
@@ -34,6 +44,7 @@ class MobileSocialController extends Controller
     public function exchange(Request $request, string $provider, MobileIdentityVerifier $verifier, MobileAuthentication $auth)
     {
         $data = $request->validate(['id_token' => 'required|string|max:16000', 'device_name' => 'required|string|max:100',
+            'challenge_id' => ($provider === 'google' ? 'required' : 'nullable').'|uuid',
             'nonce' => ($provider === 'apple' ? 'required' : 'nullable').'|string|size:64',
             'name' => 'nullable|string|max:255', 'terms' => 'sometimes|accepted']);
         $claims = $verifier->verify($provider, $data['id_token']);
@@ -70,7 +81,8 @@ class MobileSocialController extends Controller
 
     public function link(Request $request, string $provider, MobileIdentityVerifier $verifier)
     {
-        $data = $request->validate(['id_token' => 'required|string|max:16000', 'current_password' => 'required|string|max:4096', 'nonce' => ($provider === 'apple' ? 'required' : 'nullable').'|string|size:64']);
+        $data = $request->validate(['id_token' => 'required|string|max:16000', 'current_password' => 'required|string|max:4096', 'nonce' => ($provider === 'apple' ? 'required' : 'nullable').'|string|size:64',
+            'challenge_id' => ($provider === 'google' ? 'required' : 'nullable').'|uuid']);
         if (! Hash::check($data['current_password'], $request->user()->password)) {
             MobileResponse::fail('invalid_credentials', 'The password is incorrect.', 422);
         }
@@ -89,6 +101,9 @@ class MobileSocialController extends Controller
 
     private function consume(string $provider, array $data, array $claims): void
     {
+        if ($provider === 'google') {
+            app(MobileGoogleChallenge::class)->consume($data['challenge_id'], $claims);
+        }
         if ($provider === 'apple') {
             $hash = hash('sha256', $data['nonce']);
             if (! is_string($claims['nonce'] ?? null) || ! hash_equals($hash, $claims['nonce'])

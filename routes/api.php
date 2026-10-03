@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/mobile')->middleware(['throttle:mobile-api'])->group(function (): void {
     Route::get('auth/providers', [MobileSocialController::class, 'capabilities']);
+    Route::post('auth/google/challenge', [MobileSocialController::class, 'googleChallenge'])->middleware('throttle:10,1,mobile-challenge');
     Route::post('auth/nonce', [MobileSocialController::class, 'nonce'])->middleware('throttle:10,1,mobile-challenge');
     Route::post('auth/{provider}', [MobileSocialController::class, 'exchange'])->whereIn('provider', ['google', 'apple'])->middleware('throttle:10,1,mobile-challenge');
     Route::post('auth/providers/{provider}/link', [MobileSocialController::class, 'link'])->whereIn('provider', ['google', 'apple'])->middleware(['auth:sanctum', MobileSession::class, 'throttle:mobile-auth']);
