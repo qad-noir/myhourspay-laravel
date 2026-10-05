@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Profile;
 
+use App\Services\MobilePushRegistration;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -61,6 +62,7 @@ class MobileDevices extends Component
             return;
         }
         $this->validate(['password' => ['required', 'string', 'current_password:web']]);
+        app(MobilePushRegistration::class)->revokeSession(Auth::id(), $this->selectedDevice);
         $deleted = $this->devices()->whereKey($this->selectedDevice)->delete();
         $this->cancelRevocation();
         if (! $deleted) {

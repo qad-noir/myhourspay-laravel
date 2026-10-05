@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\MarketingPreference;
 use App\Models\User;
 use App\Services\MarketingConsent;
+use App\Services\MobilePushRegistration;
 use App\Services\ScaleCache;
 use Illuminate\Support\Facades\Schema;
 
@@ -24,6 +25,9 @@ class UserObserver
 
     public function deleted(User $user): void
     {
+        if (Schema::hasTable('mobile_push_devices')) {
+            app(MobilePushRegistration::class)->revokeUser($user->id);
+        }
         $this->cache->forgetAdminMetrics();
     }
 

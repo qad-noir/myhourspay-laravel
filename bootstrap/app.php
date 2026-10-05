@@ -44,6 +44,18 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReportWhen(fn (Throwable $exception) => app()->bound('request') && request()->is('api/v1/mobile/push/device'));
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (! $request->is('api/v1/mobile/push/device') || $exception instanceof ValidationException
+                || $exception instanceof HttpResponseException || $exception instanceof HttpExceptionInterface
+                || $exception instanceof AuthenticationException || $exception instanceof AuthorizationException) {
+                return null;
+            }
+            // Do not serialize exception messages, SQL bindings or request arguments containing FCM secrets.
+            Log::warning('Mobile push registration unavailable.', ['reason' => 'registration_failure']);
+
+            return response()->json(['code' => 'server_error', 'message' => 'Unable to update push settings. Please try again.'], 503);
+        });
         $exceptions->report(function (Throwable $exception): void {
             if (! app()->bound('request')) {
                 return;

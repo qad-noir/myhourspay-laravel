@@ -33,7 +33,7 @@ class MobileWorkspaceController extends Controller
         return [...$workspace->only(['id', 'name', 'currency', 'default_break_minutes', 'default_break_type', 'weekly_target_minutes']),
             'role' => app(WorkspaceRoles::class)->role($request->user(), $workspace),
             'writable' => app(WorkspaceAccess::class)->isWritable($request->user(), $workspace),
-            'timezone' => config('hours.timezone'),
+            'timezone' => $workspace->timezone ?: config('hours.timezone'),
             'features' => collect(['clients_projects', 'timesheet_approvals'])->mapWithKeys(fn ($key) => [$key => app(FeatureAccess::class)->allows($request->user(), $key, $workspace)])->all()];
     }
 

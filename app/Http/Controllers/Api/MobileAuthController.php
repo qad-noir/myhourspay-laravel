@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
 use App\Services\MobileAuthentication;
+use App\Services\MobilePushRegistration;
 use App\Support\MobileResponse;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
@@ -114,6 +115,7 @@ class MobileAuthController extends Controller
 
     public function logout(Request $request)
     {
+        app(MobilePushRegistration::class)->revokeSession($request->user()->id, $request->user()->currentAccessToken()->id);
         $request->user()->currentAccessToken()->delete();
 
         return response()->noContent();
@@ -131,7 +133,9 @@ class MobileAuthController extends Controller
 
     public function revoke(Request $request, int $session)
     {
-        $request->user()->tokens()->where('name', 'like', 'mobile:%')->findOrFail($session)->delete();
+        $token = $request->user()->tokens()->where('name', 'like', 'mobile:%')->findOrFail($session);
+        app(MobilePushRegistration::class)->revokeSession($request->user()->id, $token->id);
+        $token->delete();
 
         return response()->noContent();
     }

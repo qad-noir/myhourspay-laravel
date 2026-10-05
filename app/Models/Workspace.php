@@ -15,7 +15,7 @@ class Workspace extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = ['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes', 'currency', 'overtime_multiplier_bps'];
+    protected $fillable = ['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes', 'currency', 'overtime_multiplier_bps', 'timezone'];
 
     protected function casts(): array
     {

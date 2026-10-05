@@ -14,6 +14,9 @@ Schedule::command('billing:reconcile-stripe')->hourly()->withoutOverlapping();
 Schedule::command('billing:process-inbox')->everyMinute()->withoutOverlapping(3);
 Schedule::command('reports:deliver-scheduled')->everyTenMinutes()->withoutOverlapping();
 Schedule::command('reminders:send')->hourly()->withoutOverlapping();
+Schedule::command('mobile:send-missing-hours-reminders')->hourly()->withoutOverlapping();
+// The outbox owns bounded retry timing; this does not create new reminders.
+Schedule::command('mobile:retry-missing-hours-reminders')->everyMinute()->withoutOverlapping();
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Schedule::call(fn () => DB::table('mobile_auth_challenges')->where('expires_at', '<', now())->delete())->daily()->name('mobile:prune-challenges');
 Schedule::call(function (): void {
