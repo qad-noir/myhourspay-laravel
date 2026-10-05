@@ -1,4 +1,4 @@
-# MHP native API integration — version 2.0.0
+# MHP native API integration — version 2.1.0
 
 This implementation replaces the earlier `0.1.0-draft` contract. The canonical
 file is `docs/api/mobile.openapi.yaml`. It uses JSON syntax, which is valid YAML
@@ -108,8 +108,8 @@ and mocked provider key endpoints; they do not contact real user accounts.
 ## Hours and timesheets
 
 Hours use local calendar `work_date` (YYYY-MM-DD) and wall-clock HH:MM times,
-not UTC timestamps. Workspace response exposes the existing application hours
-timezone. Weeks start Monday. This preserves web calculations: overnight shifts
+not UTC timestamps. Workspace response exposes its optional IANA timezone, falling
+back to the existing application hours timezone. Weeks start Monday. This preserves web calculations: overnight shifts
 are unsupported and wall-clock subtraction does not adjust for DST transitions.
 Breaks must be shorter than the shift, even when paid. Unpaid breaks are deducted.
 One active date per user/workspace is supported; the existing database uniqueness
@@ -171,7 +171,8 @@ No token secrets are rendered. Browser-session controls and native session route
 remain separate; this feature does not introduce token refresh.
 
 - Native profile editing, account deletion including provider revocation, provider
-  unlinking, and push-device registration/delivery are not in this contract.
+  unlinking are not in this contract. Free native missing-entry push is implemented
+  in 2.1.0 but requires server Firebase/queue setup and coordinated Flutter rollout.
 - Apple Android callback/verified links and provider app registrations need setup.
 - Password-reset email deep linking and mobile trial-choice resolution are not
   implemented. Trial-restricted accounts return a structured state; keep mobile
@@ -191,7 +192,7 @@ Laravel-relative runtime paths, and separate deployment notes, manifest and chec
 under ignored deployment-notes. Do not include .env, user data, development caches,
 unrelated work, or test files in the production upload.
 
-## Google nonce-bound exchange � contract 2.0 (coordinated breaking change)
+## Google nonce-bound exchange — contract 2.0 (coordinated breaking change)
 
 Older Google clients, including Build 8 without a per-attempt nonce adapter, must
 upgrade. GET /auth/providers now includes data.google_challenge_required=true.
@@ -251,3 +252,131 @@ claim in real-device tests. If unsupported, gate Google sign-in on that platform
 Flutter Web likewise needs its own per-attempt nonce-capable Google flow; do not
 reuse native adapter assumptions. Never send Google client secrets in Flutter.
 See flutter-google-nonce-handoff.md for exact implementation and release steps.
+
+## Free native missing-entry push — added in 2.1.0
+
+GET, PUT and DELETE `/push/device` require a verified, active native `mobile:access`
+Sanctum bearer. Verification-only tokens receive 403; MFA challenge credentials,
+browser sessions, integration tokens and absent/expired bearers cannot register.
+These routes have neither api_access nor smart_reminders middleware. Every plan,
+including free, can opt in; writable-workspace and valid-membership rules still
+apply. This setting never alters email reminders or marketing consent.
+
+GET HTTP 200: `{"data":{"enabled":false}}` when absent or disabled; true when the
+stored registration is enabled. No FCM token, token hash or registration ID is
+returned. PUT HTTP 200 accepts exactly this documented client shape:
+
+```json
+{"enabled":true,"token":"FCM_REGISTRATION_TOKEN","platform":"android","device_name":"Samsung Galaxy"}
+```
+
+Use a strict JSON boolean; platform android/ios; token nonempty string max 4096,
+required when enabling and prohibited when disabling; device_name max 255. Disable
+with `{"enabled":false,"platform":"android","device_name":"Samsung Galaxy"}`,
+omitting token, including null. Success envelope is `{"data":{"enabled":true}}`
+or false. PUT requires UUID Idempotency-Key: identical key/body replays original
+200 with Idempotency-Replayed=true; changed body/path/method returns 409
+idempotency_conflict. Scope is authenticated mobile session, not workspace.
+GET reports current state if a historic replay no longer reflects later settings.
+DELETE requires no idempotency key, returns 204, is repeatable and unregisters only
+the current session. Existing code/message/optional errors envelope and 401,403,
+409,422,429,503 statuses apply. Client user/session IDs are never used for binding.
+
+Registration tokens are encrypted with Laravel APP_KEY at rest and omitted from
+model/API serialization. A unique SHA-256 token hash and a transactional rebinding
+lock ensure one binding per FCM token; authenticated rotation/rebinding removes
+previous user/session ownership. Idempotency records contain a keyed request digest
+and safe response only. Losing APP_KEY prevents decrypting registrations; preserve
+the current key and Laravel key-rotation policy. Never enable request-body capture
+on this route in proxy/APM tooling; redact token and Authorization externally too.
+Unexpected registration exceptions produce a safe enum-only log/503 response.
+
+Mobile logout, native revoke-device and password-confirmed web Mobile devices
+revocation clear the registration secret and disable delivery. Account soft deletion
+also disables registrations; hard deletion cascades user-owned records. Foreign
+keys sever registrations when Sanctum tokens are bulk-deleted. Every send checks
+the token and user again; the minute retry command clears expired/orphaned secrets.
+Disabled/revoked state and registered_at are retained; no session refresh is added.
+
+`mobile:send-missing-hours-reminders` runs hourly withoutOverlapping. For each
+enabled device it considers the user's active, writable workspaces and the local
+IANA timezone (workspaces.timezone, fallback config hours.timezone), weekdays only,
+at/after 18:00 before local midnight. Hourly scans can send later than exactly 18:00,
+especially in half/quarter-hour zones. Invalid timezone values skip delivery.
+There is no force option. Future/backfilled prior dates are not scanned. All existing
+premium mail/database reminder types and notification preferences are unchanged.
+
+Each queued job rechecks current membership, writable access, user/owner state,
+verification, trial restriction, native token ownership/ability/explicit expiry and
+global Sanctum expiry. ANY active entry for that user/workspace/local date suppresses
+the send, including zero net duration; it does not use app caches or local timers.
+Retries crossing local midnight are skipped. Soft-deleted entries follow existing
+active-entry queries. The routing payload is all strings: type=missing_entry,
+user_id,workspace_id,work_date; no MHP access token or website URL is included.
+Notification title is "Did you log today’s hours?", body names the workspace,
+Android icon is ic_notification and APNs sound is default. See the Flutter handoff
+for authenticated membership-checked tap routing and previous-account rejection.
+
+The separate mobile_push_deliveries outbox has a durable unique
+user/workspace/date/device/channel key. Email markers never suppress push. Row-lock
+claims use a UUID fencing lease (120s), and only the matching claimant can record
+completion. Success is recorded only after an FCM HTTP v1 acknowledgement. Retryable
+429/5xx and authorization-unavailable responses use at most five attempts with
+60/120/240/480-second exponential floors and provider Retry-After (bounded to one
+day; next-day eligibility still suppresses the old date). The minute
+`mobile:retry-missing-hours-reminders` scheduler queues due retries only, without
+creating reminders. Duplicate queue candidates cannot claim an active lease.
+
+UNREGISTERED must appear in Firebase's typed FcmError details before deleting a
+registration; generic 404, permission/sender/configuration errors never delete it.
+Definitive failures remain failed without delivered_at. Network timeouts or expired
+in-flight leases remain unknown, not success and not automatically replayed: FCM
+provides no transactional exactly-once send with this database, so a crashed worker
+or missing acknowledgement may represent an accepted message. Investigate unknown
+records rather than force-send. This trades occasional missed uncertain reminders
+for avoiding automatic duplicate notifications. APP/server/provider diagnostics
+must never contain tokens, credential files, raw claims or provider response bodies.
+
+### Server deployment and Firebase setup
+
+Apply migration `2026_10_05_180000_create_mobile_push_tables.php` before running new
+workers/routes. New tables: mobile_push_registration_locks, mobile_push_devices,
+mobile_session_mutations, mobile_push_deliveries; workspace timezone is nullable.
+Set these production environment values outside the upload bundle:
+
+```dotenv
+MOBILE_PUSH_ENABLED=false
+MOBILE_PUSH_FIREBASE_PROJECT_ID=your-firebase-project-id
+MOBILE_PUSH_FIREBASE_CREDENTIALS=/home/raaingqv/private/mhp-firebase-service-account.json
+QUEUE_CONNECTION=database
+```
+
+The path is an EXAMPLE: create a protected file outside public/document root with
+minimal owner/worker read permission (e.g. chmod 600 when they share the same user),
+never upload it to Git or Flutter. Use a Firebase service account permitted to send
+FCM messages in the selected project; enable the FCM HTTP v1 API. The transport
+uses a fixed Google OAuth endpoint, signed RS256 service-account assertions and
+short-lived OAuth tokens cached encrypted; no composer dependency change is needed
+beyond the already-installed firebase/php-jwt from previous mobile patches.
+The scheduler and queue worker must share this env/path, APP_KEY and database.
+Configure Firebase Android/iOS apps, APNs key and client notification permission.
+
+Keep the existing cron `* * * * *` invoking php84 artisan schedule:run from the
+application root. Run a supervised process for
+`php84 artisan queue:work --queue=mobile-push --tries=1 --timeout=45`.
+Keep queue retry_after greater than 45s (database default 90s), process-manager
+stopwaitsecs greater than the timeout, and use a durable queue rather than sync.
+Restart workers after code/config changes. With credentials and native setup
+ready, set MOBILE_PUSH_ENABLED=true, config:cache and queue:restart. Verify
+schedule:list and the three push/device routes. Roll back by disabling server and
+client flags and restarting workers; do not drop populated tables to roll back.
+
+Automated fake transport tests validate backend behaviour, not Firebase/device
+delivery. Real-device acceptance has NOT been executed. Record an authorized
+non-production device test using flutter-native-push-handoff.md before enabling
+ENABLE_NATIVE_PUSH in production. Send the updated OpenAPI/integration/handoff
+documents to the Flutter project first.
+
+Sources: [FCM HTTP v1](https://firebase.google.com/docs/cloud-messaging/send/v1-api),
+[FCM error codes](https://firebase.google.com/docs/cloud-messaging/error-codes),
+[Flutter receiving](https://firebase.google.com/docs/cloud-messaging/flutter/receive-messages).

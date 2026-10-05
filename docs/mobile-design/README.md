@@ -15,7 +15,8 @@ Implementation notes:
 - Sign-in provider buttons depend on GET /auth/providers and platform configuration.
 - Timesheets and project controls depend on workspace features/roles.
 - The first board's generated notification copy must be changed to "Your manager
-  can review this week after you submit." Native push notifications are not implemented.
+  can review this week after you submit." Native push covers missing-entry reminders
+  only; timesheet push notifications are not implemented.
 - "Request changes" maps to the rejected decision with an explanatory review note.
 - MFA status is read-only in this API version; do not make its row navigate to a
   nonexistent native MFA-management page. Authentication challenges do work.

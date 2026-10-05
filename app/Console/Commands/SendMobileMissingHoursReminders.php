@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\SendMobileMissingHoursReminder;
 use App\Models\MobilePushDevice;
 use App\Services\MobilePushEligibility;
+use App\Services\MobilePushRegistration;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +17,7 @@ class SendMobileMissingHoursReminders extends Command
 
     public function handle(MobilePushEligibility $eligibility): int
     {
+        app(MobilePushRegistration::class)->expireInvalidSessions();
         if (! config('mobile_push.enabled')) {
             $this->info('Native push delivery is disabled.');
 

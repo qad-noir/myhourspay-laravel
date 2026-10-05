@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\MobilePushEligibility;
+use App\Services\MobilePushRegistration;
 
 class RetryMobileMissingHoursReminders extends SendMobileMissingHoursReminders
 {
@@ -12,6 +13,7 @@ class RetryMobileMissingHoursReminders extends SendMobileMissingHoursReminders
 
     public function handle(MobilePushEligibility $eligibility): int
     {
+        app(MobilePushRegistration::class)->expireInvalidSessions();
         if (config('mobile_push.enabled')) {
             $this->queueDue();
         }

@@ -18,7 +18,7 @@ class MobilePushEligibility
             || $session->tokenable_type !== $user->getMorphClass() || (int) $session->tokenable_id !== (int) $user->id
             || ! str_starts_with($session->name, 'mobile:') || ! $session->can('mobile:access')
             || ! $session->expires_at || $session->expires_at->lte(now())
-            || (config('sanctum.expiration') && $session->created_at->addMinutes((int) config('sanctum.expiration'))->lte(now()))
+            || (config('sanctum.expiration') && $session->created_at->copy()->addMinutes((int) config('sanctum.expiration'))->lte(now()))
             || app(SubscriptionState::class)->needsTrialChoice($user)
             || ! $workspace->users()->whereKey($user->id)->exists()
             || ! app(WorkspaceAccess::class)->isWritable($user, $workspace)) {

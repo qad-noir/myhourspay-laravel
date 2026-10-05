@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Jobs\SendMobileMissingHoursReminder;
+use App\Livewire\Profile\MobileDevices;
 use App\Models\MobilePushDevice;
 use App\Models\User;
 use App\Services\BillingSettings;
 use App\Services\FeatureAccess;
 use App\Services\FirebasePushTransport;
+use App\Services\MobileMutation;
 use App\Services\MobilePushDelivery;
 use App\Services\MobilePushEligibility;
 use Carbon\CarbonImmutable;
@@ -16,8 +18,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class MobilePushTest extends TestCase
@@ -280,5 +284,110 @@ class MobilePushTest extends TestCase
         } finally {
             unlink($path);
         }
+    }
+
+    public function test_native_logout_and_device_revocation_clear_push_secrets(): void
+    {
+        [$user, , $token] = $this->fixture();
+        $this->register($token)->assertOk();
+        $id = $this->delivery();
+        $this->deleteJson('/api/v1/mobile/auth/session')->assertNoContent();
+        $this->assertFalse(MobilePushDevice::sole()->enabled);
+        $this->assertNull(MobilePushDevice::sole()->token);
+        $this->assertNull(MobilePushDevice::sole()->personal_access_token_id);
+        $this->send($id, ['status' => 'sent', 'reason' => 'acknowledged'], 0);
+        $token = $user->createToken('mobile:Again', ['mobile:access'], now()->addDay());
+        $this->register($token)->assertOk();
+        $other = $user->createToken('mobile:Other', ['mobile:access'], now()->addDay());
+        auth()->forgetGuards();
+        $this->withToken($other->plainTextToken)->deleteJson('/api/v1/mobile/auth/sessions/'.$token->accessToken->id)->assertNoContent();
+        $this->assertSame(0, MobilePushDevice::where('enabled', true)->count());
+    }
+
+    public function test_web_password_confirmed_revocation_invalidates_push(): void
+    {
+        [$user, , $token] = $this->fixture();
+        $this->register($token)->assertOk();
+        $id = $this->delivery();
+        $this->actingAs($user, 'web');
+        Livewire::test(MobileDevices::class)
+            ->call('confirmRevocation', $token->accessToken->id)->set('password', 'password')->call('revoke')->assertHasNoErrors();
+        $this->assertFalse(MobilePushDevice::sole()->enabled);
+        $this->assertNull(MobilePushDevice::sole()->token);
+        $this->send($id, ['status' => 'sent', 'reason' => 'acknowledged'], 0);
+        auth()->forgetGuards();
+        $this->withToken($token->plainTextToken)->getJson('/api/v1/mobile/me')->assertUnauthorized();
+    }
+
+    public function test_retry_rechecks_session_membership_and_disable_and_stops_after_five_attempts(): void
+    {
+        foreach (['expired', 'membership', 'disabled', 'next_day', 'exhausted'] as $case) {
+            [$user, $workspace, $token] = $this->fixture();
+            $this->register($token, ['token' => 'retry-'.$case])->assertOk();
+            Queue::fake();
+            $this->artisan('mobile:send-missing-hours-reminders')->assertSuccessful();
+            $id = DB::table('mobile_push_deliveries')->where('user_id', $user->id)->value('id');
+            $this->send($id, ['status' => 'retry', 'reason' => 'provider_transient', 'delay' => 60]);
+            $this->travel(1)->minutes();
+            match ($case) {
+                'expired' => $token->accessToken->update(['expires_at' => now()->subMinute()]),
+                'membership' => $workspace->users()->detach($user->id),
+                'disabled' => MobilePushDevice::where('user_id', $user->id)->update(['enabled' => false]),
+                'next_day' => $this->travel(1)->days(),
+                'exhausted' => DB::table('mobile_push_deliveries')->where('id', $id)->update(['attempts' => 4]),
+            };
+            $this->send($id, ['status' => 'retry', 'reason' => 'provider_transient', 'delay' => 60], $case === 'exhausted' ? 1 : 0);
+            $this->assertDatabaseHas('mobile_push_deliveries', ['id' => $id, 'state' => $case === 'exhausted' ? 'failed' : 'skipped', 'delivered_at' => null]);
+            if ($case === 'exhausted') {
+                $this->assertSame(5, DB::table('mobile_push_deliveries')->where('id', $id)->value('attempts'));
+            }
+            $this->travelTo(CarbonImmutable::parse('2026-10-05 18:00:00', 'UTC'));
+        }
+    }
+
+    public function test_notification_payload_routes_with_strings_and_contains_no_auth_token_or_url(): void
+    {
+        [$user, $workspace, $token] = $this->fixture();
+        $this->register($token)->assertOk();
+        $id = $this->delivery();
+        $transport = $this->mock(FirebasePushTransport::class);
+        $transport->shouldReceive('send')->once()->withArgs(function ($fcm, $message) use ($user, $workspace, $token): bool {
+            $this->assertSame(['type' => 'missing_entry', 'user_id' => (string) $user->id,
+                'workspace_id' => (string) $workspace->id, 'work_date' => '2026-10-05'], $message['data']);
+            $this->assertSame('ic_notification', $message['android']['notification']['icon']);
+            $this->assertSame('default', $message['apns']['payload']['aps']['sound']);
+            $this->assertStringNotContainsString($token->plainTextToken, json_encode($message));
+            $this->assertStringNotContainsString('https://', json_encode($message));
+
+            return $fcm === 'test-fcm';
+        })->andReturn(['status' => 'sent', 'reason' => 'acknowledged']);
+        app(MobilePushDelivery::class)->send($id, $transport, app(MobilePushEligibility::class));
+    }
+
+    public function test_expiry_cleanup_removes_secrets_even_when_delivery_disabled(): void
+    {
+        [, , $token] = $this->fixture();
+        $this->register($token)->assertOk();
+        $token->accessToken->update(['expires_at' => now()->subMinute()]);
+        config(['mobile_push.enabled' => false]);
+        $this->artisan('mobile:retry-missing-hours-reminders')->assertSuccessful();
+        $device = MobilePushDevice::sole();
+        $this->assertFalse($device->enabled);
+        $this->assertNull($device->token);
+        $this->assertNull($device->token_hash);
+        $this->assertNotNull($device->revoked_at);
+    }
+
+    public function test_registration_failure_does_not_log_or_return_the_secret(): void
+    {
+        [, , $token] = $this->fixture();
+        $this->mock(MobileMutation::class)->shouldReceive('runForSession')
+            ->andThrow(new \RuntimeException('sensitive-fcm-marker'));
+        Log::spy();
+        $response = $this->register($token, ['token' => 'sensitive-fcm-marker'])->assertStatus(503);
+        $this->assertStringNotContainsString('sensitive-fcm-marker', $response->getContent());
+        Log::shouldHaveReceived('warning')->once()
+            ->with('Mobile push registration unavailable.', ['reason' => 'registration_failure']);
+        Log::shouldNotHaveReceived('error');
     }
 }
