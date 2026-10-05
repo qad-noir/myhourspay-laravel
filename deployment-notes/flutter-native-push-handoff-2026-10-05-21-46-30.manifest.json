@@ -1,0 +1,17 @@
+[
+  {
+    "path": "docs/api/mobile.openapi.yaml",
+    "bytes": 141224,
+    "sha256": "4dc81a8a80157d3fd64f773fd8ee63b473d883cd35290ac2420bece865384e36"
+  },
+  {
+    "path": "docs/api/mobile-integration.md",
+    "bytes": 25220,
+    "sha256": "ecfe1b7d724fcd5d99c79ded2101c0669af6760b2b73f10848d48f707148122c"
+  },
+  {
+    "path": "docs/api/flutter-native-push-handoff.md",
+    "bytes": 4654,
+    "sha256": "ca67331a80b916478a024932cb86570fb7873a9298d6cb34ff0ff42dc94a7c7f"
+  }
+]

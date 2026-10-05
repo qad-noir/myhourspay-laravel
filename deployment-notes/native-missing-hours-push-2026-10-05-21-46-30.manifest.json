@@ -1,0 +1,102 @@
+[
+  {
+    "path": "app/Console/Commands/RetryMobileMissingHoursReminders.php",
+    "bytes": 636,
+    "sha256": "57cb038ce511f76b1591f650d371f5065805d75611652e8363f32414511d3fe1"
+  },
+  {
+    "path": "app/Console/Commands/SendMobileMissingHoursReminders.php",
+    "bytes": 2522,
+    "sha256": "40e17277792f600e4e1caac11c2c1fa485ef686ef6116993c8986a15912fe78c"
+  },
+  {
+    "path": "app/Http/Controllers/Api/MobileAuthController.php",
+    "bytes": 6245,
+    "sha256": "9fe6dc9def5d859df7b7a4e27e52a0f4c81a633f0aba049668c6094ff9a00812"
+  },
+  {
+    "path": "app/Http/Controllers/Api/MobilePushController.php",
+    "bytes": 2911,
+    "sha256": "c2200c2b6da2d6c2437a894b7be3b54843e59efe8ff602fdd4dd9b0ab5e62e4e"
+  },
+  {
+    "path": "app/Http/Controllers/Api/MobileWorkspaceController.php",
+    "bytes": 10318,
+    "sha256": "84d93e0dce307e43015ebfbe20b1c39a44b0822092125a556ddc77ac778580ae"
+  },
+  {
+    "path": "app/Jobs/SendMobileMissingHoursReminder.php",
+    "bytes": 713,
+    "sha256": "2903b7390357c79efa19502bdcce83dfcc1f6365b3dd9f5f5ad7bb71ac338a56"
+  },
+  {
+    "path": "app/Livewire/Profile/MobileDevices.php",
+    "bytes": 3262,
+    "sha256": "a4edfa397eedeca5a0abec4137652b8783e918858f3f4e963a64f8adf6b3cbd4"
+  },
+  {
+    "path": "app/Models/MobilePushDevice.php",
+    "bytes": 798,
+    "sha256": "34df70199563eb5b7df3f1ba735e6b97e29eae6edd5dca920884fd8c91485631"
+  },
+  {
+    "path": "app/Models/Workspace.php",
+    "bytes": 2640,
+    "sha256": "707410b48125ae6e5ffe6024187f2604e066710a2f21d7204b21f4d1a36fe915"
+  },
+  {
+    "path": "app/Observers/UserObserver.php",
+    "bytes": 1233,
+    "sha256": "eb194decea11f96a40c28f2001f984a38382f0303a4c69aadc9ff699dab0fca7"
+  },
+  {
+    "path": "app/Services/FirebasePushTransport.php",
+    "bytes": 3943,
+    "sha256": "f9ccba011759f6b843ee67d360b9523527c69335ed14f32ef88a0d24436accea"
+  },
+  {
+    "path": "app/Services/MobileMutation.php",
+    "bytes": 3814,
+    "sha256": "b20e3192d5c48ee10d7be3ceaf4bf99456da48e0d2d8a3271748cc5b2543a1ee"
+  },
+  {
+    "path": "app/Services/MobilePushDelivery.php",
+    "bytes": 4477,
+    "sha256": "2273f4a155d70c1bc6c86a009274567d1e8ebcc285f06c4fc106d15ae9b53311"
+  },
+  {
+    "path": "app/Services/MobilePushEligibility.php",
+    "bytes": 1834,
+    "sha256": "a14c7065f2afa5b39fb4619eef35e545dd18d876fdacaa555d89fb1df775e165"
+  },
+  {
+    "path": "app/Services/MobilePushRegistration.php",
+    "bytes": 1744,
+    "sha256": "ad8753119a2024e953fdc947f3c97572d7cc6dbf2625a07045cb9760d156fd90"
+  },
+  {
+    "path": "bootstrap/app.php",
+    "bytes": 6539,
+    "sha256": "c9cad9f6130c854fc70485b0cd03aa8bcab06f34d6065630fcfdf5aba5c09457"
+  },
+  {
+    "path": "config/mobile_push.php",
+    "bytes": 230,
+    "sha256": "4f251f766e3c9b13699ccdc3eeae8dc2e81f97efae9fe25b316607e91947251c"
+  },
+  {
+    "path": "database/migrations/2026_10_05_180000_create_mobile_push_tables.php",
+    "bytes": 3305,
+    "sha256": "4c7d79725cadf4bcd4bd8590ecb83efcf9b73572f5a6da44d782be4e873c89f8"
+  },
+  {
+    "path": "routes/api.php",
+    "bytes": 4584,
+    "sha256": "68bd2be27c3eb188f463064bc09a8797d710338fa710df40c76903cb790c90f1"
+  },
+  {
+    "path": "routes/console.php",
+    "bytes": 1701,
+    "sha256": "db69fbcb48963a031f4054856a7d67f723057c7128030c5b00e7e87cfd896667"
+  }
+]
