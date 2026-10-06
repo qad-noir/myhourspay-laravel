@@ -1,0 +1,22 @@
+[
+  {
+    "path": "docs/api/mobile.openapi.yaml",
+    "bytes": 151141,
+    "sha256": "812c431558debd241e72105dcf9bd1063d6ef4f511f5f55d0643a8d6aa951622"
+  },
+  {
+    "path": "docs/api/mobile-integration.md",
+    "bytes": 29678,
+    "sha256": "7273a589954d618a4808903305b80a52bb676ab818e55acccdb24a33761b25c2"
+  },
+  {
+    "path": "docs/api/flutter-daily-overtime-prompt.md",
+    "bytes": 6099,
+    "sha256": "8e5ffd4bbff0bda5925425c2e72e1e2ed8a5ab6a434df40033b556d28eca47a7"
+  },
+  {
+    "path": "docs/mobile-design/monthly-overview-flutter-prompt.txt",
+    "bytes": 7759,
+    "sha256": "90d1bb7942028abe0354a4b5515e871d41146311e900066e10ec1d8f4c891384"
+  }
+]

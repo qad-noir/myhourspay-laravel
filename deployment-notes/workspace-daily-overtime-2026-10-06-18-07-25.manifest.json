@@ -1,0 +1,162 @@
+[
+  {
+    "path": "app/Console/Commands/SendWorkspaceReminders.php",
+    "bytes": 7794,
+    "sha256": "f2c6b6bea9845ed0d96f26143d19683613e240929a77cc2379fe492d02b6cf8d"
+  },
+  {
+    "path": "app/Exports/HoursReportExport.php",
+    "bytes": 5177,
+    "sha256": "866b1b362b54fac8d83f27a85f365472562dbbd8606e020bb3c50a7c5cc7dbd3"
+  },
+  {
+    "path": "app/Http/Controllers/Admin/AdminController.php",
+    "bytes": 6074,
+    "sha256": "8a748b312f72acc2855b65af5a9ab3636f21ea56eb1c7fc16e05173c8e831730"
+  },
+  {
+    "path": "app/Http/Controllers/Admin/AdminManagementController.php",
+    "bytes": 13375,
+    "sha256": "74e3b9be75e3b9a5c81fc23ff87bef4e3fb8b7496c272c144626514cf4609da2"
+  },
+  {
+    "path": "app/Http/Controllers/Api/MobileTimesheetController.php",
+    "bytes": 5591,
+    "sha256": "918a727bb335d852a31537f68c508d90eb1f83515007bb6eacb7871b43e53ea8"
+  },
+  {
+    "path": "app/Http/Controllers/Api/MobileWorkspaceController.php",
+    "bytes": 12493,
+    "sha256": "2be44995073dde9e6de71871932c35e071cdd7979d9c93e46dfdca82b177647c"
+  },
+  {
+    "path": "app/Http/Controllers/Api/WorkspaceApiController.php",
+    "bytes": 5073,
+    "sha256": "a270ff99447a625585d32dd939c6a157308507b01c0e07d45ae11b1ab0dc2542"
+  },
+  {
+    "path": "app/Http/Controllers/BusinessController.php",
+    "bytes": 19851,
+    "sha256": "900f5d0c281bd32b412ef240a1ac394a3f6c641723366ae41afb4b6a4d543a38"
+  },
+  {
+    "path": "app/Http/Controllers/DashboardController.php",
+    "bytes": 2335,
+    "sha256": "8f1e28006a302dfcf191303ee33b9fe669b138f46c4168c33deecfdfdbee56e3"
+  },
+  {
+    "path": "app/Http/Controllers/HoursController.php",
+    "bytes": 21594,
+    "sha256": "d9f52138d7882baa2a8405018f9de3344a9b76559a74b5ad4d6f04e15f038b96"
+  },
+  {
+    "path": "app/Http/Controllers/HoursSettingsController.php",
+    "bytes": 1485,
+    "sha256": "e73972a5a65bcf265713d1e82d5d142a29a7d91e0a84e1e4dca2fc6922377fc8"
+  },
+  {
+    "path": "app/Http/Controllers/WorkspaceController.php",
+    "bytes": 5048,
+    "sha256": "213ba8eead64f660cc603fbb47b35ace44b1a99200488d35596d38bdef69fb1b"
+  },
+  {
+    "path": "app/Models/Workspace.php",
+    "bytes": 2727,
+    "sha256": "76f75423c583dd8f4fd0d86dbc9f7382cd444fce98f4b6a89a8ff1eb46bddade"
+  },
+  {
+    "path": "app/Observers/WorkspaceObserver.php",
+    "bytes": 878,
+    "sha256": "93c5f867c3d8f51f99fbf115663789574c4cf7ca279662f200a1c81026e4c91c"
+  },
+  {
+    "path": "app/Services/AdminMetrics.php",
+    "bytes": 3199,
+    "sha256": "f1646f1dc8bde6eca8993fbe447fb94fafd87e3de46b58903104d644d3605926"
+  },
+  {
+    "path": "app/Services/DashboardSummary.php",
+    "bytes": 2147,
+    "sha256": "30409c5bfc41104d04394f0ce99a00fc189a4f76b9b5a37bd9d6aa08459e148c"
+  },
+  {
+    "path": "app/Services/HoursCalculator.php",
+    "bytes": 12514,
+    "sha256": "736297d68a3d68e5b7c206c9bd8068630fde639f825b5503bfe4d90951875695"
+  },
+  {
+    "path": "app/Services/ScaleCache.php",
+    "bytes": 1624,
+    "sha256": "79d21a597dbf66a7d460b35771ed5b07cf2179787c9fef5376985f61095b87f6"
+  },
+  {
+    "path": "app/Services/ScheduledReportGenerator.php",
+    "bytes": 4838,
+    "sha256": "00c2917646f1a32d46aa0bb20fcb5b902d2f3170ad59fd8b9cbc346a6c3414b0"
+  },
+  {
+    "path": "app/Services/WorkspaceOvertimeSettings.php",
+    "bytes": 2231,
+    "sha256": "22aace9da4741707d0b683ba8c82ddda2ae624c83063e584a1ee0f588c74dd58"
+  },
+  {
+    "path": "database/migrations/2026_10_06_090000_add_workspace_daily_overtime_settings.php",
+    "bytes": 628,
+    "sha256": "79677a0aa4ba7a7aa629e5bae1a477df644ab85ded92a78abe86aaa2cc6182d2"
+  },
+  {
+    "path": "docs/api/mobile.openapi.yaml",
+    "bytes": 151141,
+    "sha256": "812c431558debd241e72105dcf9bd1063d6ef4f511f5f55d0643a8d6aa951622"
+  },
+  {
+    "path": "resources/views/admin/workspaces/create.blade.php",
+    "bytes": 1528,
+    "sha256": "3c2d392a72944410d975c7c99336b4d712f0f7cd20252edeabead05353c6a2e0"
+  },
+  {
+    "path": "resources/views/admin/workspaces/show.blade.php",
+    "bytes": 2574,
+    "sha256": "1da1640fd8c1b8f857f663122f324ffc16ff6f1fa2ba3cde7918c133e6f5a251"
+  },
+  {
+    "path": "resources/views/components/workspace-overtime-fields.blade.php",
+    "bytes": 1408,
+    "sha256": "8e6b1ea99e75068f8ff2d2d538ef2550c2bc8fce3ab9c5f4c6da831daf49864b"
+  },
+  {
+    "path": "resources/views/dashboard.blade.php",
+    "bytes": 8234,
+    "sha256": "1d632d54d0a8f14de593e04f3e434467f73e37dfad534d80b8778c4532856bd6"
+  },
+  {
+    "path": "resources/views/hours/print.blade.php",
+    "bytes": 2752,
+    "sha256": "013dda70cc3dce1faf0901c3f0149a8a86f80d6d7c0df24b94ca3b383dba68c9"
+  },
+  {
+    "path": "resources/views/hours/report.blade.php",
+    "bytes": 7435,
+    "sha256": "44ff0b0c0cbfc7d2d84dd8df42fbc0ec9340fa44ded2b0f1bbf1e1d9df7ebe29"
+  },
+  {
+    "path": "resources/views/pro/scheduled-report-pdf.blade.php",
+    "bytes": 1477,
+    "sha256": "d974c12fbce013647e5e052b63f08924c564bf53b8d47019629d049a0fee5505"
+  },
+  {
+    "path": "resources/views/profile/show.blade.php",
+    "bytes": 6904,
+    "sha256": "45a63f4822c4c019f0cd0edcdcde3ebe24369c425e177190ad89d8cef3806ada"
+  },
+  {
+    "path": "resources/views/workspaces/form.blade.php",
+    "bytes": 8543,
+    "sha256": "9b8bf60dda87fa63c61fd0bce8a24f0811f5284174c0dffc1701c9489597c938"
+  },
+  {
+    "path": "routes/api.php",
+    "bytes": 4659,
+    "sha256": "e2d4c1ce7d0869adb32c56efbf88383677cbf18181eb413323cfd88378444955"
+  }
+]
