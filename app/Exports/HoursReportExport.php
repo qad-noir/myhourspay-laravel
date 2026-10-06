@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\HoursCalculator;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -43,8 +44,10 @@ class HoursReportExport
         $sheet->setCellValue('B12', $summary['unpaid_break_formatted']);
         $sheet->setCellValue('A13', 'Workspace default break');
         $sheet->setCellValue('B13', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes');
+        $sheet->setCellValue('A14', 'Overtime basis');
+        $sheet->setCellValue('B14', ucfirst($summary['overtime_basis']).($workspace->contracted_daily_minutes === null ? '' : ' · '.app(HoursCalculator::class)->formatMinutes($workspace->contracted_daily_minutes).' contracted daily'));
 
-        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes'];
+        $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', ucfirst($summary['overtime_basis']).' overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes'];
         $sheet->fromArray($headings, null, 'A15');
 
         $row = 16;
@@ -53,7 +56,7 @@ class HoursReportExport
                 $entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'],
                 ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'],
                 $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''),
-                $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], data_get($entry, 'project.client.name'), data_get($entry, 'project.name'), ($entry['billable'] ?? false) ? 'Yes' : 'No', isset($entry['hourly_rate_minor']) ? number_format($entry['hourly_rate_minor'] / 100, 2, '.', '') : '', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', $this->safeText($entry['notes'] ?? ''),
+                $entry['weekly_total'], $entry['weekly_variance'], $entry['report_overtime_formatted'], data_get($entry, 'project.client.name'), data_get($entry, 'project.name'), ($entry['billable'] ?? false) ? 'Yes' : 'No', isset($entry['hourly_rate_minor']) ? number_format($entry['hourly_rate_minor'] / 100, 2, '.', '') : '', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', $this->safeText($entry['notes'] ?? ''),
             ];
             foreach ($values as $column => $value) {
                 $coordinate = chr(65 + $column).$row;

@@ -9,7 +9,7 @@
         @if (session('status'))
             <div class="workspace-onboarding__notice" role="status">{{ session('status') }}</div>
         @endif
-        @php($initialStep = $errors->has('default_break_minutes') ? 2 : ($errors->has('weekly_target_hours') ? 3 : 1))
+        @php($initialStep = $errors->has('default_break_minutes') ? 2 : ($errors->hasAny(['weekly_target_hours', 'contracted_daily_hours', 'overtime_basis']) ? 3 : 1))
         <section class="workspace-onboarding__card" x-data="{
             step: {{ $initialStep }},
             breakType: @js(old('default_break_type', 'unpaid')),
@@ -68,7 +68,8 @@
                 <div x-cloak x-show="step === 3" x-ref="step3">
                     <div class="workspace-onboarding__step-copy"><small>Step 3 of 3</small><h2>Weekly target</h2><p>Set the number of hours you aim to work each week.</p></div>
                     <div class="workspace-onboarding__field"><label for="weekly_target_hours">Weekly target (hours)</label><input id="weekly_target_hours" name="weekly_target_hours" type="number" min="1" max="168" step="0.25" value="{{ old('weekly_target_hours', 40) }}" required>@error('weekly_target_hours')<small>{{ $message }}</small>@enderror</div>
-                    <div class="workspace-onboarding__actions"><button type="button" class="workspace-onboarding__back" @click="step = 2" aria-label="Back to default break"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 5-5 5 5 5" /></svg></button><button type="submit" class="workspace-onboarding__submit">{{ $onboarding ? 'Create workspace' : 'Create and switch' }} <span>→</span></button></div>
+                    <x-workspace-overtime-fields field-class="workspace-onboarding__field" />
+                    <div class="workspace-onboarding__actions"><button type="button" class="workspace-onboarding__back" @click="step = 2" aria-label="Back to default break"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m12.5 5-5 5 5" /></svg></button><button type="submit" class="workspace-onboarding__submit">{{ $onboarding ? 'Create workspace' : 'Create and switch' }} <span>→</span></button></div>
                 </div>
                 <a class="workspace-onboarding__cancel" href="{{ $onboarding ? url('/') : route('dashboard') }}">Cancel setup</a>
             </form>

@@ -77,14 +77,17 @@ class SendWorkspaceReminders extends Command
         $user = $preference->user;
         $weekStart = $now->startOfWeek();
         $weekMinutes = $user->hoursEntries()->forWorkspace($workspace)->whereBetween('work_date', [$weekStart->toDateString(), $weekStart->endOfWeek()->toDateString()])->sum('net_minutes');
+        $overtime = $preference->type === 'overtime' ? app(HoursCalculator::class)->forWorkspace($workspace)->overtimeFromNetEntries(
+            $user->hoursEntries()->forWorkspace($workspace)->whereBetween('work_date', [$weekStart->toDateString(), $weekStart->endOfWeek()->toDateString()])->get(['work_date', 'net_minutes'])
+        ) : 0;
 
         return match ($preference->type) {
             'missing_entry' => ($force || ($now->isWeekday() && $now->hour >= 18 && ! $user->hoursEntries()->forWorkspace($workspace)->whereDate('work_date', $now)->exists()))
                 ? ['reference' => $now->toDateString(), 'heading' => 'Did you log today’s hours?', 'message' => "No worked hours are recorded for today in {$workspace->name}.", 'url' => route('hours.index'), 'action' => 'Add hours'] : null,
             'weekly_target' => ($force || ($now->isSunday() && $weekMinutes < $workspace->weekly_target_minutes))
                 ? ['reference' => $weekStart->toDateString(), 'heading' => 'Weekly target reminder', 'message' => 'Your recorded week is '.app(HoursCalculator::class)->formatMinutes((int) $weekMinutes).' against a '.app(HoursCalculator::class)->formatMinutes($workspace->weekly_target_minutes).' target.', 'url' => route('dashboard'), 'action' => 'Review dashboard'] : null,
-            'overtime' => ($force || $weekMinutes > $workspace->weekly_target_minutes)
-                ? ['reference' => $weekStart->toDateString(), 'heading' => 'Overtime reached this week', 'message' => 'Your recorded hours are now '.app(HoursCalculator::class)->formatMinutes((int) $weekMinutes - $workspace->weekly_target_minutes).' above target.', 'url' => route('dashboard'), 'action' => 'Review overtime'] : null,
+            'overtime' => ($force || $overtime > 0)
+                ? ['reference' => $weekStart->toDateString(), 'heading' => 'Overtime reached this week', 'message' => 'Your recorded week includes '.app(HoursCalculator::class)->formatMinutes($overtime).' overtime using your workspace’s '.($workspace->overtime_basis ?? 'weekly').' basis.', 'url' => route('dashboard'), 'action' => 'Review overtime'] : null,
             'trial_ending' => ($subscription = $user->subscription('default')) && $subscription->trial_ends_at?->between($now, $now->addDays(3))
                 ? ['reference' => $subscription->trial_ends_at->toDateString(), 'heading' => 'Your trial is ending soon', 'message' => 'Your premium trial ends '.$subscription->trial_ends_at->diffForHumans().'.', 'url' => route('billing.index'), 'action' => 'Review billing'] : null,
             'payment_failed' => ($subscription = $user->subscription('default')) && $subscription->stripe_status === 'past_due'

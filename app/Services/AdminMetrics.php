@@ -27,10 +27,17 @@ class AdminMetrics
             $weeklyTotals = HoursEntry::query()
                 ->join('workspaces', 'workspaces.id', '=', 'hours_entries.workspace_id')
                 ->whereNull('workspaces.deleted_at')
+                ->where('workspaces.overtime_basis', 'weekly')
                 ->whereBetween('hours_entries.work_date', [$gridStart, $gridEnd])
                 ->groupBy('hours_entries.workspace_id', 'hours_entries.user_id', 'hours_entries.week_start', 'workspaces.weekly_target_minutes')
                 ->selectRaw('hours_entries.workspace_id, hours_entries.user_id, hours_entries.week_start, workspaces.weekly_target_minutes, SUM(hours_entries.net_minutes) as total_minutes')
                 ->get();
+            $dailyTotals = HoursEntry::query()
+                ->join('workspaces', 'workspaces.id', '=', 'hours_entries.workspace_id')
+                ->whereNull('workspaces.deleted_at')->where('workspaces.overtime_basis', 'daily')
+                ->whereBetween('hours_entries.work_date', [$monthStart, $monthEnd])
+                ->groupBy('hours_entries.workspace_id', 'hours_entries.user_id', 'hours_entries.work_date', 'workspaces.contracted_daily_minutes')
+                ->selectRaw('workspaces.contracted_daily_minutes, SUM(hours_entries.net_minutes) as total_minutes')->get();
 
             return [
                 'users' => User::query()->count(),
@@ -38,7 +45,8 @@ class AdminMetrics
                 'suspended' => User::query()->whereNotNull('suspended_at')->count(),
                 'workspaces' => Workspace::query()->count(),
                 'hours' => (int) $month->net_minutes,
-                'overtime' => $weeklyTotals->sum(fn ($week): int => max(0, (int) $week->total_minutes - (int) $week->weekly_target_minutes)),
+                'overtime' => $weeklyTotals->sum(fn ($week): int => max(0, (int) $week->total_minutes - (int) $week->weekly_target_minutes))
+                    + $dailyTotals->sum(fn ($day): int => max(0, (int) $day->total_minutes - (int) $day->contracted_daily_minutes)),
                 'paid_breaks' => (int) $month->paid_break_minutes,
                 'unpaid_breaks' => (int) $month->unpaid_break_minutes,
             ];

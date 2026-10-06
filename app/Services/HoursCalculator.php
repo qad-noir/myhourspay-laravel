@@ -13,7 +13,15 @@ class HoursCalculator
     public function __construct(
         private readonly ?int $weeklyTargetMinutes = null,
         private readonly ?string $timezone = null,
-    ) {}
+        private readonly ?int $contractedDailyMinutes = null,
+        private readonly string $overtimeBasis = 'weekly',
+    ) {
+        if (! in_array($overtimeBasis, ['daily', 'weekly'], true)
+            || ($contractedDailyMinutes !== null && ($contractedDailyMinutes < 1 || $contractedDailyMinutes > 1440))
+            || ($overtimeBasis === 'daily' && $contractedDailyMinutes === null)) {
+            throw new InvalidArgumentException('Daily overtime requires valid contracted daily hours.');
+        }
+    }
 
     public function forUser(User $user): self
     {
@@ -22,12 +30,29 @@ class HoursCalculator
 
     public function forWorkspace(Workspace $workspace): self
     {
-        return new self($workspace->weekly_target_minutes ?? (int) config('hours.weekly_target_minutes'), $this->timezone());
+        return new self($workspace->weekly_target_minutes ?? (int) config('hours.weekly_target_minutes'), $this->timezone(), $workspace->contracted_daily_minutes, $workspace->overtime_basis ?? 'weekly');
     }
 
     public function weeklyTargetMinutes(): int
     {
         return $this->target();
+    }
+
+    public function overtimeBasis(): string
+    {
+        return $this->overtimeBasis;
+    }
+
+    public function contractedDailyMinutes(): ?int
+    {
+        return $this->contractedDailyMinutes;
+    }
+
+    public function overtimeDescription(): string
+    {
+        return $this->overtimeBasis === 'daily'
+            ? 'Daily excess above '.$this->formatHumanMinutes($this->contractedDailyMinutes).' contracted hours'
+            : 'Total positive weekly excess';
     }
 
     public function calculateGrossMinutes(string $start, string $end): int
@@ -90,6 +115,7 @@ class HoursCalculator
             'gross_formatted' => $this->formatMinutes($gross),
             'net_minutes' => $net,
             'net_formatted' => $this->formatMinutes($net),
+            'daily_overtime_minutes' => $this->contractedDailyMinutes === null ? null : max(0, $net - $this->contractedDailyMinutes),
             'break_type' => $breakType,
             'week_key' => $date->format('o-\WW'),
             'week_number' => (int) $date->format('W'),
@@ -102,6 +128,7 @@ class HoursCalculator
     {
         $items = [];
         $weeks = [];
+        $days = [];
         $total = 0;
         $count = 0;
         $earnings = 0;
@@ -133,6 +160,18 @@ class HoursCalculator
                 'minutes' => 0,
             ];
             $weeks[$item['week_key']]['minutes'] += $item['net_minutes'];
+            $days[$item['work_date']] ??= ['minutes' => 0, 'week_key' => $item['week_key']];
+            $days[$item['work_date']]['minutes'] += $item['net_minutes'];
+        }
+
+        foreach ($weeks as &$week) {
+            $week['daily_overtime_minutes'] = $this->contractedDailyMinutes === null ? null : 0;
+        }
+        unset($week);
+        foreach ($days as $day) {
+            if ($this->contractedDailyMinutes !== null) {
+                $weeks[$day['week_key']]['daily_overtime_minutes'] += max(0, $day['minutes'] - $this->contractedDailyMinutes);
+            }
         }
 
         foreach ($weeks as &$week) {
@@ -141,6 +180,9 @@ class HoursCalculator
             $week['target_formatted'] = $this->formatMinutes($this->target());
             $week['variance_minutes'] = $week['minutes'] - $this->target();
             $week['variance_formatted'] = $this->formatSignedMinutes($week['variance_minutes']);
+            $week['weekly_overtime_minutes'] = max(0, $week['variance_minutes']);
+            $week['overtime_minutes'] = $this->overtimeBasis === 'daily' ? $week['daily_overtime_minutes'] : $week['weekly_overtime_minutes'];
+            $week['overtime_formatted'] = $this->formatMinutes($week['overtime_minutes']);
             $week['partial'] = $rangeStart !== null && $rangeEnd !== null
                 && ($rangeStart > $week['start'] || $rangeEnd < $week['end']);
         }
@@ -150,6 +192,10 @@ class HoursCalculator
             $item['weekly_total'] = $weeks[$item['week_key']]['formatted'];
             $item['weekly_variance'] = $weeks[$item['week_key']]['variance_formatted'];
             $item['partial_week'] = $weeks[$item['week_key']]['partial'];
+            $item['daily_overtime_minutes'] = $this->contractedDailyMinutes === null ? null : max(0, $days[$item['work_date']]['minutes'] - $this->contractedDailyMinutes);
+            $item['weekly_overtime_minutes'] = $weeks[$item['week_key']]['weekly_overtime_minutes'];
+            $item['weekly_overtime_formatted'] = $this->formatMinutes($item['weekly_overtime_minutes']);
+            $item['report_overtime_formatted'] = $this->formatMinutes($this->overtimeBasis === 'daily' ? $item['daily_overtime_minutes'] : $item['weekly_overtime_minutes']);
         }
         unset($item);
 
@@ -167,8 +213,38 @@ class HoursCalculator
             'paid_break_formatted' => $this->formatMinutes($paidBreakMinutes),
             'unpaid_break_minutes' => $unpaidBreakMinutes,
             'unpaid_break_formatted' => $this->formatMinutes($unpaidBreakMinutes),
-            'overtime_minutes' => array_sum(array_map(fn (array $week): int => max(0, $week['variance_minutes']), $weeks)),
+            'overtime_basis' => $this->overtimeBasis,
+            'contracted_daily_minutes' => $this->contractedDailyMinutes,
+            'daily_overtime_minutes' => $this->contractedDailyMinutes === null ? null : array_sum(array_column($weeks, 'daily_overtime_minutes')),
+            'weekly_overtime_minutes' => array_sum(array_column($weeks, 'weekly_overtime_minutes')),
+            'overtime_minutes' => array_sum(array_column($weeks, 'overtime_minutes')),
+            'overtime_formatted' => $this->formatMinutes(array_sum(array_column($weeks, 'overtime_minutes'))),
         ];
+    }
+
+    /** Preserve the legacy full-week comparison while daily overtime stays within the exact period. */
+    public function withFullWeekOvertime(array $period, array $fullWeeks): array
+    {
+        $period['weeks'] = $fullWeeks['weeks'];
+        $period['weekly_overtime_minutes'] = $fullWeeks['weekly_overtime_minutes'];
+        $period['overtime_minutes'] = $this->overtimeBasis === 'daily' ? $period['daily_overtime_minutes'] : $period['weekly_overtime_minutes'];
+        $period['overtime_formatted'] = $this->formatMinutes($period['overtime_minutes']);
+
+        return $period;
+    }
+
+    /** Read-only calculation for stored payroll projections; never reprices or saves entries. */
+    public function overtimeFromNetEntries(iterable $entries): int
+    {
+        $totals = [];
+        foreach ($entries as $entry) {
+            $date = CarbonImmutable::parse($entry['work_date'], $this->timezone());
+            $key = $this->overtimeBasis === 'daily' ? $date->toDateString() : $date->format('o-\WW');
+            $totals[$key] = ($totals[$key] ?? 0) + (int) $entry['net_minutes'];
+        }
+        $target = $this->overtimeBasis === 'daily' ? $this->contractedDailyMinutes : $this->target();
+
+        return array_sum(array_map(fn (int $minutes): int => max(0, $minutes - $target), $totals));
     }
 
     public function formatMinutes(int $minutes): string

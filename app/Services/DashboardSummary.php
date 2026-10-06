@@ -31,13 +31,15 @@ class DashboardSummary
                     $monthStart->toDateString(),
                     $monthEnd->toDateString(),
                 );
-                $monthlyOvertime = $calculator->summarizeEntries(
+                $fullWeeks = $calculator->summarizeEntries(
                     $user->hoursEntries()->forWorkspace($workspace)
                         ->forPeriod($monthStart->startOfWeek()->toDateString(), $monthEnd->endOfWeek()->toDateString())
                         ->orderBy('work_date')->get(),
                     $monthStart->startOfWeek()->toDateString(),
                     $monthEnd->endOfWeek()->toDateString(),
-                )['overtime_minutes'];
+                );
+                $month = $calculator->withFullWeekOvertime($month, $fullWeeks);
+                $monthlyOvertime = $month['overtime_minutes'];
 
                 return compact('week', 'month', 'monthlyOvertime');
             },

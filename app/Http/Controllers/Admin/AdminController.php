@@ -9,6 +9,7 @@ use App\Models\Workspace;
 use App\Services\AdminMetrics;
 use App\Services\HoursCalculator;
 use App\Services\SubscriptionState;
+use App\Services\WorkspaceOvertimeSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -102,12 +103,14 @@ class AdminController extends Controller
             'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
             'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168'],
         ]);
-        $before = $workspace->only(['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes']);
+        $overtime = app(WorkspaceOvertimeSettings::class)->validate($request, $workspace);
+        $before = $workspace->only(['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes', 'contracted_daily_minutes', 'overtime_basis']);
         $workspace->update([
             'name' => trim($validated['name']),
             'default_break_type' => $validated['default_break_type'],
             'default_break_minutes' => $validated['default_break_minutes'],
             'weekly_target_minutes' => (int) round($validated['weekly_target_hours'] * 60),
+            ...$overtime,
         ]);
         $this->audit($request, 'workspace.updated', $workspace, $before, $workspace->only(array_keys($before)));
 

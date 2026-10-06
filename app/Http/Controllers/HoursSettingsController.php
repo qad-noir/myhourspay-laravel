@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\CurrentWorkspace;
+use App\Services\WorkspaceOvertimeSettings;
+use App\Services\WorkspaceRoles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -10,6 +12,8 @@ class HoursSettingsController extends Controller
 {
     public function update(Request $request, CurrentWorkspace $current): RedirectResponse
     {
+        $workspace = $current->for($request->user());
+        abort_unless(app(WorkspaceRoles::class)->canManage($request->user(), $workspace), 403);
         $request->merge([
             'default_break_type' => $request->input('default_break_type', $current->for($request->user())->default_break_type ?? 'unpaid'),
         ]);
@@ -19,10 +23,12 @@ class HoursSettingsController extends Controller
             'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168'],
         ]);
 
-        $current->for($request->user())->update([
+        $overtime = app(WorkspaceOvertimeSettings::class)->validate($request, $workspace);
+        $workspace->update([
             'default_break_type' => $validated['default_break_type'],
             'default_break_minutes' => $validated['default_break_minutes'],
             'weekly_target_minutes' => (int) round((float) $validated['weekly_target_hours'] * 60),
+            ...$overtime,
         ]);
 
         return to_route('profile.show')->with('status', 'Hours preferences updated.');

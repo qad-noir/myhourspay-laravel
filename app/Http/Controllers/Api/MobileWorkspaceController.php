@@ -12,6 +12,7 @@ use App\Services\HoursCalculator;
 use App\Services\MobileMutation;
 use App\Services\SubscriptionState;
 use App\Services\WorkspaceAccess;
+use App\Services\WorkspaceOvertimeSettings;
 use App\Services\WorkspaceRoles;
 use App\Support\MobileResponse;
 use Carbon\CarbonImmutable;
@@ -30,7 +31,10 @@ class MobileWorkspaceController extends Controller
 
     private function workspaceData(Request $request, Workspace $workspace): array
     {
-        return [...$workspace->only(['id', 'name', 'currency', 'default_break_minutes', 'default_break_type', 'weekly_target_minutes']),
+        return [...$workspace->only(['id', 'name', 'currency', 'default_break_minutes', 'default_break_type', 'weekly_target_minutes', 'contracted_daily_minutes']),
+            'overtime_basis' => $workspace->overtime_basis ?? 'weekly',
+            'settings_version' => app(WorkspaceOvertimeSettings::class)->version($workspace),
+            'can_manage_settings' => app(WorkspaceRoles::class)->canManage($request->user(), $workspace) && app(WorkspaceAccess::class)->isWritable($request->user(), $workspace),
             'role' => app(WorkspaceRoles::class)->role($request->user(), $workspace),
             'writable' => app(WorkspaceAccess::class)->isWritable($request->user(), $workspace),
             'timezone' => $workspace->timezone ?: config('hours.timezone'),
@@ -43,6 +47,8 @@ class MobileWorkspaceController extends Controller
         $data = $request->validate(['name' => 'required|string|min:3|max:100', 'position' => 'required|string|min:3|max:100',
             'default_break_type' => 'required|in:paid,unpaid', 'default_break_minutes' => 'required|integer|min:0|max:1439',
             'weekly_target_minutes' => 'required|integer|min:60|max:10080']);
+
+        $data = [...$data, ...app(WorkspaceOvertimeSettings::class)->validate($request, minutes: true)];
 
         return DB::transaction(function () use ($request, $data) {
             $user = User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
@@ -75,6 +81,28 @@ class MobileWorkspaceController extends Controller
         }
     }
 
+    public function updateSettings(Request $request, Workspace $workspace)
+    {
+        $this->authorizeWorkspace($request, $workspace, true);
+        abort_unless(app(WorkspaceRoles::class)->canManage($request->user(), $workspace), 403);
+
+        return app(MobileMutation::class)->run($request, $workspace, function () use ($request, $workspace) {
+            $workspace->refresh();
+            $data = $request->validate(['settings_version' => 'required|string|size:64',
+                'weekly_target_minutes' => 'sometimes|required|integer|min:60|max:10080']);
+            if (! hash_equals(app(WorkspaceOvertimeSettings::class)->version($workspace), $data['settings_version'])) {
+                MobileResponse::fail('workspace_settings_changed', 'Reload workspace settings before saving.', 409);
+            }
+            $values = [...collect($data)->except('settings_version')->all(), ...app(WorkspaceOvertimeSettings::class)->validate($request, $workspace, true)];
+            if ($values === []) {
+                throw ValidationException::withMessages(['settings' => 'Choose at least one overtime setting to update.']);
+            }
+            $workspace->update($values);
+
+            return response()->json(['data' => $this->workspaceData($request, $workspace->fresh())]);
+        });
+    }
+
     private function feature(Request $request, Workspace $workspace, string $feature): void
     {
         if (! app(FeatureAccess::class)->allows($request->user(), $feature, $workspace)) {
@@ -93,16 +121,17 @@ class MobileWorkspaceController extends Controller
         $summary = app(HoursCalculator::class)->forWorkspace($workspace)->summarizeEntries((clone $query)->get(), $data['start'], $data['end'], false);
         $page = $query->paginate($data['per_page'] ?? 50);
 
-        return response()->json(['data' => $page->getCollection()->map(fn ($entry) => $this->entryData($entry)),
+        return response()->json(['data' => $page->getCollection()->map(fn ($entry) => $this->entryData($entry, $workspace)),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'per_page' => $page->perPage(), 'total' => $page->total()],
-            'summary' => collect($summary)->only(['total_minutes', 'total_formatted', 'overtime_minutes', 'overtime_formatted', 'weeks'])->all()]);
+            'summary' => collect($summary)->only(['total_minutes', 'total_formatted', 'overtime_minutes', 'overtime_formatted', 'overtime_basis', 'contracted_daily_minutes', 'daily_overtime_minutes', 'weekly_overtime_minutes', 'weeks'])->all()]);
     }
 
-    public function entryData(HoursEntry $entry): array
+    public function entryData(HoursEntry $entry, ?Workspace $workspace = null): array
     {
         return [...$entry->only(['id', 'workspace_id', 'project_id', 'timesheet_id', 'break_minutes', 'break_type', 'notes', 'billable', 'net_minutes']),
             'work_date' => $entry->work_date->toDateString(), 'start_time' => substr($entry->start_time, 0, 5), 'end_time' => substr($entry->end_time, 0, 5),
-            'version' => hash('sha256', json_encode($entry->getAttributes()))];
+            'version' => hash('sha256', json_encode($entry->getAttributes())),
+            ...($workspace ? ['daily_overtime_minutes' => $workspace->contracted_daily_minutes === null ? null : max(0, $entry->net_minutes - $workspace->contracted_daily_minutes)] : [])];
     }
 
     public function saveHours(Request $request, Workspace $workspace, ?HoursEntry $entry = null)
@@ -148,7 +177,7 @@ class MobileWorkspaceController extends Controller
             }
             $record->fill($data)->save();
 
-            return response()->json(['data' => $this->entryData($record->fresh())], $created ? 201 : 200);
+            return response()->json(['data' => $this->entryData($record->fresh(), $workspace)], $created ? 201 : 200);
         });
     }
 

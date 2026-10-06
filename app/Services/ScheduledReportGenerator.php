@@ -31,14 +31,13 @@ class ScheduledReportGenerator
             $entry['weekly_total'] = $week['formatted'];
             $entry['weekly_variance'] = $week['variance_formatted'];
             $entry['weekly_overtime_formatted'] = $calculator->formatMinutes(max(0, $week['variance_minutes']));
+            $entry['report_overtime_formatted'] = $calculator->formatMinutes($calculator->overtimeBasis() === 'daily' ? $entry['daily_overtime_minutes'] : max(0, $week['variance_minutes']));
             $entry['partial_week'] = $week['partial'];
             $entry['project_name'] = data_get($entry, 'project.name');
             $entry['client_name'] = data_get($entry, 'project.client.name');
         }
         unset($entry);
-        $summary['weeks'] = $weekSummary['weeks'];
-        $summary['overtime_minutes'] = $weekSummary['overtime_minutes'];
-        $summary['overtime_formatted'] = $calculator->formatMinutes($weekSummary['overtime_minutes']);
+        $summary = $calculator->withFullWeekOvertime($summary, $weekSummary);
         $format = in_array($schedule->template->format, ['xlsx', 'pdf', 'csv'], true) ? $schedule->template->format : 'xlsx';
         $directory = storage_path('app/private/scheduled-reports');
         File::ensureDirectoryExists($directory);
@@ -61,9 +60,9 @@ class ScheduledReportGenerator
         if ($stream === false) {
             throw new RuntimeException('Scheduled CSV file could not be created.');
         }
-        fputcsv($stream, ['Date', 'Start', 'End', 'Break type', 'Break minutes', 'Hours', 'Overtime', 'Project', 'Billable', 'Earnings', 'Notes']);
+        fputcsv($stream, ['Date', 'Start', 'End', 'Break type', 'Break minutes', 'Hours', ucfirst($summary['overtime_basis']).' overtime', 'Project', 'Billable', 'Earnings', 'Notes']);
         foreach ($summary['entries'] as $entry) {
-            fputcsv($stream, [$entry['work_date'], $entry['start_time'], $entry['end_time'], $entry['break_type'], $entry['break_minutes'], $entry['net_formatted'], $entry['weekly_overtime_formatted'], $entry['project_name'] ?? '', $entry['billable'] ? 'Yes' : 'No', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', app(HoursReportExport::class)->safeText($entry['notes'] ?? '')]);
+            fputcsv($stream, [$entry['work_date'], $entry['start_time'], $entry['end_time'], $entry['break_type'], $entry['break_minutes'], $entry['net_formatted'], $entry['report_overtime_formatted'], $entry['project_name'] ?? '', $entry['billable'] ? 'Yes' : 'No', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', app(HoursReportExport::class)->safeText($entry['notes'] ?? '')]);
         }
         fclose($stream);
     }

@@ -23,7 +23,7 @@ class DashboardController extends Controller
             $calculator,
         );
         $weekStart = $now->startOfWeek();
-        $weeklyOvertime = max(0, $week['total_minutes'] - $calculator->weeklyTargetMinutes());
+        $weeklyOvertime = $week['overtime_minutes'];
         $byDate = collect($week['entries'])->keyBy('work_date');
         $days = collect(range(0, 6))->map(function (int $offset) use ($weekStart, $byDate): array {
             $date = $weekStart->addDays($offset);

@@ -18,7 +18,7 @@ class WorkspaceApiController extends Controller
 {
     public function workspaces(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()->workspaces()->select(['workspaces.id', 'workspaces.name', 'workspaces.currency', 'workspaces.weekly_target_minutes'])->get()]);
+        return response()->json(['data' => $request->user()->workspaces()->select(['workspaces.id', 'workspaces.name', 'workspaces.currency', 'workspaces.weekly_target_minutes', 'workspaces.contracted_daily_minutes', 'workspaces.overtime_basis'])->get()]);
     }
 
     public function hours(Request $request, Workspace $workspace): JsonResponse

@@ -8,11 +8,13 @@ use App\Models\PayrollExportProfile;
 use App\Models\SupportRequest;
 use App\Models\Timesheet;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 use App\Notifications\WorkspaceInvitationNotification;
 use App\Services\BusinessSeatBilling;
 use App\Services\CurrentWorkspace;
 use App\Services\FeatureAccess;
+use App\Services\HoursCalculator;
 use App\Services\OperationalIncidentRecorder;
 use App\Services\PublicWebhookUrl;
 use App\Services\TimesheetWorkflow;
@@ -208,7 +210,7 @@ class BusinessController extends Controller
         $workspace = $this->workspaceAndAuthorize($request, 'payroll');
         abort_unless($profile->workspace_id === $workspace->id, 404);
         $data = $request->validate(['start' => ['required', 'date'], 'end' => ['required', 'date', 'after_or_equal:start']]);
-        $rows = $this->payrollRows($workspace->id, $data['start'], $data['end'], $workspace->weekly_target_minutes);
+        $rows = $this->payrollRows($workspace, $data['start'], $data['end']);
         if ($rows === []) {
             return back()->withInput()->withErrors(['payroll' => 'No approved or locked timesheets match that date range. Choose another period after time has been approved.']);
         }
@@ -294,12 +296,15 @@ class BusinessController extends Controller
         return $workspace;
     }
 
-    private function payrollRows(int $workspaceId, string $start, string $end, int $target): array
+    private function payrollRows(Workspace $workspace, string $start, string $end): array
     {
-        return Timesheet::query()->with(['user', 'entries'])->where('workspace_id', $workspaceId)->whereIn('status', ['approved', 'locked'])->whereBetween('week_start', [$start, $end])->get()->map(function (Timesheet $sheet) use ($target): array {
-            $minutes = $sheet->entries->sum('net_minutes');
+        $calculator = app(HoursCalculator::class)->forWorkspace($workspace);
 
-            return ['employee' => $sheet->user->name, 'email' => $sheet->user->email, 'week' => $sheet->week_start->toDateString(), 'regular_minutes' => min($minutes, $target), 'overtime_minutes' => max(0, $minutes - $target), 'paid_break_minutes' => $sheet->entries->where('break_type', 'paid')->sum('break_minutes'), 'unpaid_break_minutes' => $sheet->entries->where('break_type', 'unpaid')->sum('break_minutes'), 'earnings_minor' => $sheet->entries->sum('earnings_minor'), 'currency' => $sheet->entries->pluck('currency')->filter()->first() ?? 'GBP'];
+        return Timesheet::query()->with(['user', 'entries'])->where('workspace_id', $workspace->id)->whereIn('status', ['approved', 'locked'])->whereBetween('week_start', [$start, $end])->get()->map(function (Timesheet $sheet) use ($calculator): array {
+            $minutes = $sheet->entries->sum('net_minutes');
+            $overtime = $calculator->overtimeFromNetEntries($sheet->entries);
+
+            return ['employee' => $sheet->user->name, 'email' => $sheet->user->email, 'week' => $sheet->week_start->toDateString(), 'regular_minutes' => $minutes - $overtime, 'overtime_minutes' => $overtime, 'paid_break_minutes' => $sheet->entries->where('break_type', 'paid')->sum('break_minutes'), 'unpaid_break_minutes' => $sheet->entries->where('break_type', 'unpaid')->sum('break_minutes'), 'earnings_minor' => $sheet->entries->sum('earnings_minor'), 'currency' => $sheet->entries->pluck('currency')->filter()->first() ?? 'GBP'];
         })->all();
     }
 

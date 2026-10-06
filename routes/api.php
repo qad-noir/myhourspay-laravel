@@ -43,6 +43,7 @@ Route::prefix('v1/mobile')->middleware(['throttle:mobile-api'])->group(function 
     Route::middleware(['auth:sanctum', MobileSession::class])->controller(MobileWorkspaceController::class)->group(function (): void {
         Route::get('workspaces', 'workspaces');
         Route::post('workspaces', 'createWorkspace');
+        Route::patch('workspaces/{workspace}/settings', 'updateSettings');
         Route::get('workspaces/{workspace}/hours', 'hours');
         Route::post('workspaces/{workspace}/hours', 'saveHours');
         Route::patch('workspaces/{workspace}/hours/{entry}', 'saveHours');

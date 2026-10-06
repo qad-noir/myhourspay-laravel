@@ -11,7 +11,7 @@ class WorkspaceObserver
 
     public function saved(Workspace $workspace): void
     {
-        if ($workspace->wasRecentlyCreated || $workspace->wasChanged(['weekly_target_minutes', 'default_break_minutes', 'default_break_type'])) {
+        if ($workspace->wasRecentlyCreated || $workspace->wasChanged(['weekly_target_minutes', 'contracted_daily_minutes', 'overtime_basis', 'default_break_minutes', 'default_break_type'])) {
             $this->cache->forgetWorkspace($workspace);
         }
     }

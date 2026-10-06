@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Workspace;
 use App\Services\CurrentWorkspace;
 use App\Services\WorkspaceAccess;
+use App\Services\WorkspaceOvertimeSettings;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -65,8 +66,9 @@ class WorkspaceController extends Controller
             'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'],
             'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168'],
         ]);
+        $overtime = app(WorkspaceOvertimeSettings::class)->validate($request);
         try {
-            DB::transaction(function () use ($request, $validated): void {
+            DB::transaction(function () use ($request, $validated, $overtime): void {
                 $user = $request->user();
                 $user->refresh();
                 $firstWorkspace = ! $user->workspaces()->exists();
@@ -75,6 +77,7 @@ class WorkspaceController extends Controller
                     'default_break_type' => $validated['default_break_type'],
                     'default_break_minutes' => $validated['default_break_minutes'],
                     'weekly_target_minutes' => (int) round((float) $validated['weekly_target_hours'] * 60),
+                    ...$overtime,
                 ]);
                 $workspace->users()->attach($user->id, ['role' => 'owner', 'position' => $validated['position']]);
                 if ($firstWorkspace) {

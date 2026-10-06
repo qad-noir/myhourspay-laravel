@@ -10,6 +10,7 @@ use App\Services\AdminAudit;
 use App\Services\EmailVerificationCodeService;
 use App\Services\HoursCalculator;
 use App\Services\OperationalIncidentRecorder;
+use App\Services\WorkspaceOvertimeSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -262,12 +263,12 @@ class AdminManagementController extends Controller
 
     private function workspaceData(Request $request): array
     {
-        return $request->validate(['owner_id' => ['required', 'exists:users,id'], 'position' => ['required', 'string', 'min:3', 'max:100'], 'name' => ['required', 'string', 'min:3', 'max:100', Rule::unique('workspaces')->where('owner_id', $request->input('owner_id'))], 'default_break_type' => ['required', 'in:paid,unpaid'], 'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'], 'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168']]);
+        return [...$request->validate(['owner_id' => ['required', 'exists:users,id'], 'position' => ['required', 'string', 'min:3', 'max:100'], 'name' => ['required', 'string', 'min:3', 'max:100', Rule::unique('workspaces')->where('owner_id', $request->input('owner_id'))], 'default_break_type' => ['required', 'in:paid,unpaid'], 'default_break_minutes' => ['required', 'integer', 'min:0', 'max:1439'], 'weekly_target_hours' => ['required', 'numeric', 'min:1', 'max:168']]), ...app(WorkspaceOvertimeSettings::class)->validate($request)];
     }
 
     private function workspaceValues(array $data): array
     {
-        return ['name' => trim($data['name']), 'default_break_type' => $data['default_break_type'], 'default_break_minutes' => $data['default_break_minutes'], 'weekly_target_minutes' => (int) round($data['weekly_target_hours'] * 60)];
+        return ['name' => trim($data['name']), 'default_break_type' => $data['default_break_type'], 'default_break_minutes' => $data['default_break_minutes'], 'weekly_target_minutes' => (int) round($data['weekly_target_hours'] * 60), ...array_intersect_key($data, array_flip(['contracted_daily_minutes', 'overtime_basis']))];
     }
 
     private function hoursData(Request $request, ?HoursEntry $entry = null): array

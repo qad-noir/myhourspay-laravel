@@ -13,14 +13,14 @@ class ScaleCache
     {
         $date = ($now ?? CarbonImmutable::now(config('hours.timezone')))->toDateString();
 
-        return "dashboard-summary:v1:{$userId}:{$workspaceId}:{$date}";
+        return "dashboard-summary:v2:{$userId}:{$workspaceId}:{$date}";
     }
 
     public function adminMetricsKey(?CarbonImmutable $now = null): string
     {
         $month = ($now ?? CarbonImmutable::now(config('hours.timezone')))->format('Y-m');
 
-        return "admin-metrics:v1:{$month}";
+        return "admin-metrics:v2:{$month}";
     }
 
     public function forgetHoursEntry(HoursEntry $entry): void

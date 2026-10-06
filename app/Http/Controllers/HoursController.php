@@ -15,8 +15,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -104,6 +104,7 @@ class HoursController extends Controller
                 if ($request->expectsJson()) {
                     return response()->json(['errors' => ['work_date' => ['An entry already exists for that date.']]], 422);
                 }
+
                 return back()->withInput()->withErrors(['work_date' => 'An entry already exists for that date.']);
             }
             throw $exception;
@@ -112,6 +113,7 @@ class HoursController extends Controller
         if ($request->expectsJson()) {
             return response()->json(['saved' => true, 'work_date' => $request->validated('work_date')], 201);
         }
+
         return to_route('hours.index', ['month' => substr($request->validated('work_date'), 0, 7)])->with('status', 'Hours entry saved.');
     }
 
@@ -125,6 +127,7 @@ class HoursController extends Controller
                 if ($request->expectsJson()) {
                     return response()->json(['errors' => ['work_date' => ['An entry already exists for that date.']]], 422);
                 }
+
                 return back()->withInput()->withErrors(['work_date' => 'An entry already exists for that date.']);
             }
             throw $exception;
@@ -133,6 +136,7 @@ class HoursController extends Controller
         if ($request->expectsJson()) {
             return response()->json(['saved' => true, 'work_date' => $hoursEntry->work_date->toDateString()]);
         }
+
         return to_route('hours.index', ['month' => $hoursEntry->work_date->format('Y-m')])->with('status', 'Hours entry updated.');
     }
 
@@ -159,10 +163,14 @@ class HoursController extends Controller
                     abort_unless($record->deleted_at->toISOString() === $request->query('deleted_at'), 409, 'This undo action is no longer available.');
                     $record->restore();
                 }
+
                 return response()->json(['saved' => true, 'work_date' => $record->work_date->toDateString()]);
             });
         } catch (QueryException $exception) {
-            if (! $this->isUniqueViolation($exception)) throw $exception;
+            if (! $this->isUniqueViolation($exception)) {
+                throw $exception;
+            }
+
             return response()->json(['message' => 'Another entry already exists for this date. The deleted entry was not restored.'], 409);
         }
     }
@@ -173,6 +181,7 @@ class HoursController extends Controller
         $summary = $this->reportSummary($request, $start, $end, false);
         $workspace = $this->current->for($request->user());
         $advanced = app(FeatureAccess::class)->allows($request->user(), 'advanced_reports', $workspace);
+        $calculator = $this->calculator->forWorkspace($workspace);
         $projects = $advanced ? $workspace->projects()->with('client')->where('active', true)->orderBy('name')->get() : collect();
         $clients = $advanced ? $workspace->clients()->where('active', true)->orderBy('name')->get() : collect();
         $days = CarbonImmutable::parse($start)->diffInDays(CarbonImmutable::parse($end)) + 1;
@@ -181,7 +190,7 @@ class HoursController extends Controller
         $previous = $advanced ? $this->reportSummary($request, $previousStart->toDateString(), $previousEnd->toDateString(), false) : null;
         $exportQuery = array_filter(['start' => $start, 'end' => $end, 'client_id' => $request->query('client_id'), 'project_id' => $request->query('project_id'), 'billable' => $request->query('billable')], fn ($value) => $value !== null && $value !== '');
 
-        return view('hours.report', compact('start', 'end', 'summary', 'previous', 'previousStart', 'previousEnd', 'advanced', 'projects', 'clients', 'exportQuery'));
+        return view('hours.report', compact('start', 'end', 'summary', 'previous', 'previousStart', 'previousEnd', 'advanced', 'projects', 'clients', 'exportQuery', 'calculator'));
     }
 
     public function reportData(Request $request): JsonResponse
@@ -210,7 +219,7 @@ class HoursController extends Controller
 
                 return 'W'.$item['week_number'].($week['partial'] ? ' · partial' : '').' · '.$week['formatted'].' · '.$week['variance_formatted'];
             })
-            ->addColumn('overtime', fn ($entry) => $calculator->formatMinutes(max(0, $weeks[$calculator->enrichEntry($entry)['week_key']]['variance_minutes'])))
+            ->addColumn('overtime', fn ($entry) => $calculator->formatMinutes($calculator->overtimeBasis() === 'daily' ? $calculator->enrichEntry($entry)['daily_overtime_minutes'] : max(0, $weeks[$calculator->enrichEntry($entry)['week_key']]['variance_minutes'])))
             ->editColumn('notes', fn ($entry) => $entry->notes ?: '—');
         $visible = ['date', 'time', 'break', 'net', 'week', 'overtime', 'notes'];
         if ($advanced) {
@@ -236,14 +245,16 @@ class HoursController extends Controller
             fputcsv($stream, ['Weekly target', $this->calculator->formatMinutes($workspace->weekly_target_minutes)]);
             fputcsv($stream, ['Period hours', $summary['total_formatted']]);
             fputcsv($stream, ['Overtime', $summary['overtime_formatted']]);
+            fputcsv($stream, ['Overtime basis', $summary['overtime_basis']]);
+            fputcsv($stream, ['Contracted daily hours', $workspace->contracted_daily_minutes === null ? '' : $this->calculator->formatMinutes($workspace->contracted_daily_minutes)]);
             fputcsv($stream, ['Breaks logged', $summary['break_count']]);
             fputcsv($stream, ['Paid breaks included', $summary['paid_break_formatted']]);
             fputcsv($stream, ['Unpaid breaks deducted', $summary['unpaid_break_formatted']]);
             fputcsv($stream, ['Workspace default break', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes']);
             fputcsv($stream, []);
-            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', 'Weekly overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes']);
+            fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', ucfirst($summary['overtime_basis']).' overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes']);
             foreach ($summary['entries'] as $entry) {
-                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $entry['weekly_overtime_formatted'], data_get($entry, 'project.client.name'), data_get($entry, 'project.name'), ($entry['billable'] ?? false) ? 'Yes' : 'No', isset($entry['hourly_rate_minor']) ? number_format($entry['hourly_rate_minor'] / 100, 2, '.', '') : '', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', $export->safeText($entry['notes'] ?? '')]);
+                fputcsv($stream, [$entry['work_date'], $entry['weekday'], $entry['start_time'], $entry['end_time'], ucfirst($entry['break_type']), $entry['break_minutes'], $entry['net_formatted'], $entry['week_key'].($entry['partial_week'] ? ' (partial)' : ''), $entry['weekly_total'], $entry['weekly_variance'], $entry['report_overtime_formatted'], data_get($entry, 'project.client.name'), data_get($entry, 'project.name'), ($entry['billable'] ?? false) ? 'Yes' : 'No', isset($entry['hourly_rate_minor']) ? number_format($entry['hourly_rate_minor'] / 100, 2, '.', '') : '', isset($entry['earnings_minor']) ? number_format($entry['earnings_minor'] / 100, 2, '.', '') : '', $export->safeText($entry['notes'] ?? '')]);
             }
             fclose($stream);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
@@ -305,14 +316,12 @@ class HoursController extends Controller
             $entry['weekly_variance'] = $week['variance_formatted'];
             $entry['weekly_overtime_minutes'] = max(0, $week['variance_minutes']);
             $entry['weekly_overtime_formatted'] = $calculator->formatMinutes($entry['weekly_overtime_minutes']);
+            $entry['report_overtime_formatted'] = $calculator->formatMinutes($calculator->overtimeBasis() === 'daily' ? $entry['daily_overtime_minutes'] : $entry['weekly_overtime_minutes']);
             $entry['partial_week'] = $week['partial'];
         }
         unset($entry);
-        $period['weeks'] = $weekSummary['weeks'];
-        $period['overtime_minutes'] = $weekSummary['overtime_minutes'];
-        $period['overtime_formatted'] = $calculator->formatMinutes($weekSummary['overtime_minutes']);
 
-        return $period;
+        return $calculator->withFullWeekOvertime($period, $weekSummary);
     }
 
     private function validatedRange(Request $request, bool $exclusiveEnd = false): array

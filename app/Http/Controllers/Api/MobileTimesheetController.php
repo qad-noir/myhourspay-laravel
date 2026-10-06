@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Timesheet;
 use App\Models\Workspace;
 use App\Services\FeatureAccess;
+use App\Services\HoursCalculator;
 use App\Services\MobileMutation;
 use App\Services\TimesheetWorkflow;
 use App\Services\WorkspaceRoles;
@@ -31,7 +32,7 @@ class MobileTimesheetController extends Controller
         $page = $workspace->timesheets()->when(! $review, fn ($query) => $query->where('user_id', $request->user()->id))
             ->with('user:id,name')->orderByDesc('week_start')->orderByDesc('id')->paginate(50);
 
-        return response()->json(['data' => $page->getCollection()->map(fn ($sheet) => $this->data($sheet)),
+        return response()->json(['data' => $page->getCollection()->map(fn ($sheet) => $this->data($sheet, $workspace)),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'per_page' => $page->perPage(), 'total' => $page->total()]]);
     }
 
@@ -40,7 +41,7 @@ class MobileTimesheetController extends Controller
         $this->access($request, $workspace);
         abort_unless($timesheet->workspace_id === $workspace->id && ($timesheet->user_id === $request->user()->id || app(WorkspaceRoles::class)->canReview($request->user(), $workspace)), 404);
 
-        return response()->json(['data' => [...$this->data($timesheet), 'entries' => $timesheet->entries()->orderBy('work_date')->get()->map(fn ($entry) => app(MobileWorkspaceController::class)->entryData($entry))]]);
+        return response()->json(['data' => [...$this->data($timesheet, $workspace), 'entries' => $timesheet->entries()->orderBy('work_date')->get()->map(fn ($entry) => app(MobileWorkspaceController::class)->entryData($entry, $workspace))]]);
     }
 
     public function submit(Request $request, Workspace $workspace, TimesheetWorkflow $workflow)
@@ -50,7 +51,7 @@ class MobileTimesheetController extends Controller
         return app(MobileMutation::class)->run($request, $workspace, function () use ($request, $workspace, $workflow) {
             $data = $request->validate(['week_start' => 'required|date_format:Y-m-d', 'submission_note' => 'nullable|string|max:2000']);
 
-            return response()->json(['data' => $this->data($workflow->submit($request->user(), $workspace, $data))], 201);
+            return response()->json(['data' => $this->data($workflow->submit($request->user(), $workspace, $data), $workspace)], 201);
         });
     }
 
@@ -63,15 +64,15 @@ class MobileTimesheetController extends Controller
         return app(MobileMutation::class)->run($request, $workspace, function () use ($request, $workspace, $timesheet, $workflow) {
             $data = $request->validate(['decision' => 'required|in:approved,rejected,reopened', 'review_note' => 'nullable|string|max:2000', 'version' => 'required|string|size:64']);
             $timesheet->refresh();
-            if (! hash_equals($this->data($timesheet)['version'], $data['version'])) {
+            if (! hash_equals($this->data($timesheet, $workspace)['version'], $data['version'])) {
                 MobileResponse::fail('timesheet_changed', 'Reload this timesheet before reviewing it.', 409);
             }
 
-            return response()->json(['data' => $this->data($workflow->review($request->user(), $workspace, $timesheet, $data))]);
+            return response()->json(['data' => $this->data($workflow->review($request->user(), $workspace, $timesheet, $data), $workspace)]);
         });
     }
 
-    private function data(Timesheet $sheet): array
+    private function data(Timesheet $sheet, Workspace $workspace): array
     {
         $attributes = $sheet->only(['id', 'workspace_id', 'user_id', 'status', 'submission_note', 'review_note', 'reviewed_by']);
         $attributes['week_start'] = $sheet->week_start->toDateString();
@@ -81,6 +82,13 @@ class MobileTimesheetController extends Controller
         $entries = $sheet->entries()->orderBy('id')->get();
         $attributes['version'] = hash('sha256', json_encode([$attributes, $entries->map(fn ($entry) => app(MobileWorkspaceController::class)->entryData($entry))]));
 
-        return [...$attributes, 'user_name' => $sheet->user?->name, 'total_minutes' => (int) $entries->sum('net_minutes')];
+        // Derived overtime is deliberately excluded from the approval version above.
+        $calculator = app(HoursCalculator::class)->forWorkspace($workspace);
+        $daily = $workspace->contracted_daily_minutes === null ? null : (new HoursCalculator($workspace->weekly_target_minutes, contractedDailyMinutes: $workspace->contracted_daily_minutes, overtimeBasis: 'daily'))->overtimeFromNetEntries($entries);
+        $weekly = (new HoursCalculator($workspace->weekly_target_minutes))->overtimeFromNetEntries($entries);
+
+        return [...$attributes, 'user_name' => $sheet->user?->name, 'total_minutes' => (int) $entries->sum('net_minutes'),
+            'overtime_basis' => $calculator->overtimeBasis(), 'contracted_daily_minutes' => $workspace->contracted_daily_minutes,
+            'daily_overtime_minutes' => $daily, 'weekly_overtime_minutes' => $weekly, 'overtime_minutes' => $calculator->overtimeFromNetEntries($entries)];
     }
 }

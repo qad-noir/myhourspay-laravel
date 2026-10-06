@@ -15,11 +15,11 @@ class Workspace extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = ['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes', 'currency', 'overtime_multiplier_bps', 'timezone'];
+    protected $fillable = ['name', 'default_break_type', 'default_break_minutes', 'weekly_target_minutes', 'currency', 'overtime_multiplier_bps', 'timezone', 'contracted_daily_minutes', 'overtime_basis'];
 
     protected function casts(): array
     {
-        return ['default_break_minutes' => 'integer', 'weekly_target_minutes' => 'integer', 'overtime_multiplier_bps' => 'integer'];
+        return ['default_break_minutes' => 'integer', 'weekly_target_minutes' => 'integer', 'overtime_multiplier_bps' => 'integer', 'contracted_daily_minutes' => 'integer'];
     }
 
     public function owner(): BelongsTo
