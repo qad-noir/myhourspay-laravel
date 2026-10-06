@@ -78,9 +78,36 @@ schemas["Timesheet"] = obj({"id": integer, "workspace_id": integer, "user_id": i
 schemas["TimesheetDetail"] = {"allOf": [ref("Timesheet"), obj({"entries": array(ref("HoursEntry"))})]}
 schemas["Session"] = obj({"id": integer, "device_name": text, "last_used_at": {"type": ["string", "null"], "format": "date-time"}, "expires_at": {"type": ["string", "null"], "format": "date-time"}, "current": boolean})
 
+# Additive workspace overtime settings (2.2). Existing workspaces remain weekly.
+basis = {"type": "string", "enum": ["daily", "weekly"]}
+daily_contract = {"type": ["integer", "null"], "minimum": 1, "maximum": 1440}
+overtime_fields = {"overtime_basis": basis, "contracted_daily_minutes": daily_contract,
+                   "daily_overtime_minutes": nullable_int, "weekly_overtime_minutes": integer,
+                   "overtime_minutes": integer}
+for name in ["Workspace", "Week", "Timesheet"]:
+    fields = ({"overtime_basis": basis, "contracted_daily_minutes": daily_contract,
+               "settings_version": version, "can_manage_settings": boolean} if name == "Workspace"
+              else {"daily_overtime_minutes": nullable_int, "weekly_overtime_minutes": integer,
+                    "overtime_minutes": integer, "overtime_formatted": text} if name == "Week"
+              else overtime_fields)
+    schemas[name]["properties"].update(fields)
+    schemas[name]["required"].extend(fields)
+schemas["HoursEntry"]["properties"]["daily_overtime_minutes"] = nullable_int
+schemas["HoursEntry"]["required"].append("daily_overtime_minutes")
+summary = schemas["HoursPage"]["properties"]["summary"]
+summary["properties"].update({**overtime_fields, "overtime_formatted": text})
+summary["required"] = list(summary["properties"])
+schemas["WorkspaceInput"]["properties"].update({"contracted_daily_minutes": daily_contract, "overtime_basis": basis})
+schemas["WorkspaceInput"]["description"] = "Optional overtime settings default to weekly and no daily contract. Daily basis requires a positive daily contract."
+schemas["WorkspaceSettingsInput"] = obj({"settings_version": version,
+    "weekly_target_minutes": schemas["WorkspaceInput"]["properties"]["weekly_target_minutes"],
+    "contracted_daily_minutes": daily_contract, "overtime_basis": basis}, ["settings_version"])
+schemas["WorkspaceSettingsInput"]["anyOf"] = [{"required": [field]} for field in ["weekly_target_minutes", "contracted_daily_minutes", "overtime_basis"]]
+schemas["WorkspaceSettingsInput"]["description"] = "Partial update; omitted values are preserved. Effective daily basis requires a non-null daily contract. To clear a daily contract, switch to weekly in the same request. Applies read-only overtime derivation to historical records; does not change earnings, entry or approval versions."
+
 document = {
     "openapi": "3.1.0",
-    "info": {"title": "MyHoursPay Native Mobile API", "version": "2.1.0", "description": "Implemented native routes, replacing the 0.1.0 source-inspection draft. Production URL is the deployment target, not evidence of deployment. No paid external api_access requirement. Existing feature entitlements and workspace permissions apply. See mobile-integration.md for platform setup and release limitations."},
+    "info": {"title": "MyHoursPay Native Mobile API", "version": "2.2.0", "description": "Implemented native routes, replacing the 0.1.0 source-inspection draft. Production URL is the deployment target, not evidence of deployment. No paid external api_access requirement. Existing feature entitlements and workspace permissions apply. See mobile-integration.md for platform setup and release limitations."},
     "servers": [{"url": "http://127.0.0.1:8000/api/v1/mobile", "description": "Local Laravel; Android emulator uses 10.0.2.2 instead"}, {"url": "https://mhp.glsltd.co.uk/api/v1/mobile", "description": "Production target after deployment; do not run automated write tests here"}],
     "security": [{"sanctumBearer": []}], "paths": {},
     "components": {"securitySchemes": {"sanctumBearer": {"type": "http", "scheme": "bearer", "description": "Opaque Sanctum token issued by native auth. Normal device lifetime defaults to 30 days, verification token to 60 minutes. No refresh endpoint. MFA challenge is not a bearer token."}}, "schemas": schemas},
@@ -137,6 +164,7 @@ operation('/auth/sessions/{session}', 'delete', 'revokeSession', 'Revoke own mob
 operation('/workspaces', 'get', 'listWorkspaces', 'List memberships and capabilities', envelope(array(ref('Workspace'))), description='Workspace choice is client-local. Send workspace ID in resource paths; no mutable server current-workspace dependency.')
 operation('/workspaces', 'post', 'createWorkspace', 'Create workspace / complete onboarding', envelope(ref('Workspace')), ref('WorkspaceInput'), status=201, description='Enforces workspace limit and unique name per membership. No idempotency support on this endpoint; do not blindly retry after an uncertain response. Refresh workspace list first.')
 workspace = '/workspaces/{workspace}'
+operation(workspace + '/settings', 'patch', 'updateWorkspaceSettings', 'Update workspace overtime settings', envelope(ref('Workspace')), ref('WorkspaceSettingsInput'), idempotent=True, description='Verified mobile access, writable workspace and owner/administrator required. UUID Idempotency-Key and settings_version are mandatory. Stale version: 409 workspace_settings_changed; reused key with different body: 409 idempotency_conflict. Invalid effective settings: 422 validation_failed. Retry uncertain requests with the exact body and key. Refresh historical summaries after success; no records are backfilled.')
 operation(workspace+'/hours', 'get', 'listHours', 'List own hours and period totals', ref('HoursPage'), params=[query('start', date, True), query('end', date, True), query('page', {'type': 'integer', 'minimum': 1}), query('per_page', {'type': 'integer', 'minimum': 1, 'maximum': 100, 'default': 50})], description='Inclusive work-date range; end-start <=366 days. Ascending work_date and id. Summary covers the full requested range, not just the page. Weeks without entries are omitted. Partial-week totals do not imply a full-week total.')
 operation(workspace+'/hours', 'post', 'createHours', 'Create hours entry', envelope(ref('HoursEntry')), ref('HoursInput'), status=201, idempotent=True)
 operation(workspace+'/hours/{entry}', 'patch', 'updateHours', 'Update own hours entry', envelope(ref('HoursEntry')), ref('HoursUpdate'), idempotent=True, description='Send all required HoursInput fields plus current version. Approved/locked source and destination weeks cannot change. Stale version returns entry_changed (409).')

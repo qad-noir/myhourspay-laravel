@@ -1,4 +1,4 @@
-# MHP native API integration — version 2.1.0
+# MHP native API integration — version 2.2.0
 
 This implementation replaces the earlier `0.1.0-draft` contract. The canonical
 file is `docs/api/mobile.openapi.yaml`. It uses JSON syntax, which is valid YAML
@@ -141,6 +141,82 @@ requested range. Partial weeks are labelled and empty weeks omitted. Use minutes
 for UI calculations; returned formatted totals are HH:MM, not decimal hours.
 
 ## Retries, errors and cache
+
+### Workspace overtime settings — added in 2.2.0
+
+Existing workspaces default to `overtime_basis: weekly` and
+`contracted_daily_minutes: null`. Adding a daily contract alone leaves the selected
+basis weekly. An owner/administrator chooses Daily or Weekly per workspace.
+These settings apply to all historical dates as a read-only calculation. No hours,
+breaks, stored earnings/rates, approval status, entry versions or timesheet versions
+are rewritten. Payroll exports reclassify regular/overtime minutes using the chosen
+basis while retaining stored earnings. Compensation pricing is unchanged.
+
+Daily overtime is `sum(max(0, net minutes per work_date - contracted_daily_minutes))`.
+Short days cannot cancel long days; weekends use the same daily contract when hours
+are recorded. Missing days contribute zero overtime. Weekly overtime is
+`sum(max(0, net minutes per Monday–Sunday week - weekly_target_minutes))`.
+Do not add the two figures together. `overtime_minutes` is the selected figure;
+`daily_overtime_minutes` and `weekly_overtime_minutes` are comparisons. A null daily
+contract or daily overtime means **not configured**, rather than zero. Weekly
+`variance_minutes` remains signed weekly-target variance even in Daily mode.
+
+Workspace responses add `contracted_daily_minutes` (nullable integer 1–1440),
+`overtime_basis` (`daily|weekly`), `settings_version` (64-character SHA-256) and
+`can_manage_settings`. Workspace creation accepts the two optional settings.
+PATCH `/workspaces/{workspace}/settings` requires a verified mobile access token,
+writable workspace and owner/administrator membership. Send at least one setting,
+the last workspace `settings_version`, and a new UUID `Idempotency-Key`:
+
+```http
+PATCH /api/v1/mobile/workspaces/123/settings
+Authorization: Bearer <device token>
+Accept: application/json
+Content-Type: application/json
+Idempotency-Key: <new UUID>
+```
+
+```json
+{
+  "settings_version": "<64-character value from GET /workspaces>",
+  "weekly_target_minutes": 2400,
+  "contracted_daily_minutes": 480,
+  "overtime_basis": "daily"
+}
+```
+
+Success is HTTP 200 `{"data": Workspace}` with a new settings version. Omitted
+settings retain their values. Effective Daily mode requires a positive daily
+contract; clearing it requires switching to Weekly in the same request. Native
+clients send integer minutes; the web decimal-hours input rounds to the nearest
+minute. Invalid settings return 422 `validation_failed` with field errors. Stale
+settings return 409 `workspace_settings_changed`; reload and ask the user to review
+before saving. Same key/different body returns 409 `idempotency_conflict`.
+Foreign workspace is 404, insufficient role is 403, read-only workspace returns
+403 `workspace_read_only`. Retry an uncertain request using its exact body/key;
+the replay snapshot may be stale, so refresh workspaces and summaries afterwards.
+
+GET hours summary includes the new settings and both overtime figures for the
+**entire requested range**, independent of pagination. Entry payloads add nullable
+`daily_overtime_minutes`; timesheet payloads add basis, daily contract and both
+comparison totals plus selected overtime. Existing edit/review versions remain
+stable when only workspace overtime settings change. Never persist derived
+overtime back into entries or include it in a client-generated version.
+
+For a monthly overview, request exact calendar-month dates for total hours, daily
+overtime and calendar cells. The web's existing Weekly monthly overtime includes
+full Monday–Sunday weeks intersecting that month. Use a separate expanded-range
+request for that weekly figure/comparison; use the exact-month daily figure in
+Daily mode. Expanded weeks must not inflate daily monthly overtime. Label boundary
+weeks and comparison scope. Calendar cells use their date's daily excess; weekly
+overtime has no automatic per-day allocation. Server wall-clock/break rules remain
+unchanged. Refresh local workspace caches, overview, hours and timesheets after a
+settings save; Laravel invalidates its dashboard/admin caches.
+
+Acceptance fixture: 8h daily contract, 40h weekly target, Monday 10h and Tuesday
+through Friday 7h each => 38h worked, 2h daily overtime, 0h weekly overtime, signed
+weekly variance −2h. Daily selection shows 2h; Weekly selection shows 0h. Test past
+approved/locked records and verify no persisted entry/approval changes.
 
 Hours create/update and timesheet submit/review require `Idempotency-Key` UUID.
 Keep it for retries of the same operation/payload; generate a new one after an
