@@ -1,0 +1,26 @@
+{
+  "production": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\chart-segment-hitareas-2026-10-07-18-57-50.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\chart-segment-hitareas-2026-10-07-18-57-50.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\chart-segment-hitareas-2026-10-07-18-57-50.manifest.json",
+    "checksum": "56870d12c97976760b85c43b465e2d79cbdb4a605d547c471ab88f4eecc00828",
+    "files": 5,
+    "bytes": 260546,
+    "head": "e4f6d918c8cea52baa72308c95e6003b418a2e66",
+    "verified": true
+  },
+  "tests": {
+    "assertions": 168,
+    "passed": 14,
+    "scope": "WorkspaceOvertimeTest"
+  },
+  "frontend_build_passed": true,
+  "browser_verified": true,
+  "browser_checks": 30,
+  "browser_widths": [
+    1100,
+    390,
+    320
+  ],
+  "production_deployed": false
+}

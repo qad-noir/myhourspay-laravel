@@ -1,0 +1,27 @@
+[
+  {
+    "path": "public/build/assets/app-Bd4xEwRZ.css",
+    "bytes": 156550,
+    "sha256": "acdca382b361b9d12a78d135bdccabfe60c85834ab490f86d7ce479fafbdb33b"
+  },
+  {
+    "path": "public/build/assets/app-C6nWhNqm.css",
+    "bytes": 204446,
+    "sha256": "c41113e975b6b2e425cb9404b339fa2965001b1fde8fedfbd347913edde3c274"
+  },
+  {
+    "path": "public/build/assets/app-WKvg8iH6.js",
+    "bytes": 543757,
+    "sha256": "0adf92e66efadea5810f805d492153ddb9bca794e861a5fdc7c888196a18a6af"
+  },
+  {
+    "path": "public/build/manifest.json",
+    "bytes": 383,
+    "sha256": "3242cb10e7272a3de1fac76d43d7486e5165f908b331515660105160446f866e"
+  },
+  {
+    "path": "resources/css/app.css",
+    "bytes": 154008,
+    "sha256": "5ca894fe3e122acd54ed94ee7fe4ce4283f99789e0a0a3ddbaeb17d0e1ec4dd9"
+  }
+]
