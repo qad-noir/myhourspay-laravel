@@ -46,12 +46,20 @@
                         @php($tooltipId = 'weekly-chart-tooltip-'.$loop->index)
                         <div class="weekly-chart__day" tabindex="0" aria-describedby="{{ $tooltipId }}" aria-label="{{ $day['full_date'] }}: {{ $day['minutes'] > 0 ? $calculator->formatHumanMinutes($day['minutes']).' logged' : 'No hours logged' }}">
                             <div class="weekly-chart__value">{{ $day['minutes'] > 0 ? $calculator->formatHumanMinutes($day['minutes']) : '—' }}</div>
-                            <div class="weekly-chart__track"><span style="height: {{ max(3, min(100, ($day['minutes'] / 600) * 100)) }}%" class="{{ $day['minutes'] >= 480 ? 'is-target' : '' }}"></span></div>
+                            <div class="weekly-chart__track">
+                                @if($day['minutes'] > 0)
+                                    <div class="weekly-chart__bar" style="height: {{ ($day['minutes'] / $chartMaximum) * 100 }}%">
+                                        @if($day['overtime_minutes'] > 0)<span class="weekly-chart__segment weekly-chart__segment--overtime" style="height: {{ ($day['overtime_minutes'] / $day['minutes']) * 100 }}%"></span>@endif
+                                        @if($day['regular_minutes'] > 0)<span class="weekly-chart__segment weekly-chart__segment--regular" style="height: {{ ($day['regular_minutes'] / $day['minutes']) * 100 }}%"></span>@endif
+                                    </div>
+                                @endif
+                            </div>
                             <strong>{{ $day['label'] }}</strong>
                             <div class="weekly-chart__tooltip" id="{{ $tooltipId }}" role="tooltip">
                                 <strong>{{ $day['full_date'] }}</strong>
                                 @if($day['minutes'] > 0)
                                     <span>{{ $calculator->formatHumanMinutes($day['minutes']) }} logged</span>
+                                    <span>{{ $calculator->formatHumanMinutes($day['regular_minutes']) }} regular · {{ $calculator->formatHumanMinutes($day['overtime_minutes']) }} overtime</span>
                                     <small>{{ $day['start_time'] }}–{{ $day['end_time'] }} · {{ $day['break_minutes'] }}m {{ $day['break_type'] }} break</small>
                                 @else
                                     <span>No hours logged</span>
@@ -61,7 +69,8 @@
                         </div>
                     @endforeach
                 </div>
-                <div class="weekly-target-line"><span><i></i> Daily hours</span><span>Weekly target: {{ $targetLabel }}</span></div>
+                <div class="weekly-target-line"><span><i></i> Regular hours</span><span><i class="weekly-chart__overtime-key"></i> Overtime</span><span>Weekly target: {{ $targetLabel }}</span></div>
+                @if($calculator->overtimeBasis() === 'weekly')<p class="dashboard-eyebrow">Weekly overtime is shown on the days after the weekly target is reached.</p>@endif
             @endif
         </x-dashboard.panel>
 

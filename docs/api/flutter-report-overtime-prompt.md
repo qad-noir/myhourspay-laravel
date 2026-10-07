@@ -48,13 +48,27 @@ as its main overtime total. Do not hardcode these values into live screens.
    Monday–Sunday request and label that scope. Do not inflate daily overtime with
    expanded-range records or prorate the weekly target.
 
-5. Keep read-only derivation: never alter entry dates, times, breaks, earnings,
+5. Update the dashboard chart to split regular hours and overtime with distinct
+   colours: regular orange #FF6B35, overtime green #168456. Add a visible legend
+   and tooltip/accessibility labels with both minute totals; colour is not the
+   only distinction. In Daily mode each date uses max(0, net_minutes minus daily
+   contract). In Weekly mode, for the complete Monday–Sunday week, allocate the
+   first weekly_target_minutes chronologically to regular hours and show the
+   remaining minutes as overtime on later dates. This is only a chart allocation,
+   not a new payroll/entry attribution. Explain “Weekly overtime is shown on the
+   days after the weekly target is reached.” Do not mark an entire day as overtime
+   just because it reaches 8h. Stack segments proportionally and scale the chart
+   to at least its largest bar, so shifts over 10h are not clipped. Empty days
+   have no fake coloured bar. Segment overtime summed across the complete week
+   must match the server's selected weekly total. Test both modes and 12h shifts.
+
+6. Keep read-only derivation: never alter entry dates, times, breaks, earnings,
    approval status or opaque entry/review versions when changing overtime basis.
    Keep existing month at a glance design. For selected Daily monthly overtime use
    exact-month daily_overtime_minutes; for selected Weekly use full intersecting
    weeks' weekly_overtime_minutes as documented. Do not add these alternatives.
 
-6. Test API parsing, settings navigation/save/conflict, cache refresh and selected
+7. Test API parsing, settings navigation/save/conflict, cache refresh and selected
    basis. Recreate synthetic dates/times from the Laravel regression
    WorkspaceOvertimeTest::test_attached_report_fixture_reconciles_daily_and_weekly_totals_across_web_exports_and_mobile,
    excluding personal identifiers/notes. Assert 249:15 net,33:15 Daily,30:45 Weekly,

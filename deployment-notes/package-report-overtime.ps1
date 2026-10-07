@@ -5,7 +5,7 @@ $taskStamp = [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, '
 $taskBase = '76cbba3'
 $taskHead = (git rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve source HEAD.' }
-$taskRuntimePaths = @(git diff --name-only $taskBase HEAD | Where-Object { $_ -match '^(app|bootstrap|config|database|routes|resources/views)/|^docs/api/mobile.openapi.yaml$' } | Sort-Object -Unique)
+$taskRuntimePaths = @(git diff --name-only $taskBase HEAD | Where-Object { $_ -match '^(app|bootstrap|config|database|routes|resources/views|resources/css|public/build)/|^docs/api/mobile.openapi.yaml$' } | Sort-Object -Unique)
 if ($LASTEXITCODE -ne 0 -or $taskRuntimePaths.Count -eq 0) { throw 'No production runtime files found.' }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [IO.Directory]::CreateDirectory((Join-Path $taskRoot 'production-patches')) | Out-Null

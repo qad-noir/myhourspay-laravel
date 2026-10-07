@@ -274,6 +274,31 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertSame($before, $this->entriesSnapshot($user));
     }
 
+    public function test_chart_segments_match_selected_basis_and_weekly_allocation_is_chronological(): void
+    {
+        [$user, $workspace] = $this->fixture();
+        $this->travelTo(CarbonImmutable::parse('2026-10-09 12:00', 'Europe/London'));
+        $workspace->update(['overtime_basis' => 'daily', 'contracted_daily_minutes' => 480]);
+        $daily = $this->actingAs($user)->get('/dashboard')->assertOk()->assertSee('weekly-chart__segment--overtime')
+            ->assertSee('Regular hours')->assertSee('8h 00m regular · 2h 00m overtime');
+        $days = $daily->viewData('days');
+        $this->assertSame(120, array_sum(array_column($days, 'overtime_minutes')));
+        $this->assertSame(480, $days[0]['regular_minutes']);
+        $this->assertSame(0, $days[5]['minutes']);
+        $workspace->update(['overtime_basis' => 'weekly']);
+        $weekly = $this->get('/dashboard')->assertOk();
+        $this->assertSame(0, array_sum(array_column($weekly->viewData('days'), 'overtime_minutes')));
+        $workspace->update(['weekly_target_minutes' => 1800]);
+        $weekly = $this->get('/dashboard')->assertOk()->assertSee('after the weekly target is reached');
+        $days = $weekly->viewData('days');
+        $this->assertSame([0, 0, 0, 60, 420, 0, 0], array_column($days, 'overtime_minutes'));
+        $this->assertSame(480, $weekly->viewData('weeklyOvertime'));
+        $user->hoursEntries()->whereDate('work_date', '2026-10-05')->first()->update(['end_time' => '21:00']);
+        $long = $this->get('/dashboard')->assertOk();
+        $this->assertSame(720, $long->viewData('chartMaximum'));
+        $this->assertSame(720, $long->viewData('days')[0]['minutes']);
+    }
+
     public function test_daily_reports_and_exports_use_daily_excess_but_preserve_weekly_comparison(): void
     {
         [$user, $workspace] = $this->fixture();

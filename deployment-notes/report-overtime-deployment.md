@@ -1,8 +1,9 @@
 # Report overtime clarification patch
 
 Incremental patch based on 76cbba3. Requires the 6 October Daily/Weekly overtime
-patch already installed. No migrations, Composer dependencies or compiled JS/CSS
-updates are added in this follow-up. Production has not been changed by this task.
+patch already installed. No migrations or Composer dependencies are added.
+This follow-up includes built chart CSS, the Vite manifest and every referenced
+asset. Production has not been changed by this task.
 
 The attached export records Weekly basis with 8h contracted daily hours. Its
 27 dated entries total 249h 15m, daily excess 33h 15m, weekly excess 30h 45m.
@@ -11,12 +12,18 @@ selected report basis explicit, shows the comparison in the report, links direct
 to workspace overtime preferences, removes the requested dashboard line and
 explains partial weeks in web/Excel/CSV/print reports. No forced global basis change
 or record mutation is included. Unrelated workspaces retain their chosen basis.
+The dashboard chart stacks regular hours in orange and overtime in green, with a
+legend and accessible tooltip totals. Daily mode uses the daily contract. Weekly
+mode allocates the first weekly target minutes chronologically to regular hours,
+then the remaining minutes to overtime. This visual allocation does not write
+payroll records. Bars scale to include long shifts and empty days have no fake bar.
 
 Back up the destination files listed in the manifest. In /home/raaingqv/mhp-app:
 
 ```sh
 php84 artisan down
 # Upload/extract runtime ZIP here, preserving Laravel-relative paths.
+# Include public/build/manifest.json AND all supplied public/build/assets files.
 php84 artisan optimize:clear
 php84 artisan config:cache
 php84 artisan route:cache
@@ -29,6 +36,8 @@ Use PHPRC=/home/raaingqv/mhp-app /opt/alt/php84/usr/bin/php if php84 is unavaila
 Do not replace .env or APP_KEY. Do not extract into public/. Restore backed-up files
 and clear/rebuild caches if rollback is needed. This patch does not update the
 production database's selected overtime preferences.
+Retain older hashed assets for any browser tabs still using the previous manifest.
+No npm build is required on production: the supplied assets were built locally.
 
 After deployment, the owner must select the intended workspace, open Reports >
 Change overtime calculation (or Profile > Workspace preferences), choose Daily,
