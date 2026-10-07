@@ -1,0 +1,20 @@
+{
+  "production": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\calendar-tooltip-overtime-2026-10-07-19-31-32.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\calendar-tooltip-overtime-2026-10-07-19-31-32.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\calendar-tooltip-overtime-2026-10-07-19-31-32.manifest.json",
+    "checksum": "f801fcb839c641a05035299476ee12668bb990b9913de5076a7cf534450c279b",
+    "files": 6,
+    "bytes": 246779,
+    "head": "38fc1001560726784b5b94565e62c399016e7995",
+    "verified": true
+  },
+  "tests": {
+    "scope": "WorkspaceOvertimeTest",
+    "passed": 15,
+    "assertions": 178
+  },
+  "frontend_build_passed": true,
+  "browser_verified": false,
+  "production_deployed": false
+}

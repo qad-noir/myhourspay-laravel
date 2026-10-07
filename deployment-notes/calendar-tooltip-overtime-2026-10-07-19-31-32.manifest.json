@@ -1,0 +1,32 @@
+[
+  {
+    "path": "app/Http/Controllers/HoursController.php",
+    "bytes": 22019,
+    "sha256": "57ebdabfb39cb30cb34c648c0f72a8f70b94d9e744ffae322d64be1b7159eb7c"
+  },
+  {
+    "path": "public/build/assets/app-Bd4xEwRZ.css",
+    "bytes": 156550,
+    "sha256": "acdca382b361b9d12a78d135bdccabfe60c85834ab490f86d7ce479fafbdb33b"
+  },
+  {
+    "path": "public/build/assets/app-C6nWhNqm.css",
+    "bytes": 204446,
+    "sha256": "c41113e975b6b2e425cb9404b339fa2965001b1fde8fedfbd347913edde3c274"
+  },
+  {
+    "path": "public/build/assets/app-CZWYRQnj.js",
+    "bytes": 543891,
+    "sha256": "823453c6273bf411635fb6d64ea6c4802c56a9ca6272cdc4a7fe853a66b2830a"
+  },
+  {
+    "path": "public/build/manifest.json",
+    "bytes": 383,
+    "sha256": "9c8f5774a7c755ae901c2bd205054f4b9a69ba973833b1e5c22ba565d18419d0"
+  },
+  {
+    "path": "resources/js/app.js",
+    "bytes": 40618,
+    "sha256": "06fb627adbabbb102c7b162c179c47e0895079395fc1b4529ad112e852446321"
+  }
+]
