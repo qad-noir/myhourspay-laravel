@@ -227,6 +227,53 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertSame($before, $this->entriesSnapshot($user));
     }
 
+    public function test_attached_report_fixture_reconciles_daily_and_weekly_totals_across_web_exports_and_mobile(): void
+    {
+        [$user, $workspace, $token] = $this->fixture();
+        $user->hoursEntries()->forceDelete();
+        // Dates/times only from the supplied report. No names, notes or identifiers.
+        $ends = ['2026-09-01' => '16:30', '2026-09-02' => '16:30', '2026-09-03' => '17:15',
+            '2026-09-04' => '17:45', '2026-09-05' => '15:30', '2026-09-07' => '16:15',
+            '2026-09-08' => '16:30', '2026-09-09' => '16:00', '2026-09-10' => '14:45',
+            '2026-09-11' => '15:45', '2026-09-14' => '15:30', '2026-09-15' => '14:45',
+            '2026-09-16' => '14:45', '2026-09-17' => '15:30', '2026-09-18' => '14:45',
+            '2026-09-21' => '17:30', '2026-09-22' => '17:00', '2026-09-23' => '15:45',
+            '2026-09-24' => '15:45', '2026-09-25' => '16:00', '2026-09-28' => '16:00',
+            '2026-09-29' => '15:00', '2026-09-30' => '15:30', '2026-10-01' => '15:15',
+            '2026-10-02' => '17:45', '2026-10-05' => '16:45', '2026-10-06' => '15:15'];
+        foreach ($ends as $date => $end) {
+            $user->hoursEntries()->create(['workspace_id' => $workspace->id, 'work_date' => $date,
+                'start_time' => '06:15', 'end_time' => $end, 'break_type' => 'unpaid', 'break_minutes' => 30]);
+        }
+        $workspace->update(['contracted_daily_minutes' => 480]);
+        $before = $this->entriesSnapshot($user);
+        $range = ['start' => '2026-09-01', 'end' => '2026-10-31'];
+        $url = '/api/v1/mobile/workspaces/'.$workspace->id.'/hours?'.http_build_query($range);
+        $this->withToken($token->plainTextToken)->getJson($url)->assertOk()
+            ->assertJsonPath('summary.overtime_minutes', 1845)->assertJsonPath('summary.daily_overtime_minutes', 1995)
+            ->assertJsonPath('summary.total_minutes', 14955)->assertJsonPath('summary.weeks.0.partial', true);
+        $this->updateOvertimeSettings($workspace, $token, ['overtime_basis' => 'daily'])->assertOk();
+        $this->getJson($url)->assertOk()->assertJsonPath('summary.overtime_minutes', 1995)
+            ->assertJsonPath('summary.weekly_overtime_minutes', 1845);
+        auth()->forgetGuards();
+        $report = $this->actingAs($user)->get(route('hours.reports.index', $range))->assertOk()
+            ->assertSee('Daily overtime')->assertSee('33:15')->assertSee('30:45')
+            ->assertSee('It does not mean an entry is incomplete.');
+        $this->assertSame(1995, $report->viewData('summary')['overtime_minutes']);
+        $excel = $this->get(route('hours.reports.excel', $range))->assertOk();
+        $sheet = IOFactory::load($excel->baseResponse->getFile()->getPathname())->getActiveSheet();
+        $this->assertSame('33:15', $sheet->getCell('B9')->getValue());
+        $this->assertSame('Daily overtime', $sheet->getCell('K15')->getValue());
+        $this->assertStringContainsString('date range excludes part', $sheet->getCell('H14')->getValue());
+        $this->assertSame('2026-W36 (partial)', $sheet->getCell('H16')->getValue());
+        $csv = $this->get(route('hours.reports.csv', $range))->assertOk()->streamedContent();
+        $this->assertStringContainsString('33:15', $csv);
+        $this->get(route('hours.reports.print', $range))->assertOk()->assertSee('33:15');
+        $this->get(route('profile.show', ['preferences' => 'overtime']))->assertOk()->assertSee('open: true', false);
+        $this->get('/dashboard')->assertOk()->assertDontSee('Daily overtime this month:')->assertDontSee('Weekly overtime across full weeks:');
+        $this->assertSame($before, $this->entriesSnapshot($user));
+    }
+
     public function test_daily_reports_and_exports_use_daily_excess_but_preserve_weekly_comparison(): void
     {
         [$user, $workspace] = $this->fixture();

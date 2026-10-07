@@ -26,8 +26,6 @@
         <x-dashboard.stat-card label="Overtime this month" :value="$calculator->formatHumanMinutes($monthlyOvertime)" :support="$calculator->overtimeDescription()" :tone="$monthlyOvertime > 0 ? 'positive' : 'neutral'" icon="target" />
     </section>
 
-    <p class="dashboard-eyebrow">Overtime basis: {{ ucfirst($calculator->overtimeBasis()) }} · Daily overtime this month: {{ $month['daily_overtime_minutes'] === null ? 'Set contracted daily hours' : $calculator->formatHumanMinutes($month['daily_overtime_minutes']) }} · Weekly overtime across full weeks: {{ $calculator->formatHumanMinutes($month['weekly_overtime_minutes']) }}</p>
-
     <section class="dashboard-panel monthly-breaks" aria-labelledby="monthly-breaks-title">
         <div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">{{ $now->format('F Y') }}</p><h2 id="monthly-breaks-title">Monthly break summary</h2></div><span>{{ $month['break_count'] }} {{ str('break')->plural($month['break_count']) }} logged</span></div>
         <div class="monthly-breaks__grid">

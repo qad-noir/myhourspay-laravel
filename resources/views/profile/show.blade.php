@@ -17,7 +17,7 @@
         <x-dashboard.stat-card label="Contracted daily hours" :value="$currentWorkspace->contracted_daily_minutes === null ? 'Not set' : app(App\Services\HoursCalculator::class)->formatHumanMinutes($currentWorkspace->contracted_daily_minutes)" :support="'Overtime basis: '.ucfirst($currentWorkspace->overtime_basis ?? 'weekly')" icon="clock" />
     </section>
 
-    <section class="dashboard-panel workspace-preferences-card" aria-labelledby="hours-preferences-title" x-data="{ open: @js($errors->hasAny(['default_break_type', 'default_break_minutes', 'weekly_target_hours', 'contracted_daily_hours', 'overtime_basis'])), breakType: @js(old('default_break_type', $currentWorkspace->default_break_type)) }">
+    <section id="workspace-preferences" class="dashboard-panel workspace-preferences-card" aria-labelledby="hours-preferences-title" x-data="{ open: @js($errors->hasAny(['default_break_type', 'default_break_minutes', 'weekly_target_hours', 'contracted_daily_hours', 'overtime_basis']) || ($canManageSettings && request()->query('preferences') === 'overtime')), breakType: @js(old('default_break_type', $currentWorkspace->default_break_type)) }">
         <div>
             <p class="dashboard-eyebrow">Hours defaults</p>
             <h2 id="hours-preferences-title">Workspace preferences</h2>

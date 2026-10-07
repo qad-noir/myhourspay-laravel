@@ -18,7 +18,25 @@
         <x-dashboard.stat-card label="Days worked" :value="$summary['worked_days']" support="Days with an entry" icon="calendar" tone="analytics" />
         <x-dashboard.stat-card label="Average day" :value="$summary['average_formatted']" support="Across worked days" icon="stopwatch" tone="violet" />
         <x-dashboard.stat-card label="Weeks included" :value="count($summary['weeks'])" support="Calendar weeks in range" icon="reports" tone="positive" />
-        <x-dashboard.stat-card label="Overtime" :value="$summary['overtime_formatted']" :support="$calculator->overtimeDescription()" icon="target" :tone="$summary['overtime_minutes'] > 0 ? 'positive' : 'neutral'" />
+        <x-dashboard.stat-card :label="ucfirst($summary['overtime_basis']).' overtime'" :value="$summary['overtime_formatted']" :support="$calculator->overtimeDescription()" icon="target" :tone="$summary['overtime_minutes'] > 0 ? 'positive' : 'neutral'" />
+    </section>
+
+    <section class="dashboard-panel mt-5" aria-labelledby="report-overtime-title">
+        <div class="dashboard-panel-heading"><div><h2 id="report-overtime-title">Workspace overtime calculation</h2><p>This report and its exports use {{ strtolower($summary['overtime_basis']) }} overtime.</p></div>
+        @php
+            $reportWorkspace = app(App\Services\CurrentWorkspace::class)->for(auth()->user());
+        @endphp
+        @if(app(App\Services\WorkspaceRoles::class)->canManage(auth()->user(), $reportWorkspace) && app(App\Services\WorkspaceAccess::class)->isWritable(auth()->user(), $reportWorkspace))
+            <a wire:navigate href="{{ route('profile.show', ['preferences' => 'overtime']) }}#workspace-preferences" class="dashboard-button dashboard-button--secondary">Change overtime calculation</a>
+        @endif
+        </div>
+        @if($summary['contracted_daily_minutes'] !== null)
+            <p>Daily overtime for these dates: <strong>{{ $calculator->formatMinutes($summary['daily_overtime_minutes']) }}</strong> above {{ $calculator->formatHumanMinutes($summary['contracted_daily_minutes']) }} contracted per day. Weekly overtime across full weeks: <strong>{{ $calculator->formatMinutes($summary['weekly_overtime_minutes']) }}</strong>.</p>
+            @if($summary['overtime_basis'] === 'weekly')<p>To use the daily total, choose Daily in workspace preferences and generate the report again. Entering daily contracted hours alone keeps Weekly selected.</p>@endif
+        @else
+            <p>Set contracted daily hours in workspace preferences to calculate daily overtime.</p>
+        @endif
+        @if(collect($summary['weeks'])->contains('partial', true))<p>A partial week means the selected date range excludes part of that Monday–Sunday week. It does not mean an entry is incomplete. Weekly totals use the full week; daily overtime uses only the selected dates.</p>@endif
     </section>
 
     @if($advanced)<section class="dashboard-panel report-comparison mt-5"><div class="dashboard-panel-heading"><div><p class="dashboard-eyebrow">Comparison</p><h2>Previous matching period</h2></div><span>{{ $previousStart->format('d M') }}–{{ $previousEnd->format('d M Y') }}</span></div><div class="report-comparison-grid"><article><span>Hours</span><strong>{{ $summary['total_formatted'] }}</strong><small>{{ ($summary['total_minutes']-$previous['total_minutes'])>=0?'+':'' }}{{ app(App\Services\HoursCalculator::class)->formatHumanMinutes($summary['total_minutes']-$previous['total_minutes']) }} vs previous</small></article><article><span>Overtime</span><strong>{{ $summary['overtime_formatted'] }}</strong><small>{{ ($summary['overtime_minutes']-$previous['overtime_minutes'])>=0?'+':'' }}{{ app(App\Services\HoursCalculator::class)->formatHumanMinutes($summary['overtime_minutes']-$previous['overtime_minutes']) }}</small></article><article><span>Earnings</span><strong>£{{ number_format($summary['earnings_minor']/100,2) }}</strong><small>{{ ($summary['earnings_minor']-$previous['earnings_minor'])>=0?'+':'' }}£{{ number_format(($summary['earnings_minor']-$previous['earnings_minor'])/100,2) }}</small></article><article><span>Breaks</span><strong>{{ $summary['break_count'] }}</strong><small>{{ $summary['paid_break_formatted'] }} paid · {{ $summary['unpaid_break_formatted'] }} unpaid</small></article></div></section>@endif

@@ -46,6 +46,12 @@ class HoursReportExport
         $sheet->setCellValue('B13', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes');
         $sheet->setCellValue('A14', 'Overtime basis');
         $sheet->setCellValue('B14', ucfirst($summary['overtime_basis']).($workspace->contracted_daily_minutes === null ? '' : ' · '.app(HoursCalculator::class)->formatMinutes($workspace->contracted_daily_minutes).' contracted daily'));
+        if (collect($summary['weeks'])->contains('partial', true)) {
+            $sheet->mergeCells('H14:Q14');
+            $sheet->setCellValue('H14', 'Partial = the date range excludes part of the week. Weekly totals use full weeks; daily overtime uses selected dates.');
+            $sheet->getStyle('H14:Q14')->getAlignment()->setWrapText(true);
+            $sheet->getRowDimension(14)->setRowHeight(32);
+        }
 
         $headings = ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', ucfirst($summary['overtime_basis']).' overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes'];
         $sheet->fromArray($headings, null, 'A15');

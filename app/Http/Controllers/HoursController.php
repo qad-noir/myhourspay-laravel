@@ -251,6 +251,9 @@ class HoursController extends Controller
             fputcsv($stream, ['Paid breaks included', $summary['paid_break_formatted']]);
             fputcsv($stream, ['Unpaid breaks deducted', $summary['unpaid_break_formatted']]);
             fputcsv($stream, ['Workspace default break', ucfirst($workspace->default_break_type).' · '.$workspace->default_break_minutes.' minutes']);
+            if (collect($summary['weeks'])->contains('partial', true)) {
+                fputcsv($stream, ['Partial weeks', 'The date range excludes part of the week. Weekly totals use full weeks; daily overtime uses selected dates.']);
+            }
             fputcsv($stream, []);
             fputcsv($stream, ['Date', 'Weekday', 'Start', 'End', 'Break type', 'Break minutes', 'Hours worked', 'ISO week', 'Weekly total', 'Weekly variance', ucfirst($summary['overtime_basis']).' overtime', 'Client', 'Project', 'Billable', 'Rate', 'Earnings', 'Notes']);
             foreach ($summary['entries'] as $entry) {
