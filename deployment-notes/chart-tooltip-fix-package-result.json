@@ -1,0 +1,26 @@
+{
+  "production": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\chart-tooltip-fix-2026-10-07-18-44-01.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\chart-tooltip-fix-2026-10-07-18-44-01.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\chart-tooltip-fix-2026-10-07-18-44-01.manifest.json",
+    "checksum": "87fbcefceafa333e130e4bf381589108bc1fb4e51eca96964534e335bd5568fc",
+    "files": 6,
+    "bytes": 263303,
+    "head": "ae632732e95bf7913881ea0b78d9b9a5dc7fc797",
+    "verified": true
+  },
+  "tests": {
+    "scope": "WorkspaceOvertimeTest",
+    "passed": 13,
+    "assertions": 164
+  },
+  "frontend_build_passed": true,
+  "browser_verified": true,
+  "browser_checks": 18,
+  "browser_widths": [
+    1100,
+    390,
+    320
+  ],
+  "production_deployed": false
+}
