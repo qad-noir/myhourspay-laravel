@@ -22,7 +22,7 @@
         <x-dashboard.stat-card label="This month" :value="$calculator->formatHumanMinutes($month['total_minutes'])" :support="$month['worked_days'].' worked '.str('day')->plural($month['worked_days'])" tone="analytics" icon="calendar" />
         <x-dashboard.stat-card label="Daily average" :value="$calculator->formatHumanMinutes($month['average_minutes'])" support="Across worked days" tone="violet" icon="stopwatch" />
         <x-dashboard.stat-card label="Target variance" :value="$calculator->formatHumanMinutes($variance)" support="Weekly difference" :tone="$tone" icon="trend" />
-        <x-dashboard.stat-card label="Overtime this week" :value="$calculator->formatHumanMinutes($weeklyOvertime)" :support="$calculator->overtimeDescription()" :tone="$weeklyOvertime > 0 ? 'positive' : 'neutral'" icon="trend" />
+        <x-dashboard.stat-card label="Overtime this week" :value="$weeklyOvertime === null ? 'Not configured' : $calculator->formatHumanMinutes($weeklyOvertime)" :support="$weeklyOvertime === null ? 'Set contracted daily hours' : 'Sum of daily overtime this week'" :tone="$weeklyOvertime > 0 ? 'positive' : 'neutral'" icon="trend" />
         <x-dashboard.stat-card label="Overtime this month" :value="$calculator->formatHumanMinutes($monthlyOvertime)" :support="$calculator->overtimeDescription()" :tone="$monthlyOvertime > 0 ? 'positive' : 'neutral'" icon="target" />
     </section>
 

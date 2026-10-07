@@ -303,12 +303,15 @@ class WorkspaceOvertimeTest extends TestCase
         $workspace->update(['overtime_basis' => 'weekly']);
         $weekly = $this->get('/dashboard')->assertOk()->assertDontSee('Weekly overtime is shown on the days after');
         $this->assertSame(120, array_sum(array_column($weekly->viewData('days'), 'overtime_minutes')));
-        $this->assertSame(0, $weekly->viewData('weeklyOvertime'));
+        $this->assertSame(120, $weekly->viewData('weeklyOvertime'));
+        $this->assertSame(0, $weekly->viewData('week')['overtime_minutes']);
+        $weekly->assertSee('Sum of daily overtime this week');
         $workspace->update(['weekly_target_minutes' => 1800]);
         $weekly = $this->get('/dashboard')->assertOk();
         $days = $weekly->viewData('days');
         $this->assertSame([120, 0, 0, 0, 0, 0, 0], array_column($days, 'overtime_minutes'));
-        $this->assertSame(480, $weekly->viewData('weeklyOvertime'));
+        $this->assertSame(120, $weekly->viewData('weeklyOvertime'));
+        $this->assertSame(480, $weekly->viewData('week')['overtime_minutes']);
         $user->hoursEntries()->whereDate('work_date', '2026-10-05')->first()->update(['end_time' => '21:00']);
         $long = $this->get('/dashboard')->assertOk();
         $this->assertSame(720, $long->viewData('chartMaximum'));
@@ -316,6 +319,8 @@ class WorkspaceOvertimeTest extends TestCase
         $workspace->update(['contracted_daily_minutes' => null]);
         $unset = $this->get('/dashboard')->assertOk()->assertSee('Daily overtime not configured');
         $this->assertNull($unset->viewData('days')[0]['overtime_minutes']);
+        $this->assertNull($unset->viewData('weeklyOvertime'));
+        $unset->assertSee('Not configured');
         $this->assertSame(720, $unset->viewData('days')[0]['regular_minutes']);
     }
 

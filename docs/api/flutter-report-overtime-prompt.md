@@ -70,6 +70,12 @@ as its main overtime total. Do not hardcode these values into live screens.
    Keep existing month at a glance design. For selected Daily monthly overtime use
    exact-month daily_overtime_minutes; for selected Weekly use full intersecting
    weeks' weekly_overtime_minutes as documented. Do not add these alternatives.
+   Exception for the dashboard “Overtime this week” card: always use the complete
+   current Monday–Sunday range's summary.daily_overtime_minutes, independently
+   of selected workspace basis. Caption: “Sum of daily overtime this week”. Null
+   displays “Not configured” with “Set contracted daily hours”, never zero.
+   This card must agree with the chart's daily segments. Report and monthly
+   selected-basis rules remain unchanged.
 
 7. Test API parsing, settings navigation/save/conflict, cache refresh and selected
    basis. Recreate synthetic dates/times from the Laravel regression
