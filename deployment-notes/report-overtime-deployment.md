@@ -56,4 +56,9 @@ The regression uses only dates/times/break minutes from the supplied workbook;
 no names, workspace names, notes or original workbook are packaged. It verifies
 the same selected Daily total on the website, exports and native API, plus entry
 preservation and dashboard removal. ZIP paths/hashes are verified by the packager.
-Final test results are recorded in the bundle evidence JSON.
+Final verification: full SQLite suite365 passed,9 skipped,3009 assertions;
+isolated local MySQL8.4 WorkspaceOvertimeTest13 passed,147 assertions, including
+the workbook reconciliation and chart allocation/long-shift regression.
+`npm run build` succeeded; the existing chunk-size notice is informational.
+Pint and the OpenAPI generator check passed. Production and real Flutter-device
+verification were not performed. The bundle evidence JSON records the same results.

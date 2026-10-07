@@ -46,6 +46,6 @@ function New-VerifiedTaskBundle([string]$taskName, [string[]]$taskPaths, [string
 
 $taskProduction = New-VerifiedTaskBundle ('report-overtime-clarification-' + $taskStamp) $taskRuntimePaths (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'report-overtime-deployment.md') -Raw)
 $taskFlutter = New-VerifiedTaskBundle ('flutter-report-overtime-handoff-' + $taskStamp) @('docs/api/mobile.openapi.yaml','docs/api/mobile-integration.md','docs/api/flutter-daily-overtime-prompt.md','docs/api/flutter-report-overtime-prompt.md') 'Flutter handoff only: extract into the Flutter project and paste docs/api/flutter-report-overtime-prompt.md. Read OpenAPI 2.2.0 and integration guide. Deploy the Laravel patch before enabling settings. Preserve existing auth and push flows. Do not upload this handoff as Laravel runtime files.'
-$taskResult = [pscustomobject]@{production=$taskProduction;flutter=$taskFlutter;sqlite=@{passed=364;skipped=9;assertions=2993};mysql=@{passed=12;assertions=131;workbook_fixture_verified=$true};real_device_verified=$false;production_deployed=$false}
+$taskResult = [pscustomobject]@{production=$taskProduction;flutter=$taskFlutter;sqlite=@{passed=365;skipped=9;assertions=3009};mysql=@{passed=13;assertions=147;workbook_fixture_verified=$true};real_device_verified=$false;production_deployed=$false}
 $taskResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $PSScriptRoot 'report-overtime-package-result.json') -Encoding utf8
 $taskResult | ConvertTo-Json -Depth 6
