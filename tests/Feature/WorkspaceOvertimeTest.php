@@ -274,6 +274,27 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertSame($before, $this->entriesSnapshot($user));
     }
 
+    public function test_chart_renders_thirty_minute_overtime_and_empty_tracks(): void
+    {
+        [$user, $workspace] = $this->fixture();
+        $this->travelTo(CarbonImmutable::parse('2026-10-09 12:00', 'Europe/London'));
+        $workspace->update(['contracted_daily_minutes' => 480]);
+        $user->hoursEntries()->whereDate('work_date', '2026-10-06')->first()->update(['end_time' => '17:30']);
+        $response = $this->actingAs($user)->get('/dashboard')->assertOk();
+        $this->assertSame(30, $response->viewData('days')[1]['overtime_minutes']);
+        $previousErrors = libxml_use_internal_errors(true);
+        $document = new \DOMDocument;
+        $document->loadHTML($response->getContent());
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousErrors);
+        $xpath = new \DOMXPath($document);
+        $this->assertStringContainsString('30m overtime', $xpath->query('//*[@id="weekly-chart-tooltip-1-overtime"]')->item(0)->textContent);
+        $this->assertSame(0, $xpath->query('//*[@aria-describedby="weekly-chart-tooltip-6"]//*[contains(@class,"weekly-chart__segment")]')->length);
+        if (getenv('CHART_HOVER_QA') === '1') {
+            $chart = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " weekly-chart ")]')->item(0);
+            file_put_contents(base_path('deployment-notes/chart-hover-fixture.html'), $document->saveHTML($chart));
+        }
+    }
     public function test_chart_shows_daily_excess_before_weekly_target_and_preserves_selected_summary(): void
     {
         [$user, $workspace] = $this->fixture();
@@ -300,10 +321,6 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertStringNotContainsString('overtime', $regularTooltip);
         $this->assertSame(1, $xpath->query('//*[@aria-describedby="weekly-chart-tooltip-0-overtime" and @tabindex="0"]')->length);
         $this->assertSame(1, $xpath->query('//*[@aria-describedby="weekly-chart-tooltip-0-regular" and @tabindex="0"]')->length);
-        if (getenv('CHART_HOVER_QA') === '1') {
-            $chart = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " weekly-chart ")]')->item(0);
-            file_put_contents(base_path('deployment-notes/chart-hover-fixture.html'), $document->saveHTML($chart));
-        }
         $workspace->update(['overtime_basis' => 'weekly']);
         $weekly = $this->get('/dashboard')->assertOk()->assertDontSee('Weekly overtime is shown on the days after');
         $this->assertSame(120, array_sum(array_column($weekly->viewData('days'), 'overtime_minutes')));

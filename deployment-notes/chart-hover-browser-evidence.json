@@ -22,6 +22,32 @@
   },
   {
     "width": 1100,
+    "label": "thin green top",
+    "tooltip": "weekly-chart-tooltip-1-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "thin green bottom",
+    "tooltip": "weekly-chart-tooltip-1-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "orange immediately below thin green",
+    "tooltip": "weekly-chart-tooltip-1-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "unfilled space",
+    "visibleCount": 0
+  },
+  {
+    "width": 1100,
     "label": "Sunday empty edge",
     "tooltip": "weekly-chart-tooltip-6",
     "insidePanel": true,
@@ -64,6 +90,32 @@
   },
   {
     "width": 390,
+    "label": "thin green top",
+    "tooltip": "weekly-chart-tooltip-1-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "thin green bottom",
+    "tooltip": "weekly-chart-tooltip-1-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "orange immediately below thin green",
+    "tooltip": "weekly-chart-tooltip-1-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "unfilled space",
+    "visibleCount": 0
+  },
+  {
+    "width": 390,
     "label": "Sunday empty edge",
     "tooltip": "weekly-chart-tooltip-6",
     "insidePanel": true,
@@ -103,6 +155,32 @@
     "tooltip": "weekly-chart-tooltip-1-regular",
     "insidePanel": true,
     "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "thin green top",
+    "tooltip": "weekly-chart-tooltip-1-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "thin green bottom",
+    "tooltip": "weekly-chart-tooltip-1-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "orange immediately below thin green",
+    "tooltip": "weekly-chart-tooltip-1-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "unfilled space",
+    "visibleCount": 0
   },
   {
     "width": 320,
