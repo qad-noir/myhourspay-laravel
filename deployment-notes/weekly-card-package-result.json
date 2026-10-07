@@ -1,0 +1,18 @@
+{
+  "production": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\weekly-card-daily-overtime-2026-10-07-18-20-06.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\weekly-card-daily-overtime-2026-10-07-18-20-06.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\weekly-card-daily-overtime-2026-10-07-18-20-06.manifest.json",
+    "checksum": "93a2cb90e7dc0e32db953301dcfd32cd534fbc7221aaaa072d2d4b123465d7d5",
+    "files": 2,
+    "bytes": 4004,
+    "head": "446987d2cda799ea1c1b4486e4a55803e6b63245",
+    "verified": true
+  },
+  "tests": {
+    "scope": "WorkspaceOvertimeTest",
+    "passed": 13,
+    "assertions": 164
+  },
+  "production_deployed": false
+}
