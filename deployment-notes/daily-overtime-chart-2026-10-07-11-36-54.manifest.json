@@ -1,0 +1,12 @@
+[
+  {
+    "path": "app/Http/Controllers/DashboardController.php",
+    "bytes": 2825,
+    "sha256": "edd378c059778350940173c307ca33970ce1ecff0bbf6e890bb3658ddfee83e2"
+  },
+  {
+    "path": "resources/views/dashboard.blade.php",
+    "bytes": 8827,
+    "sha256": "61429628c87a557abf4f4b04dad924d514fcf364ddce25553aac5edbe3a84e03"
+  }
+]
