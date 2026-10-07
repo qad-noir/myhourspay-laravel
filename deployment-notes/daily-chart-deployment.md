@@ -36,3 +36,8 @@ the removed note is absent, empty days and long shifts still render correctly.
 The updated Flutter report prompt supersedes the earlier chronological weekly
 allocation instruction. Backend deployment alone does not update Flutter screens.
 ZIP entry count, paths and SHA-256 hashes are verified before delivery.
+
+Verification: full SQLite suite365 passed,9 skipped,3014 assertions; the13
+overtime feature tests passed with152 assertions. Pint passed and Blade cache
+compilation succeeded. MySQL was not rerun for this read-only chart follow-up.
+Production deployment and actual Flutter-device verification were not performed.
