@@ -55,7 +55,7 @@
                                 @endif
                             </div>
                             <strong>{{ $day['label'] }}</strong>
-                            <div class="weekly-chart__tooltip" id="{{ $tooltipId }}" role="tooltip">
+                            <div class="weekly-chart__tooltip weekly-chart__tooltip--summary" id="{{ $tooltipId }}" role="tooltip">
                                 <strong>{{ $day['full_date'] }}</strong>
                                 @if($day['minutes'] > 0)
                                     <span>{{ $calculator->formatHumanMinutes($day['minutes']) }} logged</span>

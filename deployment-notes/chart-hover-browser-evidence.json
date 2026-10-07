@@ -1,0 +1,128 @@
+[
+  {
+    "width": 1100,
+    "label": "Monday green",
+    "tooltip": "weekly-chart-tooltip-0-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "Monday orange",
+    "tooltip": "weekly-chart-tooltip-0-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "hover next day while green focused",
+    "tooltip": "weekly-chart-tooltip-1-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "Sunday empty edge",
+    "tooltip": "weekly-chart-tooltip-6",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "keyboard green",
+    "tooltip": "weekly-chart-tooltip-0-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 1100,
+    "label": "keyboard orange",
+    "tooltip": "weekly-chart-tooltip-0-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "Monday green",
+    "tooltip": "weekly-chart-tooltip-0-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "Monday orange",
+    "tooltip": "weekly-chart-tooltip-0-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "hover next day while green focused",
+    "tooltip": "weekly-chart-tooltip-1-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "Sunday empty edge",
+    "tooltip": "weekly-chart-tooltip-6",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "keyboard green",
+    "tooltip": "weekly-chart-tooltip-0-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 390,
+    "label": "keyboard orange",
+    "tooltip": "weekly-chart-tooltip-0-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "Monday green",
+    "tooltip": "weekly-chart-tooltip-0-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "Monday orange",
+    "tooltip": "weekly-chart-tooltip-0-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "hover next day while green focused",
+    "tooltip": "weekly-chart-tooltip-1-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "Sunday empty edge",
+    "tooltip": "weekly-chart-tooltip-6",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "keyboard green",
+    "tooltip": "weekly-chart-tooltip-0-overtime",
+    "insidePanel": true,
+    "visibleCount": 1
+  },
+  {
+    "width": 320,
+    "label": "keyboard orange",
+    "tooltip": "weekly-chart-tooltip-0-regular",
+    "insidePanel": true,
+    "visibleCount": 1
+  }
+]

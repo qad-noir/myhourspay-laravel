@@ -300,6 +300,10 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertStringNotContainsString('overtime', $regularTooltip);
         $this->assertSame(1, $xpath->query('//*[@aria-describedby="weekly-chart-tooltip-0-overtime" and @tabindex="0"]')->length);
         $this->assertSame(1, $xpath->query('//*[@aria-describedby="weekly-chart-tooltip-0-regular" and @tabindex="0"]')->length);
+        if (getenv('CHART_HOVER_QA') === '1') {
+            $chart = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " weekly-chart ")]')->item(0);
+            file_put_contents(base_path('deployment-notes/chart-hover-fixture.html'), $document->saveHTML($chart));
+        }
         $workspace->update(['overtime_basis' => 'weekly']);
         $weekly = $this->get('/dashboard')->assertOk()->assertDontSee('Weekly overtime is shown on the days after');
         $this->assertSame(120, array_sum(array_column($weekly->viewData('days'), 'overtime_minutes')));
