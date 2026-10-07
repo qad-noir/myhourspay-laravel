@@ -59,7 +59,7 @@
                                 <strong>{{ $day['full_date'] }}</strong>
                                 @if($day['minutes'] > 0)
                                     <span>{{ $calculator->formatHumanMinutes($day['minutes']) }} logged</span>
-                                    <span>{{ $calculator->formatHumanMinutes($day['regular_minutes']) }} regular · {{ $calculator->formatHumanMinutes($day['overtime_minutes']) }} overtime</span>
+                                    @if($day['overtime_minutes'] !== null)<span>{{ $calculator->formatHumanMinutes($day['regular_minutes']) }} regular · {{ $calculator->formatHumanMinutes($day['overtime_minutes']) }} overtime</span>@else<span>Daily overtime not configured</span>@endif
                                     <small>{{ $day['start_time'] }}–{{ $day['end_time'] }} · {{ $day['break_minutes'] }}m {{ $day['break_type'] }} break</small>
                                 @else
                                     <span>No hours logged</span>
@@ -69,8 +69,7 @@
                         </div>
                     @endforeach
                 </div>
-                <div class="weekly-target-line"><span><i></i> Regular hours</span><span><i class="weekly-chart__overtime-key"></i> Overtime</span><span>Weekly target: {{ $targetLabel }}</span></div>
-                @if($calculator->overtimeBasis() === 'weekly')<p class="dashboard-eyebrow">Weekly overtime is shown on the days after the weekly target is reached.</p>@endif
+                <div class="weekly-target-line"><span><i></i> Regular hours</span><span><i class="weekly-chart__overtime-key"></i> Daily overtime</span><span>Weekly target: {{ $targetLabel }}</span></div>
             @endif
         </x-dashboard.panel>
 

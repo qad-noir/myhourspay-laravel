@@ -25,23 +25,20 @@ class DashboardController extends Controller
         $weekStart = $now->startOfWeek();
         $weeklyOvertime = $week['overtime_minutes'];
         $byDate = collect($week['entries'])->keyBy('work_date');
-        $weeklyRemaining = $calculator->weeklyTargetMinutes();
-        $days = collect(range(0, 6))->map(function (int $offset) use ($weekStart, $byDate, $calculator, &$weeklyRemaining): array {
+        $days = collect(range(0, 6))->map(function (int $offset) use ($weekStart, $byDate, $calculator): array {
             $date = $weekStart->addDays($offset);
             $entry = $byDate->get($date->toDateString());
             $minutes = $entry['net_minutes'] ?? 0;
-            // Weekly chart allocation follows date order; it does not change payroll records.
-            $overtime = $calculator->overtimeBasis() === 'daily'
-                ? max(0, $minutes - $calculator->contractedDailyMinutes())
-                : max(0, $minutes - $weeklyRemaining);
-            $weeklyRemaining = max(0, $weeklyRemaining - $minutes);
+            // Each bar shows daily excess independently of the selected summary basis.
+            $overtime = $calculator->contractedDailyMinutes() === null
+                ? null : max(0, $minutes - $calculator->contractedDailyMinutes());
 
             return [
                 'label' => $date->format('D'),
                 'date' => $date->toDateString(),
                 'full_date' => $date->format('l, j F Y'),
                 'minutes' => $minutes,
-                'regular_minutes' => $minutes - $overtime,
+                'regular_minutes' => $minutes - ($overtime ?? 0),
                 'overtime_minutes' => $overtime,
                 'formatted' => $entry['net_formatted'] ?? '00:00',
                 'start_time' => $entry['start_time'] ?? null,

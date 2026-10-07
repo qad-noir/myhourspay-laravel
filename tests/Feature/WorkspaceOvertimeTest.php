@@ -274,7 +274,7 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertSame($before, $this->entriesSnapshot($user));
     }
 
-    public function test_chart_segments_match_selected_basis_and_weekly_allocation_is_chronological(): void
+    public function test_chart_shows_daily_excess_before_weekly_target_and_preserves_selected_summary(): void
     {
         [$user, $workspace] = $this->fixture();
         $this->travelTo(CarbonImmutable::parse('2026-10-09 12:00', 'Europe/London'));
@@ -286,17 +286,22 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertSame(480, $days[0]['regular_minutes']);
         $this->assertSame(0, $days[5]['minutes']);
         $workspace->update(['overtime_basis' => 'weekly']);
-        $weekly = $this->get('/dashboard')->assertOk();
-        $this->assertSame(0, array_sum(array_column($weekly->viewData('days'), 'overtime_minutes')));
+        $weekly = $this->get('/dashboard')->assertOk()->assertDontSee('Weekly overtime is shown on the days after');
+        $this->assertSame(120, array_sum(array_column($weekly->viewData('days'), 'overtime_minutes')));
+        $this->assertSame(0, $weekly->viewData('weeklyOvertime'));
         $workspace->update(['weekly_target_minutes' => 1800]);
-        $weekly = $this->get('/dashboard')->assertOk()->assertSee('after the weekly target is reached');
+        $weekly = $this->get('/dashboard')->assertOk();
         $days = $weekly->viewData('days');
-        $this->assertSame([0, 0, 0, 60, 420, 0, 0], array_column($days, 'overtime_minutes'));
+        $this->assertSame([120, 0, 0, 0, 0, 0, 0], array_column($days, 'overtime_minutes'));
         $this->assertSame(480, $weekly->viewData('weeklyOvertime'));
         $user->hoursEntries()->whereDate('work_date', '2026-10-05')->first()->update(['end_time' => '21:00']);
         $long = $this->get('/dashboard')->assertOk();
         $this->assertSame(720, $long->viewData('chartMaximum'));
         $this->assertSame(720, $long->viewData('days')[0]['minutes']);
+        $workspace->update(['contracted_daily_minutes' => null]);
+        $unset = $this->get('/dashboard')->assertOk()->assertSee('Daily overtime not configured');
+        $this->assertNull($unset->viewData('days')[0]['overtime_minutes']);
+        $this->assertSame(720, $unset->viewData('days')[0]['regular_minutes']);
     }
 
     public function test_daily_reports_and_exports_use_daily_excess_but_preserve_weekly_comparison(): void

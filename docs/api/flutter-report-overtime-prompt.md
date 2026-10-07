@@ -48,19 +48,22 @@ as its main overtime total. Do not hardcode these values into live screens.
    Monday–Sunday request and label that scope. Do not inflate daily overtime with
    expanded-range records or prorate the weekly target.
 
-5. Update the dashboard chart to split regular hours and overtime with distinct
-   colours: regular orange #FF6B35, overtime green #168456. Add a visible legend
-   and tooltip/accessibility labels with both minute totals; colour is not the
-   only distinction. In Daily mode each date uses max(0, net_minutes minus daily
-   contract). In Weekly mode, for the complete Monday–Sunday week, allocate the
-   first weekly_target_minutes chronologically to regular hours and show the
-   remaining minutes as overtime on later dates. This is only a chart allocation,
-   not a new payroll/entry attribution. Explain “Weekly overtime is shown on the
-   days after the weekly target is reached.” Do not mark an entire day as overtime
-   just because it reaches 8h. Stack segments proportionally and scale the chart
-   to at least its largest bar, so shifts over 10h are not clipped. Empty days
-   have no fake coloured bar. Segment overtime summed across the complete week
-   must match the server's selected weekly total. Test both modes and 12h shifts.
+5. Update the dashboard chart to split regular hours and DAILY overtime with
+   distinct colours: regular orange #FF6B35, daily overtime green #168456. Every
+   date uses max(0, net_minutes minus contracted_daily_minutes), even in a workspace
+   whose summary basis is Weekly and even before the weekly target is reached.
+   Use returned entry.daily_overtime_minutes where available. Do not allocate
+   weekly overtime chronologically to later dates. Keep the main summary cards
+   using server overtime_minutes and the selected workspace basis. The chart
+   legend says “Daily overtime” to distinguish it from a Weekly summary.
+   Remove “Weekly overtime is shown on the days after the weekly target is reached.”
+   Add tooltip/accessibility labels with regular and daily overtime totals. When
+   no daily contract exists, do not assume 8h or weekly target / 5: show no green
+   segment and “Daily overtime not configured”, preserving null rather than zero.
+   Stack segments proportionally and scale to the largest bar so long shifts are
+   not clipped. Empty days have no fake coloured bar. Test a 10h Monday and four
+   7h days with 8h daily / 40h weekly: Monday has 2h green while Weekly summary
+   remains 0h. Switching summary basis must not change chart segments.
 
 6. Keep read-only derivation: never alter entry dates, times, breaks, earnings,
    approval status or opaque entry/review versions when changing overtime basis.
