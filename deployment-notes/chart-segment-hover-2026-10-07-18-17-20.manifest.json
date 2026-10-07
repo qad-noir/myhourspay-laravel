@@ -1,0 +1,32 @@
+[
+  {
+    "path": "public/build/assets/app-Bd4xEwRZ.css",
+    "bytes": 156550,
+    "sha256": "acdca382b361b9d12a78d135bdccabfe60c85834ab490f86d7ce479fafbdb33b"
+  },
+  {
+    "path": "public/build/assets/app-DW3q0lIf.css",
+    "bytes": 203820,
+    "sha256": "2764934f77d7c04b8d05e9f9a496b26fbc843c66ed8f328dee4c70a23170435d"
+  },
+  {
+    "path": "public/build/assets/app-WKvg8iH6.js",
+    "bytes": 543757,
+    "sha256": "0adf92e66efadea5810f805d492153ddb9bca794e861a5fdc7c888196a18a6af"
+  },
+  {
+    "path": "public/build/manifest.json",
+    "bytes": 383,
+    "sha256": "51854234b3f301782dde5a65b21499da4a7dfd2c453978a44f09fdad4d116523"
+  },
+  {
+    "path": "resources/css/app.css",
+    "bytes": 153913,
+    "sha256": "fd4f653f1ba4842b627a835013fe8ea09177301c6d5100d359531635b3340f6e"
+  },
+  {
+    "path": "resources/views/dashboard.blade.php",
+    "bytes": 10561,
+    "sha256": "f6dde1200cc7f16cc3c235a9e5a1663b2bdfe6fe6edeba41a44f1226d488042e"
+  }
+]

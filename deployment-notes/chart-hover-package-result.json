@@ -1,0 +1,20 @@
+{
+  "production": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\chart-segment-hover-2026-10-07-18-17-20.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\chart-segment-hover-2026-10-07-18-17-20.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\chart-segment-hover-2026-10-07-18-17-20.manifest.json",
+    "checksum": "599adaf19083563c21c3853cd02d719da0e713c0d91132b50f18241e8bfa423f",
+    "files": 6,
+    "bytes": 263141,
+    "head": "d4b5f5332d45f6ca2f46f8817c75ab64c24a08e3",
+    "verified": true
+  },
+  "tests": {
+    "assertions": 159,
+    "scope": "WorkspaceOvertimeTest",
+    "passed": 13
+  },
+  "frontend_build_passed": true,
+  "browser_verified": false,
+  "production_deployed": false
+}
