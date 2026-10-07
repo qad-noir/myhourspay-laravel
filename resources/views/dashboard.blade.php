@@ -49,8 +49,8 @@
                             <div class="weekly-chart__track">
                                 @if($day['minutes'] > 0)
                                     <div class="weekly-chart__bar" style="height: {{ ($day['minutes'] / $chartMaximum) * 100 }}%">
-                                        @if($day['overtime_minutes'] > 0)<span class="weekly-chart__segment weekly-chart__segment--overtime" style="height: {{ ($day['overtime_minutes'] / $day['minutes']) * 100 }}%"></span>@endif
-                                        @if($day['regular_minutes'] > 0)<span class="weekly-chart__segment weekly-chart__segment--regular" style="height: {{ ($day['regular_minutes'] / $day['minutes']) * 100 }}%"></span>@endif
+                                        @if($day['overtime_minutes'] > 0)<span tabindex="0" role="img" aria-label="{{ $day['full_date'] }}: {{ $calculator->formatHumanMinutes($day['overtime_minutes']) }} overtime" aria-describedby="{{ $tooltipId }}-overtime" class="weekly-chart__segment weekly-chart__segment--overtime" style="height: {{ ($day['overtime_minutes'] / $day['minutes']) * 100 }}%"></span>@endif
+                                        @if($day['regular_minutes'] > 0)<span tabindex="0" role="img" aria-label="{{ $day['full_date'] }}: {{ $calculator->formatHumanMinutes($day['regular_minutes']) }} regular hours" aria-describedby="{{ $tooltipId }}-regular" class="weekly-chart__segment weekly-chart__segment--regular" style="height: {{ ($day['regular_minutes'] / $day['minutes']) * 100 }}%"></span>@endif
                                     </div>
                                 @endif
                             </div>
@@ -66,6 +66,21 @@
                                     <small>Add an entry from the hours calendar.</small>
                                 @endif
                             </div>
+                            @if($day['overtime_minutes'] > 0)
+                                <div class="weekly-chart__tooltip weekly-chart__tooltip--overtime" id="{{ $tooltipId }}-overtime" role="tooltip">
+                                    <strong>{{ $day['full_date'] }}</strong>
+                                    <span>{{ $calculator->formatHumanMinutes($day['overtime_minutes']) }} overtime</span>
+                                    <small>Above {{ $calculator->formatHumanMinutes($calculator->contractedDailyMinutes()) }} contracted daily hours</small>
+                                </div>
+                            @endif
+                            @if($day['regular_minutes'] > 0)
+                                <div class="weekly-chart__tooltip weekly-chart__tooltip--regular" id="{{ $tooltipId }}-regular" role="tooltip">
+                                    <strong>{{ $day['full_date'] }}</strong>
+                                    <span>{{ $calculator->formatHumanMinutes($day['regular_minutes']) }} regular hours</span>
+                                    <small>{{ $day['break_minutes'] }}m {{ $day['break_type'] }} break</small>
+                                    @if($day['overtime_minutes'] === null)<small>Daily overtime not configured</small>@endif
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

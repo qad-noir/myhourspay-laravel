@@ -268,3 +268,10 @@ select[name="default_break_type"],select[name="break_type"]{-webkit-appearance:n
 .weekly-chart__track .weekly-chart__segment--regular { background: var(--brand-orange); }
 .weekly-chart__track .weekly-chart__segment--overtime, .weekly-target-line .weekly-chart__overtime-key { background: #168456; }
 .weekly-target-line { flex-wrap: wrap; gap: 8px; }
+.weekly-chart__day .weekly-chart__tooltip--regular,
+.weekly-chart__day .weekly-chart__tooltip--overtime { opacity: 0; visibility: hidden; }
+.weekly-chart__day:has(.weekly-chart__segment:hover, .weekly-chart__segment:focus) .weekly-chart__tooltip { opacity: 0; visibility: hidden; }
+.weekly-chart__day:has(.weekly-chart__segment--regular:hover, .weekly-chart__segment--regular:focus):not(:has(.weekly-chart__segment--overtime:hover)) .weekly-chart__tooltip--regular,
+.weekly-chart__day:has(.weekly-chart__segment--overtime:hover, .weekly-chart__segment--overtime:focus):not(:has(.weekly-chart__segment--regular:hover)) .weekly-chart__tooltip--overtime { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.weekly-chart__day:first-child:has(.weekly-chart__segment:hover, .weekly-chart__segment:focus) .weekly-chart__tooltip,
+.weekly-chart__day:last-child:has(.weekly-chart__segment:hover, .weekly-chart__segment:focus) .weekly-chart__tooltip { transform: translate(0, 0); }
