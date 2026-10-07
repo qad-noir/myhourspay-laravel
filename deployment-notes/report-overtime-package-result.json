@@ -1,0 +1,34 @@
+{
+  "production": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\report-overtime-clarification-2026-10-07-11-17-10.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\report-overtime-clarification-2026-10-07-11-17-10.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\report-overtime-clarification-2026-10-07-11-17-10.manifest.json",
+    "checksum": "a98b4943eb7e6a4bf57df22b6aaee94be84a20df540d2ee4fac23372dbf27b36",
+    "files": 12,
+    "bytes": 277659,
+    "head": "2bcd345df5e6232c6ebfc87ad0d82278ca983240",
+    "verified": true
+  },
+  "flutter": {
+    "zip": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\production-patches\\flutter-report-overtime-handoff-2026-10-07-11-17-10.zip",
+    "instructions": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\flutter-report-overtime-handoff-2026-10-07-11-17-10.md",
+    "manifest": "C:\\Users\\HP-MC\\Documents\\laravel\\myhourspay\\deployment-notes\\flutter-report-overtime-handoff-2026-10-07-11-17-10.manifest.json",
+    "checksum": "65c6b8895415cf11b3551e95d649372161d28c96ed8d52fcff47cc91bb7458d7",
+    "files": 4,
+    "bytes": 28171,
+    "head": "2bcd345df5e6232c6ebfc87ad0d82278ca983240",
+    "verified": true
+  },
+  "sqlite": {
+    "passed": 365,
+    "assertions": 3009,
+    "skipped": 9
+  },
+  "mysql": {
+    "passed": 13,
+    "assertions": 147,
+    "workbook_fixture_verified": true
+  },
+  "real_device_verified": false,
+  "production_deployed": false
+}

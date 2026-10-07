@@ -1,0 +1,62 @@
+[
+  {
+    "path": "app/Exports/HoursReportExport.php",
+    "bytes": 5596,
+    "sha256": "499cf99922d282186f5e514c06c459a42caa3396cd117a0eafbe38f37cd444c2"
+  },
+  {
+    "path": "app/Http/Controllers/DashboardController.php",
+    "bytes": 3016,
+    "sha256": "44d3afc5e0cee1e898440a774cebd4016ec80253f523596ae1f3b41167d8e45d"
+  },
+  {
+    "path": "app/Http/Controllers/HoursController.php",
+    "bytes": 21845,
+    "sha256": "c6119e224b457804a354253f9d90d3ab0bcda08941385b9d6cb39bf074828acd"
+  },
+  {
+    "path": "public/build/assets/app-Bd4xEwRZ.css",
+    "bytes": 156550,
+    "sha256": "acdca382b361b9d12a78d135bdccabfe60c85834ab490f86d7ce479fafbdb33b"
+  },
+  {
+    "path": "public/build/assets/app-S-D0G0Ab.css",
+    "bytes": 202869,
+    "sha256": "5993975c89257a17ff7bcf91272e53fd070e4b31a22f1fa918431b9f86f60923"
+  },
+  {
+    "path": "public/build/assets/app-WKvg8iH6.js",
+    "bytes": 543757,
+    "sha256": "0adf92e66efadea5810f805d492153ddb9bca794e861a5fdc7c888196a18a6af"
+  },
+  {
+    "path": "public/build/manifest.json",
+    "bytes": 383,
+    "sha256": "1f2e3593861f63bec2a54400817d97bb46b30206836eff15780d26eb53bf553a"
+  },
+  {
+    "path": "resources/css/app.css",
+    "bytes": 152926,
+    "sha256": "9371f73391b90a7e7fe47b33fd61ba3064d90898fb3ff7ff502dcaf041cb00a2"
+  },
+  {
+    "path": "resources/views/dashboard.blade.php",
+    "bytes": 8905,
+    "sha256": "6c691f06d0e93728a07c9fbcb93444dfd261618e5c1d9413dc12de5832780f6a"
+  },
+  {
+    "path": "resources/views/hours/print.blade.php",
+    "bytes": 2967,
+    "sha256": "57eaee12f325db44b816a2c3807a6d2ef230fef76666dbfcd76612c73fcb4a96"
+  },
+  {
+    "path": "resources/views/hours/report.blade.php",
+    "bytes": 9412,
+    "sha256": "9dcac836935a90282adcb8f28eab8ca0f1ae021293db1ce56fca74570de80321"
+  },
+  {
+    "path": "resources/views/profile/show.blade.php",
+    "bytes": 7005,
+    "sha256": "9d7613286701595a29e9f99312e8d894e0371f52e842200fab9e289038560bb5"
+  }
+]
