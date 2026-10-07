@@ -274,6 +274,26 @@ class WorkspaceOvertimeTest extends TestCase
         $this->assertSame($before, $this->entriesSnapshot($user));
     }
 
+    public function test_calendar_events_include_daily_overtime_for_visible_adjacent_dates(): void
+    {
+        [$user, $workspace] = $this->fixture();
+        $workspace->update(['contracted_daily_minutes' => 480, 'overtime_basis' => 'weekly']);
+        $user->hoursEntries()->create(['workspace_id' => $workspace->id, 'work_date' => '2026-09-29',
+            'start_time' => '06:15', 'end_time' => '15:00', 'break_type' => 'unpaid', 'break_minutes' => 30]);
+        $url = route('hours.events', ['start' => '2026-09-28', 'end' => '2026-11-02', 'month' => '2026-10']);
+        $this->actingAs($user)->getJson($url)->assertOk()
+            ->assertJsonPath('events.0.extendedProps.daily_overtime_minutes', 15)
+            ->assertJsonPath('events.0.extendedProps.daily_overtime_formatted', '15m')
+            ->assertJsonPath('events.1.extendedProps.daily_overtime_minutes', 120)
+            ->assertJsonPath('events.1.extendedProps.daily_overtime_formatted', '2h 00m')
+            ->assertJsonPath('events.2.extendedProps.daily_overtime_minutes', 0)
+            ->assertJsonPath('events.2.extendedProps.daily_overtime_formatted', '0m');
+        $workspace->update(['contracted_daily_minutes' => null]);
+        $this->getJson($url)->assertOk()
+            ->assertJsonPath('events.0.extendedProps.daily_overtime_minutes', null)
+            ->assertJsonPath('events.0.extendedProps.daily_overtime_formatted', null);
+    }
+
     public function test_chart_renders_thirty_minute_overtime_and_empty_tracks(): void
     {
         [$user, $workspace] = $this->fixture();

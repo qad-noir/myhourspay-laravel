@@ -64,7 +64,7 @@ class HoursController extends Controller
                 'title' => $entry['net_formatted'].' worked',
                 'start' => $entry['work_date'],
                 'allDay' => true,
-                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted', 'project_id', 'billable', 'earnings_minor', 'currency'])->merge(['project_name' => data_get($entry, 'project.name'), 'client_name' => data_get($entry, 'project.client.name')])->all(),
+                'extendedProps' => collect($entry)->only(['work_date', 'start_time', 'end_time', 'break_minutes', 'break_type', 'notes', 'gross_minutes', 'net_minutes', 'net_formatted', 'daily_overtime_minutes', 'project_id', 'billable', 'earnings_minor', 'currency'])->merge(['daily_overtime_formatted' => $entry['daily_overtime_minutes'] === null ? null : $calculator->formatHumanMinutes($entry['daily_overtime_minutes']), 'project_name' => data_get($entry, 'project.name'), 'client_name' => data_get($entry, 'project.client.name')])->all(),
             ], $summary['entries']),
             'summary' => $summary,
             'monthSummary' => $monthSummary,

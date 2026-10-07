@@ -645,7 +645,7 @@ const showActivityTooltip = (info) => {
     const tooltip = document.createElement('div');
     tooltip.className = 'hours-activity-tooltip';
     tooltip.dataset.hoursTooltip = 'true';
-    tooltip.innerHTML = `<span>${escapeHtml(entry.work_date)}</span><strong>${escapeHtml(entry.start_time)}–${escapeHtml(entry.end_time)}</strong><div><b>${escapeHtml(entry.net_formatted)}</b> net · ${escapeHtml(entry.break_minutes)}m ${escapeHtml(entry.break_type)} break</div>${entry.notes ? `<p>${escapeHtml(entry.notes)}</p>` : ''}`;
+    tooltip.innerHTML = `<span>${escapeHtml(entry.work_date)}</span><strong>${escapeHtml(entry.start_time)}–${escapeHtml(entry.end_time)}</strong><div><b>${escapeHtml(entry.net_formatted)}</b> net · ${escapeHtml(entry.break_minutes)}m ${escapeHtml(entry.break_type)} break</div><div>${entry.daily_overtime_minutes == null ? 'Daily overtime not configured' : `<b>${escapeHtml(entry.daily_overtime_formatted)}</b> daily overtime`}</div>${entry.notes ? `<p>${escapeHtml(entry.notes)}</p>` : ''}`;
     document.body.appendChild(tooltip);
     const rect = info.el.getBoundingClientRect();
     const left = Math.min(window.innerWidth - tooltip.offsetWidth - 12, Math.max(12, rect.left));
